@@ -9,8 +9,9 @@
             [metabase.test.util :refer :all]
             [metabase.util
              [encryption :as encryption]
-             [encryption-test :as encryption-test]]
-            [puppetlabs.i18n.core :refer [tru]]
+             [encryption-test :as encryption-test]
+             [i18n :refer [tru]]]
+            [puppetlabs.i18n.core :as i18n]
             [toucan.db :as db]))
 
 ;; ## TEST SETTINGS DEFINITIONS
@@ -32,7 +33,6 @@
 (defsetting ^:private test-json-setting
   "Test setting - this only shows up in dev (4)"
   :type :json)
-
 
 ;; ## HELPER FUNCTIONS
 
@@ -215,10 +215,13 @@
 
 ;; Validate setting description with i18n string
 (expect
-  ["Test setting - with i18n"]
-  (for [{:keys [key description]} (setting/all)
-        :when (= :test-i18n-setting key)]
-    description))
+  ["TEST SETTING - WITH I18N"]
+  (let [zz (i18n/string-as-locale "zz")]
+    (i18n/with-user-locale zz
+      (doall
+       (for [{:keys [key description]} (setting/all)
+             :when (= :test-i18n-setting key)]
+         description)))))
 
 
 ;;; ------------------------------------------------ BOOLEAN SETTINGS ------------------------------------------------

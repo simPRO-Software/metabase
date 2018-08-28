@@ -44,7 +44,8 @@
              [util :as u]]
             [metabase.util
              [date :as du]
-             [honeysql-extensions :as hx]]
+             [honeysql-extensions :as hx]
+             [i18n :as ui18n]]
             [puppetlabs.i18n.core :refer [trs tru]]
             [schema.core :as s]
             [toucan
@@ -75,13 +76,13 @@
 
 (def ^:private SettingDefinition
   {:name        s/Keyword
-   :description s/Str            ; used for docstring and is user-facing in the admin panel
+   :description (s/cond-pre s/Str ui18n/LocalizedString) ; used for docstring and is user-facing in the admin panel
    :default     s/Any
-   :type        Type             ; all values are stored in DB as Strings,
-   :getter      clojure.lang.IFn ; different getters/setters take care of parsing/unparsing
+   :type        Type                                     ; all values are stored in DB as Strings,
+   :getter      clojure.lang.IFn                         ; different getters/setters take care of parsing/unparsing
    :setter      clojure.lang.IFn
-   :tag         (s/maybe Class)  ; type annotation, e.g. ^String, to be applied. Defaults to tag based on :type
-   :internal?   s/Bool           ; should the API never return this setting? (default: false)
+   :tag         (s/maybe Class)                          ; type annotation, e.g. ^String, to be applied. Defaults to tag based on :type
+   :internal?   s/Bool                                   ; should the API never return this setting? (default: false)
    :cache?      s/Bool})         ; should the getter always fetch this value "fresh" from the DB? (default: false)
 
 
@@ -586,7 +587,7 @@
                        v)
      :is_env_setting (boolean env-value)
      :env_name       (env-var-name setting)
-     :description    (:description setting)
+     :description    (str (:description setting))
      :default        (or (when env-value
                            (format "Using $%s" (env-var-name setting)))
                          (:default setting))}))
