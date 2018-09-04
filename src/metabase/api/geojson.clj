@@ -6,7 +6,7 @@
             [metabase.models.setting :as setting :refer [defsetting]]
             [metabase.util :as u]
             [metabase.util.schema :as su]
-            [puppetlabs.i18n.core :refer [tru]]
+            [metabase.util.i18n :refer [tru]]
             [ring.util.response :as rr]
             [schema.core :as s])
   (:import org.apache.commons.io.input.ReaderInputStream))
@@ -87,7 +87,7 @@
   [key]
   {key su/NonBlankString}
   (let [url (or (get-in (custom-geojson) [(keyword key) :url])
-                (throw (ex-info (tru "Invalid custom GeoJSON key: {0}" key)
+                (throw (ex-info (str (tru "Invalid custom GeoJSON key: {0}" key))
                          {:status-code 400})))]
     ;; TODO - it would be nice if we could also avoid returning our usual cache-busting headers with the response here
     (-> (rr/response (ReaderInputStream. (io/reader url)))

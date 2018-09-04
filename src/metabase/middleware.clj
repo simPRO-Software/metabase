@@ -15,7 +15,9 @@
              [session :refer [Session]]
              [setting :refer [defsetting]]
              [user :as user :refer [User]]]
-            [metabase.util.date :as du]
+            [metabase.util
+             [date :as du]
+             [i18n :as ui18n]]
             [puppetlabs.i18n.core :refer [tru]]
             [toucan.db :as db])
   (:import com.fasterxml.jackson.core.JsonGenerator
@@ -393,11 +395,11 @@
                                           ;; Field validation exceptions. Return those as is
                                           (and status-code
                                                (seq other-info))
-                                          other-info
+                                          (ui18n/localized-strings->strings other-info)
                                           ;; If status code was specified but other data wasn't, it's something like a
                                           ;; 404. Return message as the (plain-text) body.
                                           status-code
-                                          message
+                                          (str message)
                                           ;; Otherwise it's a 500. Return a body that includes exception & filtered
                                           ;; stacktrace for debugging purposes
                                           :else
@@ -412,7 +414,9 @@
                                                                  #"\s*\n\s*")}))))]
     {:status  (or status-code 500)
      :headers (cond-> (html-page-security-headers)
-                (string? body) (assoc "Content-Type" "text/plain"))
+                (or (string? body)
+                    (ui18n/localized-string? body))
+                (assoc "Content-Type" "text/plain"))
      :body    body}))
 
 (defn catch-api-exceptions

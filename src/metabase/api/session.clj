@@ -17,9 +17,9 @@
              [setting :refer [defsetting]]
              [user :as user :refer [User]]]
             [metabase.util
+             [i18n :refer [trs tru]]
              [password :as pass]
              [schema :as su]]
-            [puppetlabs.i18n.core :refer [trs tru]]
             [schema.core :as s]
             [throttle.core :as throttle]
             [toucan.db :as db]))
@@ -56,7 +56,7 @@
         (when-not (ldap/verify-password user-info password)
           ;; Since LDAP knows about the user, fail here to prevent the local strategy to be tried with a possibly
           ;; outdated password
-          (throw (ex-info password-fail-message
+          (throw (ex-info (str password-fail-message)
                    {:status-code 400
                     :errors      {:password password-fail-snippet}})))
         ;; password is ok, return new session
@@ -85,7 +85,7 @@
       (email-login username password) ; Then try local authentication
       ;; If nothing succeeded complain about it
       ;; Don't leak whether the account doesn't exist or the password was incorrect
-      (throw (ex-info password-fail-message
+      (throw (ex-info (str password-fail-message)
                {:status-code 400
                 :errors      {:password password-fail-snippet}}))))
 
@@ -211,7 +211,7 @@
     ;; Use some wacky status code (428 - Precondition Required) so we will know when to so the error screen specific
     ;; to this situation
     (throw
-     (ex-info (tru "You''ll need an administrator to create a Metabase account before you can use Google to log in.")
+     (ex-info (str (tru "You''ll need an administrator to create a Metabase account before you can use Google to log in."))
        {:status-code 428}))))
 
 (s/defn ^:private google-auth-create-new-user!

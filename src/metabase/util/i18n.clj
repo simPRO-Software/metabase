@@ -1,9 +1,8 @@
 (ns metabase.util.i18n
-  (:require
-   [puppetlabs.i18n.core :as i18n :refer [available-locales]]
-   [schema.core :as s]
-   [cheshire.generate :as json-gen]
-   [cheshire.core :as json])
+  (:require [cheshire.generate :as json-gen]
+            [clojure.walk :as walk]
+            [puppetlabs.i18n.core :as i18n :refer [available-locales]]
+            [schema.core :as s])
   (:import java.util.Locale))
 
 (defn available-locales-with-names
@@ -46,3 +45,21 @@
 
 (defmacro trs [msg & args]
   `(SystemLocalizedString. (namespace-munge *ns*) ~msg ~(vec args)))
+
+(def ^:private localized-string-checker
+  "Compiled checker for `LocalizedString`s which is more efficient when used repeatedly like in `localized-string?`
+  below"
+  (s/checker LocalizedString))
+
+(defn localized-string?
+  "Returns `true` if `maybe-a-localized-string` is a system or user localized string instance"
+  [maybe-a-localized-string]
+  (not (localized-string-checker maybe-a-localized-string)))
+
+(defn localized-strings->strings
+  "Walks the datastructure `x` and converts any localized strings to regular string"
+  [x]
+  (walk/postwalk (fn [node]
+                   (if (localized-string? node)
+                     (str node)
+                     node)) x))
