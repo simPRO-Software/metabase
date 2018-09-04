@@ -17,8 +17,9 @@
             [metabase.driver.generic-sql.query-processor :as sqlqp]
             [metabase.models.table :refer [Table]]
             [metabase.query-processor.util :as qputil]
-            [metabase.util.honeysql-extensions :as hx]
-            [puppetlabs.i18n.core :refer [trs tru]])
+            [metabase.util
+             [honeysql-extensions :as hx]
+             [i18n :refer [trs tru]]])
   (:import clojure.lang.Reflector
            java.sql.DriverManager
            metabase.query_processor.interface.Field))
@@ -228,13 +229,13 @@
 
         :else
         (log/error
-         (trs "Error: metabase.driver.FixedHiveDriver is registered, but JDBC does not seem to be using it."))))))
+         (str (trs "Error: metabase.driver.FixedHiveDriver is registered, but JDBC does not seem to be using it.")))))))
 
 (defn -init-driver
   "Register the SparkSQL driver if the SparkSQL dependencies are available."
   []
   (when (u/ignore-exceptions (Class/forName "metabase.driver.FixedHiveDriver"))
-    (log/info (trs "Found metabase.driver.FixedHiveDriver."))
+    (log/info (str (trs "Found metabase.driver.FixedHiveDriver.")))
     (when (u/ignore-exceptions (register-hive-jdbc-driver!))
-      (log/info (trs "Successfully registered metabase.driver.FixedHiveDriver with JDBC."))
+      (log/info (str (trs "Successfully registered metabase.driver.FixedHiveDriver with JDBC.")))
       (driver/register-driver! :sparksql (SparkSQLDriver.)))))

@@ -27,14 +27,13 @@
              [util :as qputil]]
             [metabase.util
              [date :as du]
-             [honeysql-extensions :as hx]]
-            [puppetlabs.i18n.core :refer [tru]]
+             [honeysql-extensions :as hx]
+             [i18n :refer [tru]]]
             [toucan.db :as db])
   (:import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
            com.google.api.client.http.HttpRequestInitializer
            [com.google.api.services.bigquery Bigquery Bigquery$Builder BigqueryScopes]
-           [com.google.api.services.bigquery.model QueryRequest QueryResponse Table TableCell TableFieldSchema TableList
-            TableList$Tables TableReference TableRow TableSchema]
+           [com.google.api.services.bigquery.model QueryRequest QueryResponse Table TableCell TableFieldSchema TableList TableList$Tables TableReference TableRow TableSchema]
            honeysql.format.ToSql
            java.sql.Time
            [java.util Collections Date]
@@ -305,12 +304,12 @@
     ;; to do so)
     (when dataset-name
       (assert (valid-bigquery-identifier? dataset-name)
-        (tru "Invalid BigQuery identifier: ''{0}''" dataset-name)))
+        (str (tru "Invalid BigQuery identifier: ''{0}''" dataset-name))))
     (assert (valid-bigquery-identifier? table-name)
-      (tru "Invalid BigQuery identifier: ''{0}''" table-name))
+      (str (tru "Invalid BigQuery identifier: ''{0}''" table-name)))
     (when (seq field-name)
       (assert (valid-bigquery-identifier? field-name)
-        (tru "Invalid BigQuery identifier: ''{0}''" field-name)))
+        (str (tru "Invalid BigQuery identifier: ''{0}''" field-name))))
     ;; BigQuery identifiers should look like `dataset.table` or `dataset.table`.`field` (SAD!)
     (str (format "`%s.%s`" (or dataset-name (dataset-name-for-current-query)) table-name)
          (when (seq field-name)

@@ -16,12 +16,11 @@
              [util :as qputil]]
             [metabase.util
              [date :as du]
-             [honeysql-extensions :as hx]]
-            [puppetlabs.i18n.core :refer [trs]])
+             [honeysql-extensions :as hx]
+             [i18n :refer [trs]]])
   (:import [java.sql PreparedStatement ResultSet ResultSetMetaData SQLException]
            [java.util Calendar Date TimeZone]
-           [metabase.query_processor.interface AgFieldRef BinnedField DateTimeField DateTimeValue Expression
-            ExpressionRef Field FieldLiteral JoinQuery JoinTable RelativeDateTimeValue TimeField TimeValue Value]))
+           [metabase.query_processor.interface AgFieldRef BinnedField DateTimeField DateTimeValue Expression ExpressionRef Field FieldLiteral JoinQuery JoinTable RelativeDateTimeValue TimeField TimeValue Value]))
 
 (def ^:dynamic *query*
   "The outer query currently being processed."
@@ -560,10 +559,10 @@
                                                (some-> report-timezone TimeZone/getTimeZone)
                                                transaction-connection)))
     (catch SQLException e
-      (log/error (trs "Failed to set timezone:") "\n" (with-out-str (jdbc/print-sql-exception-chain e)))
+      (log/error (str (trs "Failed to set timezone:")) "\n" (with-out-str (jdbc/print-sql-exception-chain e)))
       (run-query-without-timezone driver settings connection query))
     (catch Throwable e
-      (log/error (trs "Failed to set timezone:") "\n" (.getMessage e))
+      (log/error (str (trs "Failed to set timezone:")) "\n" (.getMessage e))
       (run-query-without-timezone driver settings connection query))))
 
 
