@@ -216,7 +216,7 @@
     (try
       (send-notification! notification)
       (catch Throwable e
-        (log/error e (str (trs "Error sending notification!")))))))
+        (log/error e (trs "Error sending notification!"))))))
 
 (defn- pulse->notifications [{:keys [cards channel-ids], :as pulse}]
   (let [results     (for [card  cards

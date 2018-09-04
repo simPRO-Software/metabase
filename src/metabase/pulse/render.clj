@@ -789,7 +789,7 @@
         (render:attached render-type card data)
         (render:unknown card data)))
     (catch Throwable e
-      (log/error (str (trs "Pulse card render error"))
+      (log/error (trs "Pulse card render error")
                  (class e)
                  (.getMessage e)
                  "\n"

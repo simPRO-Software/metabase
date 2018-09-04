@@ -64,10 +64,10 @@
   (let [total-length (reduce + (map (comp count str)
                                     distinct-values))]
     (u/prog1 (<= total-length total-max-length)
-      (log/debug (format "Field values total length is %d (max %d)." total-length total-max-length)
+      (log/debug (trs "Field values total length is {0} (max {1})." total-length total-max-length)
                  (if <>
-                   "FieldValues are allowed for this Field."
-                   "FieldValues are NOT allowed for this Field.")))))
+                   (trs "FieldValues are allowed for this Field.")
+                   (trs "FieldValues are NOT allowed for this Field."))))))
 
 
 (defn- distinct-values
@@ -109,15 +109,15 @@
       (and (> (count values) auto-list-cardinality-threshold)
            (= :auto-list (keyword (:has_field_values field))))
       (do
-        (log/info (str (trs "Field {0} was previously automatically set to show a list widget, but now has {1} values."
-                            field-name (count values)))
-                  (str (trs "Switching Field to use a search widget instead.")))
+        (log/info (trs "Field {0} was previously automatically set to show a list widget, but now has {1} values."
+                       field-name (count values))
+                  (trs "Switching Field to use a search widget instead."))
         (db/update! 'Field (u/get-id field) :has_field_values nil)
         (db/delete! FieldValues :field_id (u/get-id field)))
       ;; if the FieldValues object already exists then update values in it
       (and field-values values)
       (do
-        (log/debug (str (trs "Storing updated FieldValues for Field {0}..." field-name)))
+        (log/debug (trs "Storing updated FieldValues for Field {0}..." field-name))
         (db/update-non-nil-keys! FieldValues (u/get-id field-values)
           :values                values
           :human_readable_values (fixup-human-readable-values field-values values))
@@ -125,7 +125,7 @@
       ;; if FieldValues object doesn't exist create one
       values
       (do
-        (log/debug (str (trs "Storing FieldValues for Field {0}..." field-name)))
+        (log/debug (trs "Storing FieldValues for Field {0}..." field-name))
         (db/insert! FieldValues
           :field_id              (u/get-id field)
           :values                values
@@ -198,6 +198,6 @@
     (doseq [{table-id :table_id, :as field} fields]
       (when (table-id->is-on-demand? table-id)
         (log/debug
-         (format "Field %d '%s' should have FieldValues and belongs to a Database with On-Demand FieldValues updating."
+         (trs "Field {0} ''{1}'' should have FieldValues and belongs to a Database with On-Demand FieldValues updating."
                  (u/get-id field) (:name field)))
         (create-or-update-field-values! field)))))

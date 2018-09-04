@@ -559,10 +559,10 @@
                                                (some-> report-timezone TimeZone/getTimeZone)
                                                transaction-connection)))
     (catch SQLException e
-      (log/error (str (trs "Failed to set timezone:")) "\n" (with-out-str (jdbc/print-sql-exception-chain e)))
+      (log/error (trs "Failed to set timezone:") "\n" (with-out-str (jdbc/print-sql-exception-chain e)))
       (run-query-without-timezone driver settings connection query))
     (catch Throwable e
-      (log/error (str (trs "Failed to set timezone:")) "\n" (.getMessage e))
+      (log/error (trs "Failed to set timezone:") "\n" (.getMessage e))
       (run-query-without-timezone driver settings connection query))))
 
 

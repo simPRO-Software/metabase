@@ -229,13 +229,13 @@
 
         :else
         (log/error
-         (str (trs "Error: metabase.driver.FixedHiveDriver is registered, but JDBC does not seem to be using it.")))))))
+         (trs "Error: metabase.driver.FixedHiveDriver is registered, but JDBC does not seem to be using it."))))))
 
 (defn -init-driver
   "Register the SparkSQL driver if the SparkSQL dependencies are available."
   []
   (when (u/ignore-exceptions (Class/forName "metabase.driver.FixedHiveDriver"))
-    (log/info (str (trs "Found metabase.driver.FixedHiveDriver.")))
+    (log/info (trs "Found metabase.driver.FixedHiveDriver."))
     (when (u/ignore-exceptions (register-hive-jdbc-driver!))
-      (log/info (str (trs "Successfully registered metabase.driver.FixedHiveDriver with JDBC.")))
+      (log/info (trs "Successfully registered metabase.driver.FixedHiveDriver with JDBC."))
       (driver/register-driver! :sparksql (SparkSQLDriver.)))))

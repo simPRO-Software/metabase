@@ -18,7 +18,7 @@
     (if (= query-str trimmed-string)
       query-str
       (do
-        (log/info (str (trs "Trimming trailing comment from card with id {0}" card-id)))
+        (log/info (trs "Trimming trailing comment from card with id {0}" card-id))
         trimmed-string))))
 
 (defn- card-id->source-query

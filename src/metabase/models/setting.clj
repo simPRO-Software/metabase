@@ -132,7 +132,7 @@
 (defn- update-settings-last-updated!
   "Update the value of `settings-last-updated` in the DB; if the row does not exist, insert one."
   []
-  (log/debug (str (trs "Updating value of settings-last-updated in DB...")))
+  (log/debug (trs "Updating value of settings-last-updated in DB..."))
   ;; for MySQL, cast(current_timestamp AS char); for H2 & Postgres, cast(current_timestamp AS text)
   (let [current-timestamp-as-string-honeysql (hx/cast (if (= (mdb/db-type) :mysql) :char :text)
                                                       (hsql/raw "current_timestamp"))]
@@ -161,7 +161,7 @@
       will be no value until the first time a normal Setting is updated; thus if it is not yet set, we do not yet need
       to invalidate our cache.)"
   []
-  (log/debug (str (trs "Checking whether settings cache is out of date (requires DB call)...")))
+  (log/debug (trs "Checking whether settings cache is out of date (requires DB call)..."))
   (boolean
    (or
     ;; is the cache empty?
@@ -205,7 +205,7 @@
   ;; certainly quicker than starting the task ourselves from scratch
   (locking restore-cache-if-needed-lock
     (when (should-restore-cache?)
-      (log/debug (str (trs "Refreshing Settings cache...")))
+      (log/debug (trs "Refreshing Settings cache..."))
       (reset! cache (db/select-field->field :key :value Setting))
       ;; Now the cache is up-to-date. That is all good, but if we call `should-restore-cache?` again in a second it
       ;; will still return `true`, because its result is memoized, and we would be on the hook to (again) update the

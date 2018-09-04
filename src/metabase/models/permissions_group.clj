@@ -26,8 +26,8 @@
                    :name group-name)
                  (u/prog1 (db/insert! PermissionsGroup
                             :name group-name)
-                   (log/info (u/format-color 'green (str (trs "Created magic permissions group ''{0}'' (ID = {1})"
-                                                              group-name (:id <>))))))))))
+                   (log/info (u/format-color 'green (trs "Created magic permissions group ''{0}'' (ID = {1})"
+                                                         group-name (:id <>)))))))))
 
 (def ^{:arglists '([])} ^metabase.models.permissions_group.PermissionsGroupInstance
   all-users

@@ -38,12 +38,12 @@
   for licensing reasons."
   []
   (when-let [^java.io.File dir (plugins-dir)]
-    (log/info (str (trs "Loading plugins in directory {0}..." dir)))
+    (log/info (trs "Loading plugins in directory {0}..." dir))
     (doseq [^java.io.File file (.listFiles dir)
             :when (and (.isFile file)
                        (.canRead file)
                        (re-find #"\.jar$" (.getPath file)))]
-      (log/info (u/format-color 'magenta (str (trs "Loading plugin {0}... " file) (u/emoji "🔌"))))
+      (log/info (u/format-color 'magenta (trs "Loading plugin {0}... " file) (u/emoji "🔌")))
       (add-jar-to-classpath! file))))
 
 
@@ -58,13 +58,12 @@
   (when-let [plugins-dir (plugins-dir)]
     (when (seq (.listFiles plugins-dir))
       (log/info
-       (str
-        (trs "It looks like you have some external dependencies in your Metabase plugins directory.")
-        (trs "With Java 9 or higher, Metabase cannot automatically add them to your classpath.")
-        (trs "Instead, you should include them at launch with the -cp option. For example:")
-        "\n\n    java -cp metabase.jar:plugins/* metabase.core\n\n"
-        (trs "See https://metabase.com/docs/latest/operations-guide/start.html#java-versions for more details.")
-        (trs "(If you're already running Metabase this way, you can ignore this message.)"))))))
+       (trs "It looks like you have some external dependencies in your Metabase plugins directory.")
+       (trs "With Java 9 or higher, Metabase cannot automatically add them to your classpath.")
+       (trs "Instead, you should include them at launch with the -cp option. For example:")
+       "\n\n    java -cp metabase.jar:plugins/* metabase.core\n\n"
+       (trs "See https://metabase.com/docs/latest/operations-guide/start.html#java-versions for more details.")
+       (trs "(If you're already running Metabase this way, you can ignore this message.)")))))
 
 
 ;;; +----------------------------------------------------------------------------------------------------------------+

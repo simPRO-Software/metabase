@@ -54,7 +54,7 @@
                   ;; token being invalid. This message will get displayed in the Settings page in the admin panel so
                   ;; we do not want something complicated
                   (catch Throwable e
-                    (log/error e (str (trs "Error fetching token status:")))
+                    (log/error e (trs "Error fetching token status:"))
                     {:valid false, :status (str (tru "There was an error checking whether this token was valid."))})))
            fetch-token-status-timeout-ms
            {:valid false, :status (str (tru "Token validation timed out."))})))
@@ -62,7 +62,7 @@
 (defn- check-embedding-token-is-valid* [token]
   (when (s/check ValidToken token)
     (throw (Exception. (str (trs "Invalid token: token isn't in the right format.")))))
-  (log/info (str (trs "Checking with the MetaStore to see whether {0} is valid..." token)))
+  (log/info (trs "Checking with the MetaStore to see whether {0} is valid..." token))
   (let [{:keys [valid status]} (fetch-token-status token)]
     (or valid
         ;; if token isn't valid throw an Exception with the `:status` message
@@ -91,10 +91,10 @@
             (try
               (when (seq new-value)
                 (check-embedding-token-is-valid new-value)
-                (log/info (str (trs "Token is valid."))))
+                (log/info (trs "Token is valid.")))
               (setting/set-string! :premium-embedding-token new-value)
               (catch Throwable e
-                (log/error e (str (trs "Error setting premium embedding token")))
+                (log/error e (trs "Error setting premium embedding token"))
                 (throw (ex-info (.getMessage e) {:status-code 400}))))))
 
 (defn hide-embed-branding?
