@@ -11,7 +11,7 @@
              [config :as config]
              [util :as u]]
             [metabase.db.spec :as dbspec]
-            [puppetlabs.i18n.core :refer [trs]]
+            [metabase.util.i18n :refer [trs]]
             [ring.util.codec :as codec]
             [toucan.db :as db])
   (:import com.mchange.v2.c3p0.ComboPooledDataSource
@@ -169,19 +169,19 @@
   of the transaction block. Converting the migration to SQL string and running that via `jdbc/execute!` seems to do
   the trick."
   [conn, ^Liquibase liquibase]
-  (log/info (trs "Checking if Database has unrun migrations..."))
+  (log/info (str (trs "Checking if Database has unrun migrations...")))
   (when (has-unrun-migrations? liquibase)
-    (log/info (trs "Database has unrun migrations. Waiting for migration lock to be cleared..."))
+    (log/info (str (trs "Database has unrun migrations. Waiting for migration lock to be cleared...")))
     (wait-for-migration-lock-to-be-cleared liquibase)
     ;; while we were waiting for the lock, it was possible that another instance finished the migration(s), so make
     ;; sure something still needs to be done...
     (if (has-unrun-migrations? liquibase)
       (do
-        (log/info (trs "Migration lock is cleared. Running migrations..."))
+        (log/info (str (trs "Migration lock is cleared. Running migrations...")))
         (doseq [line (migrations-lines liquibase)]
           (jdbc/execute! conn [line])))
       (log/info
-       (trs "Migration lock cleared, but nothing to do here! Migrations were finished by another instance.")))))
+       (str (trs "Migration lock cleared, but nothing to do here! Migrations were finished by another instance."))))))
 
 (defn- force-migrate-up-if-needed!
   "Force migrating up. This does two things differently from `migrate-up-if-needed!`:
@@ -265,11 +265,11 @@
      ;; Disable auto-commit. This should already be off but set it just to be safe
      (.setAutoCommit (jdbc/get-connection conn) false)
      ;; Set up liquibase and let it do its thing
-     (log/info (trs "Setting up Liquibase..."))
+     (log/info (str (trs "Setting up Liquibase...")))
      (try
        (let [liquibase (conn->liquibase conn)]
          (consolidate-liquibase-changesets conn)
-         (log/info (trs "Liquibase is ready."))
+         (log/info (str (trs "Liquibase is ready.")))
          (case direction
            :up            (migrate-up-if-needed! conn liquibase)
            :force         (force-migrate-up-if-needed! conn liquibase)
@@ -361,12 +361,12 @@
    (verify-db-connection (:type db-details) db-details))
   ([engine details]
    {:pre [(keyword? engine) (map? details)]}
-   (log/info (u/format-color 'cyan (trs "Verifying {0} Database Connection ..." (name engine))))
+   (log/info (u/format-color 'cyan (str (trs "Verifying {0} Database Connection ..." (name engine)))))
    (assert (binding [*allow-potentailly-unsafe-connections* true]
              (require 'metabase.driver)
              ((resolve 'metabase.driver/can-connect-with-details?) engine details))
      (format "Unable to connect to Metabase %s DB." (name engine)))
-   (log/info (trs "Verify Database Connection ... ") (u/emoji "✅"))))
+   (log/info (str (trs "Verify Database Connection ... ")) (u/emoji "✅"))))
 
 
 (def ^:dynamic ^Boolean *disable-data-migrations*
@@ -392,7 +392,7 @@
 (defn- run-schema-migrations!
   "Run through our DB migration process and make sure DB is fully prepared"
   [auto-migrate? db-details]
-  (log/info (trs "Running Database Migrations..."))
+  (log/info (str (trs "Running Database Migrations...")))
   (if auto-migrate?
     ;; There is a weird situation where running the migrations can cause a race condition: if two (or more) instances
     ;; in a horizontal cluster are started at the exact same time, they can all start running migrations (and all
@@ -409,7 +409,7 @@
     (u/auto-retry 1
       (migrate! db-details :up))
     (print-migrations-and-quit! db-details))
-  (log/info (trs "Database Migrations Current ... ") (u/emoji "✅")))
+  (log/info (str (trs "Database Migrations Current ... ")) (u/emoji "✅")))
 
 (defn- run-data-migrations!
   "Do any custom code-based migrations now that the db structure is up to date."
