@@ -10,7 +10,7 @@
             [clojure.tools.logging :as log]
             [environ.core :as env]
             [metabase.util :as u]
-            [puppetlabs.i18n.core :refer [trs]]
+            [metabase.util.i18n :refer [trs]]
             [ring.util.codec :as codec]))
 
 (defn secret-key->hash
@@ -32,11 +32,11 @@
 
 ;; log a nice message letting people know whether DB details encryption is enabled
 (log/info
- (if default-secret-key
-   (trs "Saved credentials encryption is ENABLED for this Metabase instance.")
-   (trs "Saved credentials encryption is DISABLED for this Metabase instance."))
+ (str (if default-secret-key
+        (trs "Saved credentials encryption is ENABLED for this Metabase instance.")
+        (trs "Saved credentials encryption is DISABLED for this Metabase instance.")))
  (u/emoji (if default-secret-key "🔐" "🔓"))
- (trs "\nFor more information, see")
+ (str (trs "\nFor more information, see"))
  "https://www.metabase.com/docs/latest/operations-guide/start.html#encrypting-your-database-connection-details-at-rest")
 
 (defn encrypt
@@ -102,7 +102,7 @@
        (catch Throwable e
          ;; if we can't decrypt `s`, but it *is* probably encrypted, log a warning
          (log/warn
-          (trs "Cannot decrypt encrypted string. Have you changed or forgot to set MB_ENCRYPTION_SECRET_KEY?")
+          (str (trs "Cannot decrypt encrypted string. Have you changed or forgot to set MB_ENCRYPTION_SECRET_KEY?"))
           (.getMessage e)
           (u/pprint-to-str (u/filtered-stacktrace e)))
          s))

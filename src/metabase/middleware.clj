@@ -17,8 +17,7 @@
              [user :as user :refer [User]]]
             [metabase.util
              [date :as du]
-             [i18n :as ui18n]]
-            [puppetlabs.i18n.core :refer [tru]]
+             [i18n :as ui18n :refer [tru]]]
             [toucan.db :as db])
   (:import com.fasterxml.jackson.core.JsonGenerator
            java.sql.SQLException))

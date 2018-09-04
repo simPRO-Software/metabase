@@ -2,7 +2,7 @@
   "Namespaces that uses the Nashorn javascript engine to invoke some shared javascript code that we use to determine
   the background color of pulse table cells"
   (:require [cheshire.core :as json]
-            [puppetlabs.i18n.core :refer [trs]]
+            [metabase.util.i18n :refer [trs]]
             [schema.core :as s])
   (:import java.io.InputStream
            [javax.script Invocable ScriptEngine ScriptEngineManager]
@@ -23,7 +23,7 @@
     ;; assertion till look for the javascript file at startup and fail if it doesn't find it. This is to avoid a big
     ;; delay in finding out that the system is broken
     (assert (get-classpath-resource js-file-path)
-      (trs "Can't find JS color selector at ''{0}''" js-file-path))
+      (str (trs "Can't find JS color selector at ''{0}''" js-file-path)))
     (delay
      (with-open [stream (get-classpath-resource js-file-path)]
        (make-js-engine-with-script (slurp stream))))))

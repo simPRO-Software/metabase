@@ -12,7 +12,7 @@
             [metabase
              [db :as mdb]
              [util :as u]]
-            [puppetlabs.i18n.core :refer [trs]]
+            [metabase.util.i18n :refer [trs]]
             [schema.core :as s])
   (:import [org.quartz JobDetail JobKey Scheduler Trigger TriggerKey]))
 
@@ -40,7 +40,7 @@
   []
   (doseq [ns-symb @u/metabase-namespace-symbols
           :when   (.startsWith (name ns-symb) "metabase.task.")]
-    (log/info (trs "Loading tasks namespace:") (u/format-color 'blue ns-symb) (u/emoji "📆"))
+    (log/info (str (trs "Loading tasks namespace:")) (u/format-color 'blue ns-symb) (u/emoji "📆"))
     (require ns-symb)
     ;; look for `task-init` function in the namespace and call it if it exists
     (when-let [init-fn (ns-resolve ns-symb 'task-init)]
@@ -74,7 +74,7 @@
   []
   (when-not @quartz-scheduler
     (set-jdbc-backend-properties!)
-    (log/debug (trs "Starting Quartz Scheduler"))
+    (log/debug (str (trs "Starting Quartz Scheduler")))
     ;; keep a reference to our scheduler
     (reset! quartz-scheduler (qs/start (qs/initialize)))
     ;; look for job/trigger definitions
@@ -83,7 +83,7 @@
 (defn stop-scheduler!
   "Stop our Quartzite scheduler and shutdown any running executions."
   []
-  (log/debug (trs "Stopping Quartz Scheduler"))
+  (log/debug (str (trs "Stopping Quartz Scheduler")))
   ;; tell quartz to stop everything
   (when-let [scheduler (scheduler)]
     (qs/shutdown scheduler))
@@ -102,7 +102,7 @@
     (try
       (qs/schedule scheduler job trigger)
       (catch org.quartz.ObjectAlreadyExistsException _
-        (log/info (trs "Job already exists:") (-> job .getKey .getName))))))
+        (log/info (str (trs "Job already exists:")) (-> job .getKey .getName))))))
 
 (s/defn delete-task!
   "delete a task from the scheduler"
