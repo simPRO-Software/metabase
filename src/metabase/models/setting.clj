@@ -45,8 +45,7 @@
             [metabase.util
              [date :as du]
              [honeysql-extensions :as hx]
-             [i18n :as ui18n]]
-            [puppetlabs.i18n.core :refer [trs tru]]
+             [i18n :as ui18n :refer [trs tru]]]
             [schema.core :as s]
             [toucan
              [db :as db]
@@ -133,7 +132,7 @@
 (defn- update-settings-last-updated!
   "Update the value of `settings-last-updated` in the DB; if the row does not exist, insert one."
   []
-  (log/debug (trs "Updating value of settings-last-updated in DB..."))
+  (log/debug (str (trs "Updating value of settings-last-updated in DB...")))
   ;; for MySQL, cast(current_timestamp AS char); for H2 & Postgres, cast(current_timestamp AS text)
   (let [current-timestamp-as-string-honeysql (hx/cast (if (= (mdb/db-type) :mysql) :char :text)
                                                       (hsql/raw "current_timestamp"))]
@@ -148,7 +147,7 @@
           (db/simple-insert! Setting :key settings-last-updated-key, :value current-timestamp-as-string-honeysql)
           (catch java.sql.SQLException e
             ;; go ahead and log the Exception anyway on the off chance that it *wasn't* just a race condition issue
-            (log/error (tru "Error inserting a new Setting:") (with-out-str (jdbc/print-sql-exception-chain e)))))))
+            (log/error (str (tru "Error inserting a new Setting:")) (with-out-str (jdbc/print-sql-exception-chain e)))))))
   ;; Now that we updated the value in the DB, go ahead and update our cached value as well, because we know about the
   ;; changes
   (swap! cache assoc settings-last-updated-key (db/select-one-field :value Setting :key settings-last-updated-key)))
@@ -162,7 +161,7 @@
       will be no value until the first time a normal Setting is updated; thus if it is not yet set, we do not yet need
       to invalidate our cache.)"
   []
-  (log/debug (trs "Checking whether settings cache is out of date (requires DB call)..."))
+  (log/debug (str (trs "Checking whether settings cache is out of date (requires DB call)...")))
   (boolean
    (or
     ;; is the cache empty?
@@ -177,7 +176,7 @@
                           [:> :value last-known-update]]})
         (when <>
           (log/info (u/format-color 'red
-                        (trs "Settings have been changed on another instance, and will be reloaded here.")))))))))
+                        (str (trs "Settings have been changed on another instance, and will be reloaded here."))))))))))
 
 (def ^:private cache-update-check-interval-ms
   "How often we should check whether the Settings cache is out of date (which requires a DB call)?"
@@ -206,7 +205,7 @@
   ;; certainly quicker than starting the task ourselves from scratch
   (locking restore-cache-if-needed-lock
     (when (should-restore-cache?)
-      (log/debug (trs "Refreshing Settings cache..."))
+      (log/debug (str (trs "Refreshing Settings cache...")))
       (reset! cache (db/select-field->field :key :value Setting))
       ;; Now the cache is up-to-date. That is all good, but if we call `should-restore-cache?` again in a second it
       ;; will still return `true`, because its result is memoized, and we would be on the hook to (again) update the
@@ -337,7 +336,7 @@
   "Update an existing Setting. Used internally by `set-string!` below; do not use directly."
   [setting-name new-value]
   (assert (not= setting-name settings-last-updated-key)
-    (tru "You cannot update `settings-last-updated` yourself! This is done automatically."))
+    (str (tru "You cannot update `settings-last-updated` yourself! This is done automatically.")))
   ;; This is indeed a very annoying way of having to do things, but `update-where!` doesn't call `pre-update` (in case
   ;; it updates thousands of objects). So we need to manually trigger `pre-update` behavior by calling `do-pre-update`
   ;; so that `value` can get encrypted if `MB_ENCRYPTION_SECRET_KEY` is in use. Then take that possibly-encrypted
@@ -356,9 +355,9 @@
        ;; and there's actually a row in the DB that's not in the cache for some reason. Go ahead and update the
        ;; existing value and log a warning
        (catch Throwable e
-         (log/warn (tru "Error inserting a new Setting:") "\n"
+         (log/warn (str (tru "Error inserting a new Setting:")) "\n"
                    (.getMessage e) "\n"
-                   (tru "Assuming Setting already exists in DB and updating existing value."))
+                   (str (tru "Assuming Setting already exists in DB and updating existing value.")))
          (update-setting! setting-name new-value))))
 
 (s/defn set-string!

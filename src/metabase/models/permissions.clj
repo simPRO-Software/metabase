@@ -15,8 +15,8 @@
              [permissions-revision :as perms-revision :refer [PermissionsRevision]]]
             [metabase.util
              [honeysql-extensions :as hx]
+             [i18n :as ui18n :refer [tru]]
              [schema :as su]]
-            [puppetlabs.i18n.core :refer [tru]]
             [schema.core :as s]
             [toucan
              [db :as db]
@@ -79,7 +79,7 @@
   [{:keys [group_id]}]
   (when (and (= group_id (:id (group/admin)))
              (not *allow-admin-permissions-changes*))
-    (throw (ex-info (tru "You cannot create or revoke permissions for the 'Admin' group.")
+    (throw (ui18n/ex-info (tru "You cannot create or revoke permissions for the 'Admin' group.")
              {:status-code 400}))))
 
 (defn- assert-valid-object
@@ -89,7 +89,7 @@
              (not (valid-object-path? object))
              (or (not= object "/")
                  (not *allow-root-entries*)))
-    (throw (ex-info (tru "Invalid permissions object path: ''{0}''." object)
+    (throw (ui18n/ex-info (tru "Invalid permissions object path: ''{0}''." object)
              {:status-code 400}))))
 
 (defn- assert-valid
@@ -422,7 +422,7 @@
        :object   path)
      ;; on some occasions through weirdness we might accidentally try to insert a key that's already been inserted
      (catch Throwable e
-       (log/error (u/format-color 'red (tru "Failed to grant permissions: {0}" (.getMessage e))))
+       (log/error (u/format-color 'red (str (tru "Failed to grant permissions: {0}" (.getMessage e)))))
        ;; if we're running tests, we're doing something wrong here if duplicate permissions are getting assigned,
        ;; mostly likely because tests aren't properly cleaning up after themselves, and possibly causing other tests
        ;; to pass when they shouldn't. Don't allow this during tests
@@ -555,8 +555,8 @@
    Return a 409 (Conflict) if the numbers don't match up."
   [old-graph new-graph]
   (when (not= (:revision old-graph) (:revision new-graph))
-    (throw (ex-info (str (tru "Looks like someone else edited the permissions and your data is out of date.")
-                         (tru "Please fetch new data and try again."))
+    (throw (ui18n/ex-info (str (tru "Looks like someone else edited the permissions and your data is out of date.")
+                               (tru "Please fetch new data and try again."))
              {:status-code 409}))))
 
 (defn- save-perms-revision!

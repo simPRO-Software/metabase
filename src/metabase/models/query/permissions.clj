@@ -8,8 +8,9 @@
              [permissions :as perms]]
             [metabase.query-processor.util :as qputil]
             [metabase.util :as u]
-            [metabase.util.schema :as su]
-            [puppetlabs.i18n.core :refer [tru]]
+            [metabase.util
+             [i18n :refer [tru]]
+             [schema :as su]]
             [schema.core :as s]
             [toucan.db :as db]))
 
@@ -88,7 +89,7 @@
     (catch Throwable e
       (when throw-exceptions?
         (throw e))
-      (log/warn (tru "Error calculating permissions for query: {0}" (.getMessage e))
+      (log/warn (str (tru "Error calculating permissions for query: {0}" (.getMessage e)))
                 "\n"
                 (u/pprint-to-str (u/filtered-stacktrace e)))
       #{"/db/0/"})))                    ; DB 0 will never exist

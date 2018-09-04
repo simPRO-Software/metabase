@@ -1,4 +1,5 @@
 (ns metabase.util.i18n
+  (:refer-clojure :exclude [ex-info])
   (:require [cheshire.generate :as json-gen]
             [clojure.walk :as walk]
             [puppetlabs.i18n.core :as i18n :refer [available-locales]]
@@ -63,3 +64,11 @@
                    (if (localized-string? node)
                      (str node)
                      node)) x))
+
+(defn ex-info
+  "Just like `clojure.core/ex-info` but it is i18n-aware. It will call `str` on `msg` and walk `map` converting any
+  `SystemLocalizedString` and `UserLocalizedString`s to a regular string"
+  ([msg map]
+   (clojure.core/ex-info (str msg) (localized-strings->strings map)))
+  ([msg map cause]
+   (clojure.core/ex-info (str msg) (localized-strings->strings map) cause)))
