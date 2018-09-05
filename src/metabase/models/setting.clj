@@ -460,9 +460,12 @@
   "Register a new Setting with a map of `SettingDefinition` attributes.
    This is used internally be `defsetting`; you shouldn't need to use it yourself."
   [{setting-name :name, setting-type :type, default :default, :as setting}]
-  (u/prog1 (let [setting-type (s/validate Type (or setting-type :string))]
+  (u/prog1 (let [setting-type         (s/validate Type (or setting-type :string))
+                 maybe-description-fn (:description setting)]
              (merge {:name        setting-name
-                     :description nil
+                     :description (if (fn? maybe-description-fn)
+                                    (maybe-description-fn)
+                                    maybe-description-fn)
                      :type        setting-type
                      :default     default
                      :getter      (partial (default-getter-for-type setting-type) setting-name)
@@ -470,7 +473,7 @@
                      :tag         (default-tag-for-type setting-type)
                      :internal?   false
                      :cache?      true}
-                    (dissoc setting :name :type :default)))
+                    (dissoc setting :name :type :default :description)))
     (s/validate SettingDefinition <>)
     (swap! registered-settings assoc setting-name <>)))
 
@@ -552,7 +555,7 @@
   {:pre [(symbol? setting-symb)]}
   `(let [setting# (register-setting! (assoc ~options
                                        :name ~(keyword setting-symb)
-                                       :description ~description))]
+                                       :description (fn [] (eval '~description))))]
      (-> (def ~setting-symb (setting-fn setting#))
          (alter-meta! merge (metadata-for-setting-fn setting#)))))
 
