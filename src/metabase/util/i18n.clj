@@ -77,9 +77,9 @@
                      node)) x))
 
 (defn ex-info
-  "Just like `clojure.core/ex-info` but it is i18n-aware. It will call `str` on `msg` and walk `map` converting any
+  "Just like `clojure.core/ex-info` but it is i18n-aware. It will call `str` on `msg` and walk `ex-data` converting any
   `SystemLocalizedString` and `UserLocalizedString`s to a regular string"
-  ([msg map]
-   (clojure.core/ex-info (str msg) (localized-strings->strings map)))
-  ([msg map cause]
-   (clojure.core/ex-info (str msg) (localized-strings->strings map) cause)))
+  ([msg ex-data-map]
+   (clojure.core/ex-info (str msg) (localized-strings->strings ex-data-map)))
+  ([msg ex-data-map cause]
+   (clojure.core/ex-info (str msg) (localized-strings->strings ex-data-map) cause)))
