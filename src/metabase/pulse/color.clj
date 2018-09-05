@@ -23,7 +23,7 @@
     ;; assertion till look for the javascript file at startup and fail if it doesn't find it. This is to avoid a big
     ;; delay in finding out that the system is broken
     (assert (get-classpath-resource js-file-path)
-      (str (trs "Can't find JS color selector at ''{0}''" js-file-path)))
+      (trs "Can't find JS color selector at ''{0}''" js-file-path))
     (delay
      (with-open [stream (get-classpath-resource js-file-path)]
        (make-js-engine-with-script (slurp stream))))))

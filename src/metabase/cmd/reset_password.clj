@@ -19,8 +19,8 @@
   (println (str (trs "Resetting password for {0}..." email-address)
                 "\n"))
   (try
-    (println (str (trs "OK [[[{0}]]]" (set-reset-token! email-address))))
+    (println (trs "OK [[[{0}]]]" (set-reset-token! email-address)))
     (System/exit 0)
     (catch Throwable e
-      (println (str (trs "FAIL [[[{0}]]]" (.getMessage e))))
+      (println (trs "FAIL [[[{0}]]]" (.getMessage e)))
       (System/exit -1))))

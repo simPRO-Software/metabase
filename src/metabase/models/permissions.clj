@@ -79,7 +79,7 @@
   [{:keys [group_id]}]
   (when (and (= group_id (:id (group/admin)))
              (not *allow-admin-permissions-changes*))
-    (throw (ui18n/ex-info (tru "You cannot create or revoke permissions for the 'Admin' group.")
+    (throw (ui18n/ex-info (tru "You cannot create or revoke permissions for the ''Admin'' group.")
              {:status-code 400}))))
 
 (defn- assert-valid-object
@@ -422,7 +422,7 @@
        :object   path)
      ;; on some occasions through weirdness we might accidentally try to insert a key that's already been inserted
      (catch Throwable e
-       (log/error (u/format-color 'red (str (tru "Failed to grant permissions: {0}" (.getMessage e)))))
+       (log/error (u/format-color 'red (tru "Failed to grant permissions: {0}" (.getMessage e))))
        ;; if we're running tests, we're doing something wrong here if duplicate permissions are getting assigned,
        ;; mostly likely because tests aren't properly cleaning up after themselves, and possibly causing other tests
        ;; to pass when they shouldn't. Don't allow this during tests

@@ -39,12 +39,23 @@
     (json-gen/to-json (str this) json-generator)))
 
 (def LocalizedString
+  "Schema for user and system localized string instances"
   (s/cond-pre UserLocalizedString SystemLocalizedString))
 
-(defmacro tru [msg & args]
+(defmacro tru
+  "Similar to `puppetlabs.i18n.core/tru` but creates a `UserLocalizedString` instance so that conversion to the
+  correct locale can be delayed until it is needed. The user locale comes from the browser, so conversion to the
+  localized string needs to be 'late bound' and only occur when the user's locale is in scope. Calling `str` on the
+  results of this invocation will lookup the translated version of the string."
+  [msg & args]
   `(UserLocalizedString. (namespace-munge *ns*) ~msg ~(vec args)))
 
-(defmacro trs [msg & args]
+(defmacro trs
+  "Similar to `puppetlabs.i18n.core/trs` but creates a `SystemLocalizedString` instance so that conversion to the
+  correct locale can be delayed until it is needed. This is needed as the system locale from the JVM can be
+  overridden/changed by a setting. Calling `str` on the results of this invocation will lookup the translated version
+  of the string."
+  [msg & args]
   `(SystemLocalizedString. (namespace-munge *ns*) ~msg ~(vec args)))
 
 (def ^:private localized-string-checker

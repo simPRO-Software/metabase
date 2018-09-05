@@ -78,8 +78,8 @@
      (when-not tst
        (throw (if (and (map? message)
                        (not (ui18n/localized-string? message)))
-                (ex-info (str (:message message)) (assoc message :status-code code))
-                (ex-info (str message)            {:status-code code}))))
+                (ui18n/ex-info (:message message) (assoc message :status-code code))
+                (ui18n/ex-info message            {:status-code code}))))
      (if (empty? rest-args) tst
          (recur (first rest-args) (second rest-args) (drop 2 rest-args))))))
 
@@ -102,7 +102,7 @@
 (defn throw-invalid-param-exception
   "Throw an `ExceptionInfo` that contains information about an invalid API params in the expected format."
   [field-name message]
-  (throw (ex-info (str (tru "Invalid field: {0}" field-name))
+  (throw (ui18n/ex-info (tru "Invalid field: {0}" field-name)
            {:status-code 400
             :errors      {(keyword field-name) message}})))
 
@@ -234,7 +234,7 @@
 (defn throw-403
   "Throw a generic 403 (no permissions) error response."
   []
-  (throw (ex-info (str (tru "You don''t have permissions to do that.")) {:status-code 403})))
+  (throw (ui18n/ex-info (tru "You don''t have permissions to do that.") {:status-code 403})))
 
 ;; #### GENERIC 500 RESPONSE HELPERS
 ;; For when you don't feel like writing something useful

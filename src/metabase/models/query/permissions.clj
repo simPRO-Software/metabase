@@ -89,7 +89,7 @@
     (catch Throwable e
       (when throw-exceptions?
         (throw e))
-      (log/warn (str (tru "Error calculating permissions for query: {0}" (.getMessage e)))
+      (log/warn (tru "Error calculating permissions for query: {0}" (.getMessage e))
                 "\n"
                 (u/pprint-to-str (u/filtered-stacktrace e)))
       #{"/db/0/"})))                    ; DB 0 will never exist

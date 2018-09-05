@@ -147,7 +147,8 @@
           (db/simple-insert! Setting :key settings-last-updated-key, :value current-timestamp-as-string-honeysql)
           (catch java.sql.SQLException e
             ;; go ahead and log the Exception anyway on the off chance that it *wasn't* just a race condition issue
-            (log/error (str (tru "Error inserting a new Setting:")) (with-out-str (jdbc/print-sql-exception-chain e)))))))
+            (log/error (trs "Error inserting a new Setting: {0}"
+                            (with-out-str (jdbc/print-sql-exception-chain e))))))))
   ;; Now that we updated the value in the DB, go ahead and update our cached value as well, because we know about the
   ;; changes
   (swap! cache assoc settings-last-updated-key (db/select-one-field :value Setting :key settings-last-updated-key)))
@@ -336,7 +337,7 @@
   "Update an existing Setting. Used internally by `set-string!` below; do not use directly."
   [setting-name new-value]
   (assert (not= setting-name settings-last-updated-key)
-    (str (tru "You cannot update `settings-last-updated` yourself! This is done automatically.")))
+    (tru "You cannot update `settings-last-updated` yourself! This is done automatically."))
   ;; This is indeed a very annoying way of having to do things, but `update-where!` doesn't call `pre-update` (in case
   ;; it updates thousands of objects). So we need to manually trigger `pre-update` behavior by calling `do-pre-update`
   ;; so that `value` can get encrypted if `MB_ENCRYPTION_SECRET_KEY` is in use. Then take that possibly-encrypted
