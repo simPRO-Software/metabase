@@ -75,13 +75,13 @@
 
 (def ^:private SettingDefinition
   {:name        s/Keyword
-   :description (s/cond-pre s/Str ui18n/LocalizedString) ; used for docstring and is user-facing in the admin panel
+   :description s/Any            ; description is validated via the macro, not schema
    :default     s/Any
-   :type        Type                                     ; all values are stored in DB as Strings,
-   :getter      clojure.lang.IFn                         ; different getters/setters take care of parsing/unparsing
+   :type        Type             ; all values are stored in DB as Strings,
+   :getter      clojure.lang.IFn ; different getters/setters take care of parsing/unparsing
    :setter      clojure.lang.IFn
-   :tag         (s/maybe Class)                          ; type annotation, e.g. ^String, to be applied. Defaults to tag based on :type
-   :internal?   s/Bool                                   ; should the API never return this setting? (default: false)
+   :tag         (s/maybe Class)  ; type annotation, e.g. ^String, to be applied. Defaults to tag based on :type
+   :internal?   s/Bool           ; should the API never return this setting? (default: false)
    :cache?      s/Bool})         ; should the getter always fetch this value "fresh" from the DB? (default: false)
 
 
@@ -460,12 +460,9 @@
   "Register a new Setting with a map of `SettingDefinition` attributes.
    This is used internally be `defsetting`; you shouldn't need to use it yourself."
   [{setting-name :name, setting-type :type, default :default, :as setting}]
-  (u/prog1 (let [setting-type         (s/validate Type (or setting-type :string))
-                 maybe-description-fn (:description setting)]
+  (u/prog1 (let [setting-type         (s/validate Type (or setting-type :string))]
              (merge {:name        setting-name
-                     :description (if (fn? maybe-description-fn)
-                                    (maybe-description-fn)
-                                    maybe-description-fn)
+                     :description nil
                      :type        setting-type
                      :default     default
                      :getter      (partial (default-getter-for-type setting-type) setting-name)
@@ -473,7 +470,7 @@
                      :tag         (default-tag-for-type setting-type)
                      :internal?   false
                      :cache?      true}
-                    (dissoc setting :name :type :default :description)))
+                    (dissoc setting :name :type :default)))
     (s/validate SettingDefinition <>)
     (swap! registered-settings assoc setting-name <>)))
 
@@ -522,6 +519,33 @@
      ;; :refer-clojure :exclude doesn't seem to work in this case
      (metabase.models.setting/set! setting new-value))))
 
+(defn- expr-of-sym? [symbols expr]
+  (when-let [first-sym (and (coll? expr)
+                            (first expr))]
+    (some #(= first-sym %) symbols)))
+
+(defn- valid-trs-or-tru? [desc]
+  (expr-of-sym? ['trs 'tru `trs `tru] desc))
+
+(defn- valid-str-of-trs-or-tru? [maybe-str-expr]
+  (when (expr-of-sym? ['str `str] maybe-str-expr)
+    ;; When there are several i18n'd sentences, there will probably be a surrounding `str` invocation and a space in
+    ;; between the sentences, remove those to validate the i18n clauses
+    (let [exprs-without-strs (remove (every-pred string? str/blank?) (rest maybe-str-expr))]
+      ;; We should have at lease 1 i18n clause, so ensure `exprs-without-strs` is not empty
+      (and (seq exprs-without-strs)
+           (every? valid-trs-or-tru? exprs-without-strs)))))
+
+(defn- validate-description
+  "Validates the description expression `desc-expr`, ensuring it contains an i18n form, or a string consisting of 1 or more i18n forms"
+  [desc]
+  (when-not (or (valid-trs-or-tru? desc)
+                (valid-str-of-trs-or-tru? desc))
+    (throw (IllegalArgumentException.
+            (str (trs "defsetting descriptions strings must be `:internal?` or internationalized, found: `{0}`"
+                      (pr-str desc))))))
+  desc)
+
 (defmacro defsetting
   "Defines a new Setting that will be added to the DB at some point in the future.
    Conveniently can be used as a getter/setter as well:
@@ -553,9 +577,12 @@
   {:style/indent 1}
   [setting-symb description & {:as options}]
   {:pre [(symbol? setting-symb)]}
-  `(let [setting# (register-setting! (assoc ~options
+  `(let [desc# ~(if (:internal? options)
+                  description
+                  (validate-description description))
+         setting# (register-setting! (assoc ~options
                                        :name ~(keyword setting-symb)
-                                       :description (fn [] (eval '~description))))]
+                                       :description desc#))]
      (-> (def ~setting-symb (setting-fn setting#))
          (alter-meta! merge (metadata-for-setting-fn setting#)))))
 

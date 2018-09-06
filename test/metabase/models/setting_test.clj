@@ -20,18 +20,22 @@
 ;; these tests will fail. FIXME
 
 (defsetting test-setting-1
-  "Test setting - this only shows up in dev (1)")
+  "Test setting - this only shows up in dev (1)"
+  :internal? true)
 
 (defsetting test-setting-2
   "Test setting - this only shows up in dev (2)"
+  :internal? true
   :default "[Default Value]")
 
 (defsetting ^:private test-boolean-setting
   "Test setting - this only shows up in dev (3)"
+  :internal? true
   :type :boolean)
 
 (defsetting ^:private test-json-setting
   "Test setting - this only shows up in dev (4)"
+  :internal? true
   :type :json)
 
 ;; ## HELPER FUNCTIONS
@@ -288,7 +292,8 @@
 ;; (#4178)
 
 (setting/defsetting ^:private toucan-name
-  "Name for the Metabase Toucan mascot.")
+  "Name for the Metabase Toucan mascot."
+  :internal? true)
 
 (expect
   "Banana Beak"
@@ -342,6 +347,7 @@
 
 (defsetting ^:private test-timestamp-setting
   "Test timestamp setting"
+  :internal? true
   :type :timestamp)
 
 (expect
@@ -482,6 +488,7 @@
 
 (defsetting ^:private uncached-setting
   "A test setting that should *not* be cached."
+  :internal? true
   :cache? false)
 
 ;; make sure uncached setting still saves to the DB
