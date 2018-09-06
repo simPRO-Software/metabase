@@ -165,7 +165,8 @@
 (defn- default-dimension-options []
   (->> #'table-api/dimension-options-for-response
        var-get
-       walk/keywordize-keys))
+       walk/keywordize-keys
+       (m/map-vals #(update % :name str))))
 
 (defn- query-metadata-defaults []
   (-> (table-defaults)

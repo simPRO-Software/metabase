@@ -16,7 +16,7 @@
   [locale]
   (Locale/setDefault (Locale/forLanguageTag locale)))
 
-(defrecord UserLocalizedString [ns-str msg args]
+(deftype UserLocalizedString [ns-str msg args]
   java.lang.Object
   (toString [_]
     (apply i18n/translate ns-str (i18n/user-locale) msg args))
@@ -27,7 +27,7 @@
   (to-json [this json-generator]
     (json-gen/to-json (str this) json-generator)))
 
-(defrecord SystemLocalizedString [ns-str msg args]
+(deftype SystemLocalizedString [ns-str msg args]
   java.lang.Object
   (toString [_]
     (apply i18n/translate ns-str (i18n/system-locale) msg args))
