@@ -16,27 +16,31 @@
   [locale]
   (Locale/setDefault (Locale/forLanguageTag locale)))
 
-(deftype UserLocalizedString [ns-str msg args]
+(defrecord UserLocalizedString [ns-str msg args]
   java.lang.Object
   (toString [_]
     (apply i18n/translate ns-str (i18n/user-locale) msg args))
   schema.core.Schema
   (explain [this]
-    (str this))
-  json-gen/JSONable
-  (to-json [this json-generator]
-    (json-gen/to-json (str this) json-generator)))
+    (str this)))
 
-(deftype SystemLocalizedString [ns-str msg args]
+(defrecord SystemLocalizedString [ns-str msg args]
   java.lang.Object
   (toString [_]
     (apply i18n/translate ns-str (i18n/system-locale) msg args))
   s/Schema
   (explain [this]
-    (str this))
-  json-gen/JSONable
-  (to-json [this json-generator]
-    (json-gen/to-json (str this) json-generator)))
+    (str this)))
+
+(defn- localized-to-json
+  "Write a UserLocalizedString or SystemLocalizedString to the `json-generator`. This is intended for
+  `json-gen/add-encoder`. Ideallys we'd implement those protocols directly as it's faster, but currently that doesn't
+  work with Cheshire"
+  [localized-string json-generator]
+  (json-gen/write-string json-generator (str localized-string)))
+
+(json-gen/add-encoder UserLocalizedString localized-to-json)
+(json-gen/add-encoder SystemLocalizedString localized-to-json)
 
 (def LocalizedString
   "Schema for user and system localized string instances"
