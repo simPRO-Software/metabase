@@ -157,28 +157,12 @@ export default class Navbar extends Component {
               <LogoIcon dark={true} />
             </Link>
           </li>
-          <li className="md-pl3 hide xs-show">
-            <MainNavLink
-              to="/dashboards"
-              name={t`Dashboards`}
-              eventName="Dashboards"
-              icon="dashboard"
-            />
-          </li>
           <li className="md-pl1 hide xs-show">
             <MainNavLink
               to="/questions"
               name={t`Questions`}
               eventName="Questions"
               icon="all"
-            />
-          </li>
-          <li className="md-pl1 hide xs-show">
-            <MainNavLink
-              to="/pulse"
-              name={t`Pulses`}
-              eventName="Pulses"
-              icon="pulse"
             />
           </li>
           <li className="md-pl1 hide xs-show">
