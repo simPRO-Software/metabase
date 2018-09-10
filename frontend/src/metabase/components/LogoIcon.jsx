@@ -4,7 +4,7 @@ import cx from "classnames";
 
 export default class LogoIcon extends Component {
   static defaultProps = {
-    size: 128,
+    size: 64,
   };
 
   static propTypes = {
@@ -19,6 +19,7 @@ export default class LogoIcon extends Component {
     return (
       <svg
         className={cx("Icon", { "text-brand": !dark }, { "text-white": dark })}
+        viewBox="0 0 32 32"
         width={width || size}
         height={height || size}
         fill="currentcolor"

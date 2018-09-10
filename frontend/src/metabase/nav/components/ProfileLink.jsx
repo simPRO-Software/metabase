@@ -93,7 +93,7 @@ export default class ProfileLink extends Component {
           <OnClickOutsideWrapper handleDismissal={this.closeDropdown}>
             <div className="NavDropdown-content right">
               <ul className="NavDropdown-content-layer">
-                {!user.google_auth && !user.ldap_auth ? (
+                {!user.google_auth && !user.ldap_auth && user.is_superuser ? (
                   <li>
                     <Link
                       to="/user/edit_current"
@@ -160,7 +160,7 @@ export default class ProfileLink extends Component {
                     </a>
                   </li>
                 )}
-
+                {user.is_superuser && (
                 <li>
                   <a
                     data-metabase-event={"Navbar;Profile Dropdown;About " + tag}
@@ -170,7 +170,7 @@ export default class ProfileLink extends Component {
                     {t`About Metabase`}
                   </a>
                 </li>
-
+                )}
                 <li className="border-top border-light">
                   <Link
                     to="/auth/logout"
