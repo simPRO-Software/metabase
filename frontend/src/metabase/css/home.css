@@ -10,6 +10,10 @@
   justify-content: center;
 }
 
+.NavLogo {
+  background-color: inherit !important;
+}
+
 .NavItem > .Icon {
   padding-left: 1em;
   padding-right: 1em;

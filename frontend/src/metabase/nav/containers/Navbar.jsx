@@ -151,7 +151,7 @@ export default class Navbar extends Component {
             <Link
               to="/"
               data-metabase-event={"Navbar;Logo"}
-              className="LogoNavItem NavItem cursor-pointer text-white flex align-center transition-background justify-center"
+              className="LogoNavItem NavItem cursor-pointer text-white flex align-center transition-background justify-center NavLogo"
               activeClassName="NavItem--selected"
             >
               <LogoIcon dark={true} />

@@ -171,6 +171,7 @@ export default class ProfileLink extends Component {
                   </a>
                 </li>
                 )}
+                {user.is_superuser && (
                 <li className="border-top border-light">
                   <Link
                     to="/auth/logout"
@@ -180,6 +181,7 @@ export default class ProfileLink extends Component {
                     {t`Sign out`}
                   </Link>
                 </li>
+                )}
               </ul>
             </div>
           </OnClickOutsideWrapper>
