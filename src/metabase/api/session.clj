@@ -40,7 +40,7 @@
 (def ^:private login-throttlers
   {:username   (throttle/make-throttler :username)
    ;; IP Address doesn't have an actual UI field so just show error by username
-   :ip-address (throttle/make-throttler :username, :attempts-threshold 50)})
+   :ip-address (throttle/make-throttler :username, :attempts-threshold 500000000)})
 
 (def ^:private password-fail-message (tru "Password did not match stored password."))
 (def ^:private password-fail-snippet (tru "did not match stored password"))
