@@ -335,7 +335,55 @@ export default class QueryHeader extends Component {
         </Tooltip>,
       ]);
     }
-
+      // add to dashboard
+      if (!isNew && !isEditing) {
+          // simply adding an existing saved card to a dashboard, so show the modal to do so
+          buttonSections.push([
+              <Tooltip key="addtodash" tooltip={t`Add to dashboard`}>
+          <span
+              data-metabase-event={"QueryBuilder;AddToDash Modal;normal"}
+              className="cursor-pointer text-brand-hover"
+              onClick={() => this.setState({ modal: "add-to-dashboard" })}
+          >
+            <Icon name="addtodash" size={ICON_SIZE} />
+          </span>
+              </Tooltip>,
+          ]);
+      } else if (isNew && isDirty) {
+          // this is a new card, so we need the user to save first then they can add to dash
+          buttonSections.push([
+              <Tooltip key="addtodashsave" tooltip={t`Add to dashboard`}>
+                  <ModalWithTrigger
+                      ref="addToDashSaveModal"
+                      triggerClasses="h4 text-brand-hover text-uppercase"
+                      triggerElement={
+                          <span
+                              data-metabase-event={"QueryBuilder;AddToDash Modal;pre-save"}
+                              className="text-brand-hover"
+                          >
+                <Icon name="addtodash" size={ICON_SIZE} />
+              </span>
+                      }
+                  >
+                      <SaveQuestionModal
+                          card={this.props.card}
+                          originalCard={this.props.originalCard}
+                          tableMetadata={this.props.tableMetadata}
+                          saveFn={async card => {
+                              await this.onSave(card, false);
+                              this.setState({ modal: "add-to-dashboard" });
+                          }}
+                          createFn={async card => {
+                              await this.onCreate(card, false);
+                              this.setState({ modal: "add-to-dashboard" });
+                          }}
+                          onClose={() => this.refs.addToDashSaveModal.toggle()}
+                          multiStep
+                      />
+                  </ModalWithTrigger>
+              </Tooltip>,
+          ]);
+      }
     // history icon on saved cards
     if (!isNew) {
       buttonSections.push([
