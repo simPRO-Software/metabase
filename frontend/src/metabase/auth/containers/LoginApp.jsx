@@ -113,6 +113,7 @@ export default class LoginApp extends Component {
 
     return (
       <div className="full-height full bg-white flex flex-column flex-full md-layout-centered">
+          <div style={{ marginBottom: '40px', color: '#6a6a6a', fontWeight: '700', fontSize: '1.50em'}}>Please sign in to Report Builder from simPRO</div>
         <div className="Login-wrapper wrapper Grid Grid--full md-Grid--1of2 relative z2">
           <div className="Grid-cell flex layout-centered text-brand">
             <LogoIcon className="Logo my4 sm-my0" width={66} height={85} />
@@ -123,7 +124,7 @@ export default class LoginApp extends Component {
               name="form"
               onSubmit={e => this.formSubmitted(e)}
             >
-              <h3 className="Login-header Form-offset">{t`Sign in to Metabase`}</h3>
+              <h3 className="Login-header Form-offset">{t`Administrator login`}</h3>
 
               {Settings.ssoEnabled() && (
                 <div className="mx4 mb4 py3 border-bottom relative">
