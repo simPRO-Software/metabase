@@ -92,4 +92,4 @@
   "A formatted version string including the word 'Metabase' appropriate for passing along
    with database connections so admins can identify them as Metabase ones.
    Looks something like `Metabase v0.25.0.RC1`."
-  (str "Metabase " (mb-version-info :tag)))
+  (str "Report Builder " (mb-version-info :tag)))

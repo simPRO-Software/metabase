@@ -71,7 +71,7 @@
 (defn ^:command version
   "Print version information about Metabase and the current system."
   []
-  (println "Metabase version:" config/mb-version-info)
+  (println "Report Builder version:" config/mb-version-info)
   (println "\nOS:"
            (System/getProperty "os.name")
            (System/getProperty "os.version")

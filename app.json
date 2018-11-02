@@ -1,6 +1,6 @@
 {
-  "name": "Metabase",
-  "description": "Metabase report server",
+  "name": "Report Builder",
+  "description": "Report Builder server",
   "keywords": [
     "business intelligence",
     "analytics",

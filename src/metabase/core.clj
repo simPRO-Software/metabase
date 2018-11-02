@@ -126,9 +126,9 @@
 (defn- destroy!
   "General application shutdown function which should be called once at application shuddown."
   []
-  (log/info "Metabase Shutting Down ...")
+  (log/info "Report Builder Shutting Down ...")
   (task/stop-scheduler!)
-  (log/info "Metabase Shutdown COMPLETE"))
+  (log/info "Report Builder Shutdown COMPLETE"))
 
 (defn init!
   "General application initialization function which should be run once at application startup."
@@ -187,7 +187,7 @@
   (set-locale (setting/get :site-locale))
 
   (init-status/set-complete!)
-  (log/info "Metabase Initialization COMPLETE"))
+  (log/info "Report Builder Initialization COMPLETE"))
 
 
 ;;; ## ---------------------------------------- Jetty (Web) Server ----------------------------------------
@@ -249,7 +249,7 @@
 ;;; ## ---------------------------------------- Normal Start ----------------------------------------
 
 (defn- start-normally []
-  (log/info "Starting Metabase in STANDALONE mode")
+  (log/info "Starting Report Builder in STANDALONE mode")
   (try
     (check-jdk-version)
     ;; launch embedded webserver async
@@ -261,7 +261,7 @@
       (.join ^Server @jetty-instance))
     (catch Throwable e
       (.printStackTrace e)
-      (log/error "Metabase Initialization FAILED: " (.getMessage e))
+      (log/error "Report Builder Initialization FAILED: " (.getMessage e))
       (System/exit 1))))
 
 (defn- run-cmd [cmd args]
