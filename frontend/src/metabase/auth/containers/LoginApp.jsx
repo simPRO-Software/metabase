@@ -34,7 +34,9 @@ export default class LoginApp extends Component {
     this.state = {
       credentials: {},
       valid: false,
+      hidden: true
     };
+    this.displayLogin = this.displayLogin.bind(this);
   }
 
   validateForm() {
@@ -106,7 +108,9 @@ export default class LoginApp extends Component {
 
     login(credentials, location.query.redirect);
   }
-
+  displayLogin(e) {
+    this.setState({hidden : false});
+  }
   render() {
     const { loginError } = this.props;
     const ldapEnabled = Settings.ldapEnabled();
@@ -114,7 +118,7 @@ export default class LoginApp extends Component {
     return (
       <div className="full-height full bg-white flex flex-column flex-full md-layout-centered">
           <div style={{ marginBottom: '40px', color: '#6a6a6a', fontWeight: '700', fontSize: '1.50em'}}>Please sign in to Report Builder from simPRO</div>
-        <div className="Login-wrapper wrapper Grid Grid--full md-Grid--1of2 relative z2">
+        <div className={this.state.hidden ? 'Login-hide Login-wrapper wrapper Grid Grid--full md-Grid--1of2 relative z2' : 'Login-wrapper wrapper Grid Grid--full md-Grid--1of2 relative z2'}>
           <div className="Grid-cell flex layout-centered text-brand">
             <LogoIcon className="Logo my4 sm-my0" width={66} height={85} />
           </div>
@@ -231,6 +235,7 @@ export default class LoginApp extends Component {
           </div>
         </div>
         <AuthScene />
+        <div onClick={this.displayLogin} style={{ textAlign: 'center', cursor: 'pointer'}}>Admin Login</div>
       </div>
     );
   }
