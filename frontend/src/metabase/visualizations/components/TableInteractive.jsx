@@ -454,10 +454,9 @@ export default class TableInteractive extends Component {
                 left: 0,
                 right: 0,
                 height: HEADER_HEIGHT,
-                position: "absolute",
-                overflow: "hidden",
+                position: "absolute"
               }}
-              className="TableInteractive-header scroll-hide-all"
+              className="TableInteractive-header scroll-hide-all overflow-hidden"
               width={width || 0}
               height={HEADER_HEIGHT}
               rowCount={1}
