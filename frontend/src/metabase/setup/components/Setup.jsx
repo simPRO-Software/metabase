@@ -46,7 +46,7 @@ export default class Setup extends Component {
         <a
           className="link"
           href={
-            "http://www.metabase.com/docs/" + tag + "/setting-up-metabase.html"
+            "http://helpguide.simprogroup.com/"
           }
           target="_blank"
         >{t`our getting started guide`}</a>{" "}

@@ -77,9 +77,7 @@ export default class PreferencesStep extends Component {
               <a
                 className="link"
                 href={
-                  "http://www.metabase.com/docs/" +
-                  tag +
-                  "/information-collection.html"
+                  "http://helpguide.simprogroup.com/"
                 }
                 target="_blank"
               >{t`Here's a full list of everything we track and why.`}</a>

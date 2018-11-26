@@ -140,7 +140,7 @@ export default class ProfileLink extends Component {
                   <a
                     data-metabase-event={"Navbar;Profile Dropdown;Help " + tag}
                     className="Dropdown-item block text-white no-decoration"
-                    href={"http://www.metabase.com/docs/" + tag}
+                    href={"http://helpguide.simprogroup.com/"}
                     target="_blank"
                   >
                     {t`Help`}

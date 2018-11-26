@@ -173,14 +173,7 @@ export default class Navbar extends Component {
               icon="all"
             />
           </li>
-          <li className="md-pl1 hide xs-show">
-            <MainNavLink
-              to="/reference/guide"
-              name={t`Data Reference`}
-              eventName="DataReference"
-              icon="reference"
-            />
-          </li>
+
           <li className="md-pl3 hide sm-show">
             <Link
               to={Urls.newQuestion()}

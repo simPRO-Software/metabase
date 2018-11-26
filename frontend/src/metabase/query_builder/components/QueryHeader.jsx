@@ -439,17 +439,6 @@ export default class QueryHeader extends Component {
       "text-brand": this.props.isShowingDataReference,
       "text-brand-hover": !this.state.isShowingDataReference,
     });
-    buttonSections.push([
-      <Tooltip key="dataReference" tooltip={t`Learn about your data`}>
-        <a className={dataReferenceButtonClasses}>
-          <Icon
-            name="reference"
-            size={ICON_SIZE}
-            onClick={this.onToggleDataReference}
-          />
-        </a>
-      </Tooltip>,
-    ]);
 
     return (
       <ButtonBar

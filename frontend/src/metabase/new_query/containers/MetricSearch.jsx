@@ -90,7 +90,7 @@ export default class MetricSearch extends Component {
                   }
                   image="/app/img/metrics_illustration"
                   action={t`How to create metrics`}
-                  link="http://www.metabase.com/docs/latest/administration-guide/07-segments-and-metrics.html"
+                  link="http://helpguide.simprogroup.com/"
                   className="mt2"
                   imageClassName="mln2"
                 />
