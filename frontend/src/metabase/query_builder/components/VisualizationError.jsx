@@ -41,7 +41,7 @@ class VisualizationError extends Component {
           <ErrorMessage
             type="timeout"
             title={t`Your question took too long`}
-            message={t`We didn't get an answer back from your database in time, so we had to stop. You can try again in a minute, or if the problem persists, you can contact support to let them know.`}
+            message={t`We didn't get an answer back from your database in time, so we had to stop. You can try again in a minute, or if the problem persists, you can contact Support to let them know.`}
             action={<EmailAdmin />}
           />
         );
