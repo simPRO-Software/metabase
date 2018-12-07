@@ -20,17 +20,6 @@ export default class NotFound extends Component {
             <Link to={Urls.question()} className="Button Button--primary">
               <div className="p1">{t`Ask a new question.`}</div>
             </Link>
-            <span className="mx2">{t`or`}</span>
-            <a
-              className="Button Button--withIcon"
-              target="_blank"
-              href="https://giphy.com/tv/search/kitten"
-            >
-              <div className="p1 flex align-center relative">
-                <span className="h2">😸</span>
-                <span className="ml1">{t`Take a kitten break.`}</span>
-              </div>
-            </a>
           </div>
         </div>
       </div>
