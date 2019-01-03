@@ -237,14 +237,11 @@ export default class DatabaseDetailsForm extends Component {
             <div className="Grid-cell--top">
               <Toggle
                 value={on}
-                onChange={val =>
-                  this.onChange("use-jvm-timezone", val)
-                }
+                onChange={val => this.onChange("use-jvm-timezone", val)}
               />
             </div>
             <div className="px2">
-              <h3
-              >{t`Use the Java Virtual Machine (JVM) timezone`}</h3>
+              <h3>{t`Use the Java Virtual Machine (JVM) timezone`}</h3>
               <div style={{ maxWidth: "40rem" }} className="pt1">
                 {t`We suggest you leave this off unless you're doing manual timezone casting in
                                 many or most of your queries with this data.`}
@@ -290,7 +287,7 @@ export default class DatabaseDetailsForm extends Component {
         <div className="flex align-center Form-offset">
           <div className="Grid-cell--top">
             {jt`${(
-              <a href={credentialsURL} target="_blank">
+              <a className="link" href={credentialsURL} target="_blank">
                 {t`Click here`}
               </a>
             )} to generate a Client ID and Client Secret for your project.`}
@@ -317,7 +314,7 @@ export default class DatabaseDetailsForm extends Component {
           <div className="flex align-center Form-offset">
             <div className="Grid-cell--top">
               {jt`${(
-                <a href={authURL} target="_blank">
+                <a className="link" href={authURL} target="_blank">
                   {t`Click here`}
                 </a>
               )} to get an auth code`}
