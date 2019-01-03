@@ -29,6 +29,10 @@
   "Int ID or `nil` of user associated with current API call."
   nil)
 
+(def ^:dynamic ^Integer *current-user-group*
+  "Int ID or `nil` of user group associated with current API call."
+  nil)
+
 (def ^:dynamic *current-user*
   "Delay that returns the `User` (or nil) associated with the current API call.
    ex. `@*current-user*`"

@@ -16,14 +16,16 @@
              [dashboard-favorite :refer [DashboardFavorite]]
              [interface :as mi]
              [query :as query :refer [Query]]
-             [revision :as revision]]
+             [revision :as revision]
+             [permissions-group-membership :refer [PermissionsGroupMembership]]]
             [metabase.query-processor.util :as qp-util]
             [metabase.related :as related]
             [metabase.util.schema :as su]
             [schema.core :as s]
             [toucan
              [db :as db]
-             [hydrate :refer [hydrate]]])
+             [hydrate :refer [hydrate]]
+             [models :as models]])
   (:import java.util.UUID))
 
 (defn- hydrate-favorites
@@ -38,11 +40,17 @@
         :favorite (contains? favorite-dashboard-ids (u/get-id dashboard))))))
 
 (defn- dashboards-list [filter-option]
-  (as-> (db/select Dashboard {:where    [:and (case (or (keyword filter-option) :all)
-                                                (:all :archived)  true
-                                                :mine [:= :creator_id api/*current-user-id*])
-                                              [:= :archived (= (keyword filter-option) :archived)]]
-                              :order-by [:%lower.name]}) <>
+  (as-> (map #(models/do-post-select Dashboard %)
+             (db/query
+                     {:select [:d.*]
+                      :from   [[Dashboard :d]]
+                      :join [[PermissionsGroupMembership :pgm] [:and [:= :pgm.user_id :d.creator_id] [:not= :pgm.group_id 1]]]
+                      :where    [:and (case (or (keyword filter-option) :all)
+                                            (:all :archived)  true
+                                            :mine [:= :creator_id api/*current-user-id*])
+                                 [:= :archived (= (keyword filter-option) :archived)]
+                                 [:= :pgm.group_id api/*current-user-group*]]
+                      :order-by [:%lower.name]})) <>
     (hydrate <> :creator)
     (filter mi/can-read? <>)
     (hydrate-favorites <>)))
