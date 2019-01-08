@@ -20,7 +20,7 @@ const Greeting = {
     const randomIndex = Math.floor(
       Math.random() * (greetingPrefixes.length - 1),
     );
-    return greetingPrefixes[randomIndex];
+    return '';
   },
 
   sayHello: function(personalization) {

@@ -76,14 +76,6 @@ class Overworld extends React.Component {
     const { user, xraysEnabled } = this.props;
     return (
       <Box>
-        <Flex px={PAGE_PADDING} pt={3} pb={1} align="center">
-          <Tooltip tooltip={t`Don't tell anyone, but you're my favorite.`}>
-            <MetabotLogo />
-          </Tooltip>
-          <Box ml={2}>
-            <Subhead>{Greeting.sayHello(user.first_name)}</Subhead>
-          </Box>
-        </Flex>
         <CollectionItemsLoader collectionId="root">
           {({ items }) => {
             let pinnedDashboards = items.filter(
