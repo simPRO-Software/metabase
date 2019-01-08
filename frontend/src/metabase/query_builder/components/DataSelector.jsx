@@ -821,7 +821,7 @@ export const TablePicker = ({
           <div className="bg-light p2 text-centered border-top">
             {t`Is a question missing?`}
             <a
-              href="http://metabase.com/docs/latest/users-guide/04-asking-questions.html#source-data"
+              href="http://helpguide.simprogroup.com/Content/Service-and-Enterprise/Report-builder.htm"
               className="block link"
             >{t`Learn more about nested queries`}</a>
           </div>

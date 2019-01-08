@@ -23,12 +23,7 @@ export const FILTERS = [
     name: t`Questions`,
     filter: "card",
     icon: "beaker",
-  },
-  {
-    name: t`Pulses`,
-    filter: "pulse",
-    icon: "pulse",
-  },
+  }
 ];
 
 const ItemTypeFilterBar = props => {

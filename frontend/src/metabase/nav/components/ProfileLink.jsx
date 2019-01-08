@@ -70,7 +70,7 @@ export default class ProfileLink extends Component {
         icon: null,
         // HACK - for some reason if you use // react router treats the link
         // as a non local route
-        link: `//metabase.com/docs/${tag}`,
+        link: `//helpguide.simprogroup.com/Content/Service-and-Enterprise/Report-builder.htm`,
         externalLink: true,
         event: `Navbar;Profile Dropdown;About ${tag}`,
       },

@@ -171,54 +171,6 @@ class Overworld extends React.Component {
             </Link>
           </Box>
         </Box>
-
-        <DatabaseListLoader>
-          {({ databases }) => {
-            if (databases.length === 0) {
-              return null;
-            }
-            return (
-              <Box pt={2} px={PAGE_PADDING}>
-                <SectionHeading>{t`Our data`}</SectionHeading>
-                <Box mb={4}>
-                  <Grid>
-                    {databases.map(database => (
-                      <GridItem w={[1, 1 / 3]} key={database.id}>
-                        <Link
-                          to={`browse/${database.id}`}
-                          hover={{ color: normal.blue }}
-                          data-metabase-event={`Homepage;Browse DB Clicked; DB Type ${
-                            database.engine
-                          }`}
-                        >
-                          <Box
-                            p={3}
-                            bg={colors["bg-medium"]}
-                            className="hover-parent hover--visibility"
-                          >
-                            <Icon
-                              name="database"
-                              color={normal.purple}
-                              mb={3}
-                              size={28}
-                            />
-                            <Flex align="center">
-                              <h3>{database.name}</h3>
-                              <Box ml="auto" mr={1} className="hover-child">
-                                <Flex align="center">
-                                </Flex>
-                              </Box>
-                            </Flex>
-                          </Box>
-                        </Link>
-                      </GridItem>
-                    ))}
-                  </Grid>
-                </Box>
-              </Box>
-            );
-          }}
-        </DatabaseListLoader>
       </Box>
     );
   }
@@ -278,7 +230,6 @@ export class AdminPinMessage extends React.Component {
 const SectionHeading = ({ children }) => (
   <Box mb={1}>
     <h5
-      className="text-uppercase"
       style={{ color: colors["text-medium"], fontWeight: 900 }}
     >
       {children}
