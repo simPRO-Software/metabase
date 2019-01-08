@@ -229,11 +229,11 @@ export class AdminPinMessage extends React.Component {
 
 const SectionHeading = ({ children }) => (
   <Box mb={1}>
-    <h5
-      style={{ color: colors["text-medium"], fontWeight: 900 }}
+    <h1
+      style={{ fontWeight: 900 }}
     >
       {children}
-    </h5>
+    </h1>
   </Box>
 );
 
