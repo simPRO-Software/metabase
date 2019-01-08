@@ -194,6 +194,7 @@
                                           "https://apis.google.com"
                                           "https://www.google-analytics.com" ; Safari requires the protocol
                                           "https://*.googleapis.com"
+                                          "https://www.googletagmanager.com"
                                           "*.gstatic.com"
                                           (when config/is-dev?
                                             "localhost:8080")]

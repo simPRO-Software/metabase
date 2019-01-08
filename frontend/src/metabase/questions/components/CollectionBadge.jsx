@@ -25,9 +25,9 @@ class CollectionBadge extends React.Component {
       >
         <Flex align="center">
           <Icon name={object.getIcon()} mr={1} />
-          <h5 className="text-uppercase" style={{ fontWeight: 900 }}>
+          <h4 style={{ fontWeight: 900 }}>
             {object.name}
-          </h5>
+          </h4>
         </Flex>
       </Link>
     );

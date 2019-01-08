@@ -39,10 +39,6 @@
 
 ;;; ## API Endpoints
 
-(def ^:private login-throttlers
-  {:username   (throttle/make-throttler :username)
-   ;; IP Address doesn't have an actual UI field so just show error by username
-   :ip-address (throttle/make-throttler :username, :attempts-threshold 50)})
 
 (def ^:private password-fail-message (tru "Password did not match stored password."))
 (def ^:private password-fail-snippet (tru "did not match stored password"))
@@ -87,8 +83,6 @@
   [:as {{:keys [username password]} :body, remote-address :remote-addr}]
   {username su/NonBlankString
    password su/NonBlankString}
-  (throttle-check (login-throttlers :ip-address) remote-address)
-  (throttle-check (login-throttlers :username)   username)
   ;; Primitive "strategy implementation", should be reworked for modular providers in #3210
   (or (ldap-login username password)  ; First try LDAP if it's enabled
       (email-login username password) ; Then try local authentication
@@ -242,7 +236,6 @@
   "Login with Google Auth."
   [:as {{:keys [token]} :body, remote-address :remote-addr}]
   {token su/NonBlankString}
-  (throttle-check (login-throttlers :ip-address) remote-address)
   ;; Verify the token is valid with Google
   (let [{:keys [given_name family_name email]} (google-auth-token-info token)]
     (log/info (trs "Successfully authenticated Google Auth token for: {0} {1}" given_name family_name))

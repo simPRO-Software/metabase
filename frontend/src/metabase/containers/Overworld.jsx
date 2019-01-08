@@ -90,40 +90,6 @@ class Overworld extends React.Component {
               d => d.model === "dashboard" && d.collection_position != null,
             );
 
-            if (xraysEnabled && !pinnedDashboards.length > 0) {
-              return (
-                <CandidateListLoader>
-                  {({ candidates, sampleCandidates, isSample }) => {
-                    // if there are no items to show then just hide the section
-                    if (!candidates && !sampleCandidates) {
-                      return null;
-                    }
-                    return (
-                      <Box mx={PAGE_PADDING} mt={[1, 3]}>
-                        {user.is_superuser && <AdminPinMessage />}
-                        <Box mt={[1, 3]}>
-                          <Flex align="center">
-                            <SectionHeading>
-                              {t`Try these x-rays based on your data.`}
-                            </SectionHeading>
-                          </Flex>
-                          <Box>
-                            <ExplorePane
-                              candidates={candidates}
-                              withMetabot={false}
-                              title=""
-                              gridColumns={[1, 1 / 3]}
-                              asCards={true}
-                            />
-                          </Box>
-                        </Box>
-                      </Box>
-                    );
-                  }}
-                </CandidateListLoader>
-              );
-            }
-
             if (pinnedDashboards.length === 0) {
               return null;
             }
@@ -248,16 +214,6 @@ class Overworld extends React.Component {
                               <h3>{database.name}</h3>
                               <Box ml="auto" mr={1} className="hover-child">
                                 <Flex align="center">
-                                  <Tooltip tooltip={t`Learn about this table`}>
-                                    <Link
-                                      to={`reference/databases/${database.id}`}
-                                    >
-                                      <Icon
-                                        name="reference"
-                                        color={normal.grey1}
-                                      />
-                                    </Link>
-                                  </Tooltip>
                                 </Flex>
                               </Box>
                             </Flex>

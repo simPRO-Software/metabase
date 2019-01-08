@@ -33,7 +33,7 @@
   (html [:link {:rel   "alternate"
                 :type  "application/json+oembed"
                 :href  (oembed-url url)
-                :title "Metabase"}]))
+                :title "Report Builder"}]))
 
 (def ^:private ^:const ^String embedly-meta
   "A `<meta>` tag for `Embed.ly` support."

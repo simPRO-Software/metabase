@@ -68,6 +68,7 @@ const SearchWrapper = Flex.extend`
   align-items: center;
   color: white;
   transition: background 300ms ease-in;
+  margin-left: 20px;
   &:hover {
     background-color: ${ActiveSearchColor};
   }
@@ -192,7 +193,7 @@ export default class Navbar extends Component {
         <div className="sm-pl4 flex align-center pr1">
           <div className="NavTitle flex align-center">
             <Icon name={"gear"} className="AdminGear" size={22} />
-            <span className="NavItem-text ml1 hide sm-show text-bold">{t`Metabase Admin`}</span>
+            <span className="NavItem-text ml1 hide sm-show text-bold">{t`Report Builder Admin`}</span>
           </div>
 
           <ul className="sm-ml4 flex flex-full">
@@ -312,30 +313,8 @@ export default class Navbar extends Component {
                 action: () => this.setModal(MODAL_NEW_DASHBOARD),
                 event: `NavBar;New Dashboard Click;`,
               },
-              {
-                title: t`New pulse`,
-                icon: `pulse`,
-                link: Urls.newPulse(),
-                event: `NavBar;New Pulse Click;`,
-              },
             ]}
           />
-          {hasDataAccess && (
-            <Tooltip tooltip={t`Reference`}>
-              <Link to="reference" data-metabase-event={`NavBar;Reference`}>
-                <IconWrapper>
-                  <Icon name="reference" />
-                </IconWrapper>
-              </Link>
-            </Tooltip>
-          )}
-          <Tooltip tooltip={t`Activity`}>
-            <Link to="activity" data-metabase-event={`NavBar;Activity`}>
-              <IconWrapper>
-                <Icon name="bell" />
-              </IconWrapper>
-            </Link>
-          </Tooltip>
           <ProfileLink {...this.props} />
         </Flex>
         {this.renderModal()}

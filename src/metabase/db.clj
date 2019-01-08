@@ -333,20 +333,20 @@
   [{:keys [subprotocol subname classname minimum-pool-size idle-connection-test-period excess-timeout]
     :or   {minimum-pool-size           3
            idle-connection-test-period 0
-           excess-timeout              (* 30 60)}
+           excess-timeout              (* 3 60)}
     :as   spec}]
   {:datasource (doto (ComboPooledDataSource.)
                  (.setDriverClass                  classname)
                  (.setJdbcUrl                      (str "jdbc:" subprotocol ":" subname))
                  (.setMaxIdleTimeExcessConnections excess-timeout)
-                 (.setMaxIdleTime                  (* 3 60 60))
-                 (.setInitialPoolSize              3)
-                 (.setMinPoolSize                  minimum-pool-size)
+                 (.setMaxIdleTime                  (* 3 60))
+                 (.setInitialPoolSize              0)
+                 (.setMinPoolSize                  0)
                  (.setMaxPoolSize                  15)
-                 (.setIdleConnectionTestPeriod     idle-connection-test-period)
+                 (.setIdleConnectionTestPeriod     0)
                  (.setTestConnectionOnCheckin      false)
                  (.setTestConnectionOnCheckout     false)
-                 (.setPreferredTestQuery           nil)
+                 (.setPreferredTestQuery           "SELECT 1")
                  (.setProperties                   (u/prog1 (Properties.)
                                                      (doseq [[k v] (dissoc spec :classname :subprotocol :subname
                                                                                 :naming :delimiters :alias-delimiter
