@@ -8,13 +8,14 @@
              [public-settings :as public-settings]
              [util :as u]]
             [metabase.api.common :refer [*current-user* *current-user-id* *current-user-permissions-set*
-                                         *is-superuser?*]]
+                                         *is-superuser?* *current-user-group*]]
             [metabase.api.common.internal :refer [*automatically-catch-api-exceptions*]]
             [metabase.core.initialization-status :as init-status]
             [metabase.models
              [session :refer [Session]]
              [setting :refer [defsetting]]
-             [user :as user :refer [User]]]
+             [user :as user :refer [User]]
+             [permissions-group-membership :refer [PermissionsGroupMembership]]]
             monger.json
             [puppetlabs.i18n.core :refer [tru]]
             [toucan
@@ -122,11 +123,12 @@
   (vec (concat [User :is_active :google_auth :ldap_auth] (models/default-fields User))))
 
 (defn bind-current-user
-  "Middleware that binds `metabase.api.common/*current-user*`, `*current-user-id*`, `*is-superuser?*`, and
+  "Middleware that binds `metabase.api.common/*current-user*`, `*current-user-id*`, `*is-superuser?*`, `*current-user-group*`  and
   `*current-user-permissions-set*`.
 
   *  `*current-user-id*`             int ID or nil of user associated with request
   *  `*current-user*`                delay that returns current user (or nil) from DB
+  *  `*current-user-group*`                delay that returns current user group (or nil) from DB
   *  `*is-superuser?*`               Boolean stating whether current user is a superuser.
   *  `current-user-permissions-set*` delay that returns the set of permissions granted to the current user from DB"
   [handler]
@@ -135,10 +137,10 @@
       (binding [*current-user-id*              current-user-id
                 *is-superuser?*                (:is-superuser? request)
                 *current-user*                 (delay (db/select-one current-user-fields, :id current-user-id))
+                *current-user-group*           (db/select-one-field :group_id PermissionsGroupMembership :user_id current-user-id :group_id [:not= 1])
                 *current-user-permissions-set* (delay (user/permissions-set current-user-id))]
         (handler request))
       (handler request))))
-
 
 (defn wrap-api-key
   "Middleware that sets the `:metabase-api-key` keyword on the request if a valid API Key can be found. We check the
