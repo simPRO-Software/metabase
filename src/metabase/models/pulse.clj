@@ -198,7 +198,7 @@
    (retrieve-pulses nil))
   ([{:keys [archived?]
      :or   {archived? false}}]
-   (for [pulse (db/select Pulse, :alert_condition nil, :archived archived?, {:order-by [[:%lower.name :asc]]})]
+   (for [pulse (db/select Pulse,:simpro_removed false, :alert_condition nil, :archived archived?, {:order-by [[:%lower.name :asc]]})]
      (-> pulse
          hydrate-notification
          notification->pulse))))

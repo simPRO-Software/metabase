@@ -78,6 +78,7 @@
   (db/select [Pulse :id :name :collection_position]
     :collection_id   (:id collection)
     :archived        archived?
+    :simpro_removed false
     ;; exclude Alerts
     :alert_condition nil))
 

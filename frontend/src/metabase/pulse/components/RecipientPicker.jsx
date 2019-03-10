@@ -59,7 +59,6 @@ export default class RecipientPicker extends Component {
             ? users.map(user => ({ label: user.common_name, value: user }))
             : []
         }
-        onChange={this.handleOnChange}
         placeholder={
           recipients.length === 0
             ? t`Enter email addresses you'd like this data to go to`
@@ -76,13 +75,6 @@ export default class RecipientPicker extends Component {
             <span className="ml1 h4">{option.value.common_name}</span>
           </div>
         )}
-        filterOption={(option, filterString) =>
-          // case insensitive search of name or email
-          ~option.value.common_name
-            .toLowerCase()
-            .indexOf(filterString.toLowerCase()) ||
-          ~option.value.email.toLowerCase().indexOf(filterString.toLowerCase())
-        }
         parseFreeformValue={inputValue => {
           if (VALID_EMAIL_REGEX.test(inputValue)) {
             return { email: inputValue };

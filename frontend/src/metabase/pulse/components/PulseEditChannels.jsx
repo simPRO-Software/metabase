@@ -296,7 +296,6 @@ export default class PulseEditChannels extends Component {
     // Default to show the default channels until full formInput is loaded
     let channels = formInput.channels || {
       email: { name: t`Email`, type: "email" },
-      slack: { name: t`Slack`, type: "slack" },
     };
     return (
       <ul className="bordered rounded bg-white">
