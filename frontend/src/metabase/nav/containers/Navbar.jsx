@@ -263,7 +263,6 @@ export default class Navbar extends Component {
     const hasDataAccess =
         this.props.databases && this.props.databases.length > 0;
     const hasSQLPermission = db => db.native_permissions === "write";
-    console.log(this.props.databases);
     const showSQLOption =  this.props.databases &&
         this.props.databases.filter(hasSQLPermission).length > 0;
     const itemsNav = [

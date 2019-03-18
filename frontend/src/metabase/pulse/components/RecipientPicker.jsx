@@ -55,10 +55,9 @@ export default class RecipientPicker extends Component {
       <TokenField
         value={recipients}
         options={
-          users
-            ? users.map(user => ({ label: user.common_name, value: user }))
-            : []
+          []
         }
+        onChange={this.handleOnChange}
         placeholder={
           recipients.length === 0
             ? t`Enter email addresses you'd like this data to go to`
