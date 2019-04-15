@@ -212,6 +212,7 @@
                                           "https://s3.amazonaws.com"
                                           "https://d3sbxpiag177w8.cloudfront.net"
                                           "https://d2qhvajt3imc89.cloudfront.net"
+                                          "https://d3b3ehuo35wzeh.cloudfront.net"
                                           (when config/is-dev?
                                             "localhost:8080")]
                             :child-src   ["'self'"
@@ -231,6 +232,7 @@
                                           "https://s3.amazonaws.com"
                                           "https://d3sbxpiag177w8.cloudfront.net"
                                           "https://d2qhvajt3imc89.cloudfront.net"
+                                          "https://d3b3ehuo35wzeh.cloudfront.net"
                                           ;; TODO - double check that we actually need this for Google Auth
                                           "https://accounts.google.com"]
                             :style-src   ["'unsafe-inline'"
@@ -261,6 +263,7 @@
                                           "https://s3.amazonaws.com"
                                           "https://d3sbxpiag177w8.cloudfront.net"
                                           "https://d2qhvajt3imc89.cloudfront.net"
+                                          "https://d3b3ehuo35wzeh.cloudfront.net"
                                           (when config/is-dev?
                                             "localhost:8080 ws://localhost:8080")]}]
                 (format "%s %s; " (name k) (apply str (interpose " " vs)))))})
