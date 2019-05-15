@@ -64,6 +64,7 @@
   [_ collection {:keys [archived?]}]
   (-> (db/select [Card :id :name :description :collection_position :display]
         :collection_id (:id collection)
+        :simpro_removed false
         :archived      archived?)
       (hydrate :favorite)))
 
