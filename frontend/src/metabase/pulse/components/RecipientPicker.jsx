@@ -55,9 +55,7 @@ export default class RecipientPicker extends Component {
       <TokenField
         value={recipients}
         options={
-          users
-            ? users.map(user => ({ label: user.common_name, value: user }))
-            : []
+          []
         }
         onChange={this.handleOnChange}
         placeholder={
@@ -76,13 +74,6 @@ export default class RecipientPicker extends Component {
             <span className="ml1 h4">{option.value.common_name}</span>
           </div>
         )}
-        filterOption={(option, filterString) =>
-          // case insensitive search of name or email
-          ~option.value.common_name
-            .toLowerCase()
-            .indexOf(filterString.toLowerCase()) ||
-          ~option.value.email.toLowerCase().indexOf(filterString.toLowerCase())
-        }
         parseFreeformValue={inputValue => {
           if (VALID_EMAIL_REGEX.test(inputValue)) {
             return { email: inputValue };

@@ -145,14 +145,6 @@ const TagEditorHelp = ({ setDatasetQuery, sampleDatasetId }) => {
         datasetQuery={EXAMPLES.multipleOptional}
         setDatasetQuery={setQueryWithSampleDatasetId}
       />
-
-      <p className="pt2 link">
-        <a
-          href="https://www.metabase.com/docs/latest/users-guide/13-sql-parameters.html"
-          target="_blank"
-          data-metabase-event="QueryBuilder;Template Tag Documentation Click"
-        >{t`Read the full documentation`}</a>
-      </p>
     </div>
   );
 };
