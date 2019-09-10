@@ -22,4 +22,13 @@ pipeline {
       }
     }
   }
+  post {
+    success {
+      archiveArtifacts artifacts: 'target/uberjar/metabase.jar'
+      slackSend color: 'good', channel: '#jenkins-metabasepackage', message: "*SUCCESSED* - Packaged metabase.  Download jar file from Jenkins: <${env.BUILD_URL}|build ${env.BUILD_NUMBER}>"
+    }
+    failure {
+      slackSend color: 'danger', channel: '#jenkins-metabasepackage', message: "*FAILED* - Metabase build failed (<${env.BUILD_URL}|build ${env.BUILD_NUMBER}>) - <${env.BUILD_URL}console|click here to see the console output>"
+    }
+  }
 }
