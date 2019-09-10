@@ -2,6 +2,7 @@ pipeline {
   agent {
     docker {
       image 'metabasepackage'
+      args '-v /.npm:/.npm'
     }
   }
   stages {
