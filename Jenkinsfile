@@ -13,13 +13,6 @@ pipeline {
         }
       }
     }
-    stage("npm install") {
-      steps {
-        script {
-          sh 'npm install'
-        }
-      }
-    }
     stage("run build") {
       steps {
         sh './bin/build'
