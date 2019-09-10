@@ -15,7 +15,7 @@ pipeline {
     }
     stage("run build") {
       steps {
-        sh './bin/build'
+        sh './bin/build no-translations'
       }
     }
   }
