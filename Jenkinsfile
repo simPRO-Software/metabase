@@ -6,7 +6,7 @@ pipeline {
     }
   }
   environment {
-    BABEL_CACHE_PATH = "/.cache/.babel.json"
+    HOME = "/.cache"
   }
   stages {
     stage("print env variables") {
