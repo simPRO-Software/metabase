@@ -2,11 +2,8 @@ pipeline {
   agent {
     docker {
       image 'metabasepackage'
-      args '-v /.npm:/.npm -v /.cache:/.cache -v /.yarn:/.yarn'
+      args '-v /.npm:/.npm -v /.cache:/.cache'
     }
-  }
-  environment {
-    HOME = '/tmp'
   }
   stages {
     stage("print env variables") {
