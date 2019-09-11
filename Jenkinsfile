@@ -5,6 +5,9 @@ pipeline {
       args '-v /.npm:/.npm -v /.cache:/.cache -v /.yarn:/.yarn'
     }
   }
+  environment {
+    BABEL_CACHE_PATH = "/.cache"
+  }
   stages {
     stage("print env variables") {
       steps {
