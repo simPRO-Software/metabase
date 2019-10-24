@@ -232,12 +232,12 @@
                    [(when-let [temp-file (and (render/include-csv-attachment? card result-data)
                                               (create-temp-file-or-throw "csv"))]
                       (export/export-to-csv-writer temp-file result)
-                      (create-result-attachment-map "csv" (str card-name "_" (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (new java.util.Date))) temp-file))
+                      (create-result-attachment-map "csv" card-name temp-file))
 
                     (when-let [temp-file (and (:include_xls card)
                                               (create-temp-file-or-throw "xlsx"))]
                       (export/export-to-xlsx-file temp-file result)
-                      (create-result-attachment-map "xlsx" (str card-name "_" (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (new java.util.Date))) temp-file))]))))
+                      (create-result-attachment-map "xlsx" card-name temp-file))]))))
 
 (defn- render-message-body [message-template message-context timezone results]
   (let [rendered-cards (binding [render/*include-title* true]
