@@ -1,24 +1,30 @@
-/* @flow weak */
-
+/* eslint-disable react/prop-types */
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import title from "metabase/hoc/Title";
-import { t } from "c-3po";
+import { getValues } from "redux-form";
 
-import MetabaseSettings from "metabase/lib/settings";
-import DeleteDatabaseModal from "../components/DeleteDatabaseModal.jsx";
-import DatabaseEditForms from "../components/DatabaseEditForms.jsx";
-import DatabaseSchedulingForm from "../components/DatabaseSchedulingForm";
-import ActionButton from "metabase/components/ActionButton.jsx";
-import Breadcrumbs from "metabase/components/Breadcrumbs.jsx";
-import Radio from "metabase/components/Radio.jsx";
-import ModalWithTrigger from "metabase/components/ModalWithTrigger.jsx";
+import { t } from "ttag";
+
+import { Box, Flex } from "grid-styled";
+
+import title from "metabase/hoc/Title";
+
+import DeleteDatabaseModal from "../components/DeleteDatabaseModal";
+import ActionButton from "metabase/components/ActionButton";
+import AddDatabaseHelpCard from "metabase/components/AddDatabaseHelpCard";
+import Button from "metabase/components/Button";
+import Breadcrumbs from "metabase/components/Breadcrumbs";
+import DriverWarning from "metabase/components/DriverWarning";
+import Radio from "metabase/components/Radio";
+import ModalWithTrigger from "metabase/components/ModalWithTrigger";
+
+import Databases from "metabase/entities/databases";
 
 import {
   getEditingDatabase,
-  getFormState,
   getDatabaseCreationStep,
+  getInitializeError,
 } from "../selectors";
 
 import {
@@ -34,12 +40,25 @@ import {
 } from "../database";
 import ConfirmContent from "metabase/components/ConfirmContent";
 import LoadingAndErrorWrapper from "metabase/components/LoadingAndErrorWrapper";
+import { getIn } from "icepick";
 
-const mapStateToProps = (state, props) => ({
-  database: getEditingDatabase(state),
-  databaseCreationStep: getDatabaseCreationStep(state),
-  formState: getFormState(state),
-});
+const DATABASE_FORM_NAME = "database";
+
+const getLetUserControlScheduling = database =>
+  getIn(database, ["details", "let-user-control-scheduling"]);
+
+const mapStateToProps = (state, props) => {
+  const database = getEditingDatabase(state);
+  const formValues = getValues(state.form[DATABASE_FORM_NAME]);
+  return {
+    database,
+    databaseCreationStep: getDatabaseCreationStep(state),
+    selectedEngine: formValues ? formValues.engine : undefined,
+    letUserControlSchedulingSaved: getLetUserControlScheduling(database),
+    letUserControlSchedulingForm: getLetUserControlScheduling(formValues),
+    initializeError: getInitializeError(state),
+  };
+};
 
 const mapDispatchToProps = {
   reset,
@@ -57,11 +76,20 @@ type TabName = "connection" | "scheduling";
 type TabOption = { name: string, value: TabName };
 
 const TABS: TabOption[] = [
-  { name: t`Connection`, value: "connection" },
-  { name: t`Scheduling`, value: "scheduling" },
+  {
+    name: t`Connection`,
+    value: "connection",
+  },
+  {
+    name: t`Scheduling`,
+    value: "scheduling",
+  },
 ];
 
-@connect(mapStateToProps, mapDispatchToProps)
+@connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)
 @title(({ database }) => database && database.name)
 export default class DatabaseEditApp extends Component {
   state: {
@@ -74,12 +102,14 @@ export default class DatabaseEditApp extends Component {
     this.state = {
       currentTab: TABS[0].value,
     };
+
+    this.discardSavedFieldValuesModal = React.createRef();
+    this.deleteDatabaseModal = React.createRef();
   }
 
   static propTypes = {
     database: PropTypes.object,
     databaseCreationStep: PropTypes.string,
-    formState: PropTypes.object.isRequired,
     params: PropTypes.object.isRequired,
     reset: PropTypes.func.isRequired,
     initializeDatabase: PropTypes.func.isRequired,
@@ -93,35 +123,35 @@ export default class DatabaseEditApp extends Component {
     location: PropTypes.object,
   };
 
-  async componentWillMount() {
+  async UNSAFE_componentWillMount() {
     await this.props.reset();
     await this.props.initializeDatabase(this.props.params.databaseId);
   }
 
-  componentWillReceiveProps(nextProps) {
-    const addingNewDatabase = !nextProps.database || !nextProps.database.id;
-
-    if (addingNewDatabase) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    const isNew = !nextProps.database || !nextProps.database.id;
+    if (isNew) {
       // Update the current creation step (= active tab) if adding a new database
       this.setState({ currentTab: nextProps.databaseCreationStep });
     }
   }
 
   render() {
-    let { database, formState } = this.props;
+    const {
+      database,
+      selectedEngine,
+      letUserControlSchedulingSaved,
+      letUserControlSchedulingForm,
+      initializeError,
+    } = this.props;
     const { currentTab } = this.state;
-
     const editingExistingDatabase = database && database.id != null;
     const addingNewDatabase = !editingExistingDatabase;
 
-    const letUserControlScheduling =
-      database &&
-      database.details &&
-      database.details["let-user-control-scheduling"];
-    const showTabs = editingExistingDatabase && letUserControlScheduling;
+    const showTabs = editingExistingDatabase && letUserControlSchedulingSaved;
 
     return (
-      <div className="wrapper">
+      <Box px={[3, 4, 5]} mt={[1, 2, 3]}>
         <Breadcrumbs
           className="py4"
           crumbs={[
@@ -129,58 +159,80 @@ export default class DatabaseEditApp extends Component {
             [addingNewDatabase ? t`Add Database` : database.name],
           ]}
         />
-        <section className="Grid Grid--gutters Grid--2-of-3">
-          <div className="Grid-cell">
-            <div className="Form-new bordered rounded shadowed pt0">
+        <Flex pb={2}>
+          <Box>
+            <div className="pt0">
               {showTabs && (
-                <div className="Form-offset border-bottom">
+                <div className="border-bottom mb2">
                   <Radio
                     value={currentTab}
                     options={TABS}
                     onChange={currentTab => this.setState({ currentTab })}
-                    underlined
+                    variant="underlined"
                   />
                 </div>
               )}
-              <LoadingAndErrorWrapper loading={!database} error={null}>
-                {() => (
-                  <div>
-                    {currentTab === "connection" && (
-                      <DatabaseEditForms
+              <Flex>
+                <Box w={620}>
+                  <LoadingAndErrorWrapper
+                    loading={!database}
+                    error={initializeError}
+                  >
+                    {() => (
+                      <Databases.Form
                         database={database}
-                        details={database ? database.details : null}
-                        engines={MetabaseSettings.get("engines")}
-                        hiddenFields={{ ssl: true }}
-                        formState={formState}
-                        selectEngine={this.props.selectEngine}
-                        save={
-                          addingNewDatabase
+                        form={Databases.forms[currentTab]}
+                        formName={DATABASE_FORM_NAME}
+                        onSubmit={
+                          addingNewDatabase && currentTab === "connection"
                             ? this.props.proceedWithDbCreation
                             : this.props.saveDatabase
                         }
-                      />
-                    )}
-                    {currentTab === "scheduling" && (
-                      <DatabaseSchedulingForm
-                        database={database}
-                        formState={formState}
-                        // Use saveDatabase both for db creation and updating
-                        save={this.props.saveDatabase}
-                        submitButtonText={
+                        submitTitle={
                           addingNewDatabase ? t`Save` : t`Save changes`
                         }
+                        renderSubmit={
+                          // override use of ActionButton for the `Next` button
+                          addingNewDatabase &&
+                          currentTab === "connection" &&
+                          letUserControlSchedulingForm &&
+                          (({ handleSubmit, canSubmit }) => (
+                            <Button
+                              primary={canSubmit}
+                              disabled={!canSubmit}
+                              onClick={handleSubmit}
+                            >
+                              {t`Next`}
+                            </Button>
+                          ))
+                        }
+                        submitButtonComponent={Button}
                       />
                     )}
-                  </div>
-                )}
-              </LoadingAndErrorWrapper>
+                  </LoadingAndErrorWrapper>
+                </Box>
+                <Box>
+                  <DriverWarning
+                    engine={selectedEngine}
+                    ml={26}
+                    data-testid="database-setup-driver-warning"
+                  />
+                  {addingNewDatabase && (
+                    <AddDatabaseHelpCard
+                      engine={selectedEngine}
+                      ml={26}
+                      data-testid="database-setup-help-card"
+                    />
+                  )}
+                </Box>
+              </Flex>
             </div>
-          </div>
+          </Box>
 
           {/* Sidebar Actions */}
           {editingExistingDatabase && (
-            <div className="Grid-cell Cell--1of3">
-              <div className="Actions bordered rounded shadowed">
+            <Box ml={[2, 3]} w={420}>
+              <div className="Actions bg-light rounded p3">
                 <div className="Actions-group">
                   <label className="Actions-groupLabel block text-bold">{t`Actions`}</label>
                   <ol>
@@ -216,14 +268,14 @@ export default class DatabaseEditApp extends Component {
                   <ol>
                     <li>
                       <ModalWithTrigger
-                        ref="discardSavedFieldValuesModal"
+                        ref={this.discardSavedFieldValuesModal}
                         triggerClasses="Button Button--danger Button--discardSavedFieldValues"
                         triggerElement={t`Discard saved field values`}
                       >
                         <ConfirmContent
                           title={t`Discard saved field values`}
                           onClose={() =>
-                            this.refs.discardSavedFieldValuesModal.toggle()
+                            this.discardSavedFieldValuesModal.current.toggle()
                           }
                           onAction={() =>
                             this.props.discardSavedFieldValues(database.id)
@@ -234,13 +286,15 @@ export default class DatabaseEditApp extends Component {
 
                     <li className="mt2">
                       <ModalWithTrigger
-                        ref="deleteDatabaseModal"
+                        ref={this.deleteDatabaseModal}
                         triggerClasses="Button Button--deleteDatabase Button--danger"
                         triggerElement={t`Remove this database`}
                       >
                         <DeleteDatabaseModal
                           database={database}
-                          onClose={() => this.refs.deleteDatabaseModal.toggle()}
+                          onClose={() =>
+                            this.deleteDatabaseModal.current.toggle()
+                          }
                           onDelete={() =>
                             this.props.deleteDatabase(database.id, true)
                           }
@@ -250,10 +304,10 @@ export default class DatabaseEditApp extends Component {
                   </ol>
                 </div>
               </div>
-            </div>
+            </Box>
           )}
-        </section>
-      </div>
+        </Flex>
+      </Box>
     );
   }
 }

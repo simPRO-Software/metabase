@@ -1,19 +1,17 @@
 (ns metabase.api.email
   "/api/email endpoints"
-  (:require [clojure
-             [data :as data]
-             [set :as set]
-             [string :as string]]
+  (:require [clojure.data :as data]
+            [clojure.set :as set]
+            [clojure.string :as str]
             [clojure.tools.logging :as log]
             [compojure.core :refer [DELETE POST PUT]]
-            [metabase
-             [config :as config]
-             [email :as email]]
             [metabase.api.common :as api]
+            [metabase.email :as email]
             [metabase.models.setting :as setting]
+            [metabase.util.i18n :refer [tru]]
             [metabase.util.schema :as su]))
 
-(def ^:private ^:const mb-to-smtp-settings
+(def ^:private mb-to-smtp-settings
   {:email-smtp-host     :host
    :email-smtp-username :user
    :email-smtp-password :pass
@@ -55,37 +53,33 @@
         #".*"
         {:message "Sorry, something went wrong.  Please try again."}))))
 
-(defn humanize-email-corrections
-  "formats warnings when security settings are autocorrected"
+(defn- humanize-email-corrections
+  "Formats warnings when security settings are autocorrected."
   [corrections]
-  (into {}
-        (mapv (fn [[k v]]
-                [k (format "%s was autocorrected to %s"
-                           (name (mb-to-smtp-settings k))
-                           (string/upper-case v))])
-              corrections)))
+  (into
+   {}
+   (for [[k v] corrections]
+     [k (tru "{0} was autocorrected to {1}"
+             (name (mb-to-smtp-settings k))
+             (str/upper-case v))])))
 
 (api/defendpoint PUT "/"
-  "Update multiple `Settings` values.  You must be a superuser to do this."
+  "Update multiple email Settings. You must be a superuser to do this."
   [:as {settings :body}]
   {settings su/Map}
   (api/check-superuser)
-  (let [email-settings (select-keys settings (keys mb-to-smtp-settings))
-        smtp-settings  (-> (set/rename-keys email-settings mb-to-smtp-settings)
-                           (assoc :port (Integer/parseInt (:email-smtp-port settings))))
-        response       (if-not config/is-test?
-                         ;; in normal conditions, validate connection
-                         (email/test-smtp-connection smtp-settings)
-                         ;; for unit testing just respond with a success message
-                         {:error :SUCCESS})
-        tested-settings  (merge settings (select-keys response [:port :security]))
-        [_ corrections _] (data/diff settings tested-settings)
+  (let [email-settings             (select-keys settings (keys mb-to-smtp-settings))
+        smtp-settings              (-> (set/rename-keys email-settings mb-to-smtp-settings)
+                                       (assoc :port (some-> (:email-smtp-port settings) Integer/parseInt)))
+        response                   (email/test-smtp-connection smtp-settings)
+        tested-settings            (merge settings (select-keys response [:port :security]))
+        [_ corrections _]          (data/diff settings tested-settings)
         properly-named-corrections (set/rename-keys corrections (set/map-invert mb-to-smtp-settings))
-        corrected-settings (merge email-settings properly-named-corrections)]
+        corrected-settings         (merge email-settings properly-named-corrections)]
     (if (= :SUCCESS (:error response))
       ;; test was good, save our settings
       (assoc (setting/set-many! corrected-settings)
-        :with-corrections (humanize-email-corrections properly-named-corrections))
+             :with-corrections (humanize-email-corrections properly-named-corrections))
       ;; test failed, return response message
       {:status 500
        :body   (humanize-error-messages response)})))

@@ -1,6 +1,7 @@
+/* eslint-disable react/prop-types */
 import React from "react";
 
-import { t } from "c-3po";
+import { t } from "ttag";
 
 import Radio from "metabase/components/Radio";
 
@@ -12,9 +13,9 @@ const PermissionsTabs = ({ tab, onChangeTab }) => (
         { name: t`Data permissions`, value: `databases` },
         { name: t`Collection permissions`, value: `collections` },
       ]}
-      onChange={onChangeTab}
-      underlined
-      py={1}
+      onOptionClick={onChangeTab}
+      variant="underlined"
+      py={2}
     />
   </div>
 );

@@ -5,7 +5,7 @@ Note that currently the Mac Application is not setup for shared use, so some Met
 
 ### Installing the Mac Application
 
-Start off by downloading the [Metabase Mac Application](http://www.metabase.com/start/mac.html) if you haven't done so already.
+Start off by downloading the [Metabase Mac Application](https://metabase.com/start/mac.html) if you haven't done so already.
 Once the download is complete go ahead and double click the file to open it up. You should see something like this:
 
 ![macinstaller](images/MacInstaller.png)
@@ -36,3 +36,7 @@ If you want to delete it, back it up, or replace it with an old backup, shut dow
 
 Note: depending on when you first started using Metabase the file may be called
 `~/Library/Application Support/Metabase/metabase.db.mv.db`
+
+### Uninstalling Metabase
+
+To uninstall Metabase, simply grab the Metabase application in your `Applications` folder and send it to the Trash.

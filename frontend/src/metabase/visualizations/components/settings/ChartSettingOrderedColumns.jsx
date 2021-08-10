@@ -1,16 +1,13 @@
+/* eslint-disable react/prop-types */
 import React, { Component } from "react";
-import { t } from "c-3po";
+import { t } from "ttag";
 
 import ColumnItem from "./ColumnItem";
 
 import { SortableContainer, SortableElement } from "react-sortable-hoc";
 
 import StructuredQuery from "metabase-lib/lib/queries/StructuredQuery";
-import {
-  keyForColumn,
-  fieldRefForColumn,
-  findColumnForColumnSetting,
-} from "metabase/lib/dataset";
+import { keyForColumn, findColumnForColumnSetting } from "metabase/lib/dataset";
 import { getFriendlyName } from "metabase/visualizations/lib/utils";
 
 import _ from "underscore";
@@ -82,15 +79,9 @@ export default class ChartSettingOrderedColumns extends Component {
   };
 
   handleAddNewField = fieldRef => {
-    const { value, onChange, addField } = this.props;
-    onChange([
-      // remove duplicates
-      ...value.filter(
-        columnSetting => !_.isEqual(columnSetting.fieldRef, fieldRef),
-      ),
-      { fieldRef, enabled: true },
-    ]);
-    addField(fieldRef);
+    const { value, onChange } = this.props;
+    const columnSettings = [...value, { fieldRef, enabled: true }];
+    onChange(columnSettings);
   };
 
   getColumnName = columnSetting =>
@@ -102,13 +93,14 @@ export default class ChartSettingOrderedColumns extends Component {
 
   render() {
     const { value, question, columns } = this.props;
+    const query = question && question.query();
 
     let additionalFieldOptions = { count: 0 };
-    if (columns && question && question.query() instanceof StructuredQuery) {
-      const fieldRefs = columns.map(column => fieldRefForColumn(column));
-      additionalFieldOptions = question.query().fieldsOptions(dimension => {
-        const mbql = dimension.mbql();
-        return !_.find(fieldRefs, fieldRef => _.isEqual(fieldRef, mbql));
+    if (columns && query instanceof StructuredQuery) {
+      additionalFieldOptions = query.fieldsOptions(dimension => {
+        return !_.find(columns, column =>
+          dimension.isSameBaseDimension(column.field_ref),
+        );
       });
     }
 
@@ -159,10 +151,13 @@ export default class ChartSettingOrderedColumns extends Component {
                 onAdd={() => this.handleAddNewField(dimension.mbql())}
               />
             ))}
-            {additionalFieldOptions.fks.map(fk => (
-              <div>
+            {additionalFieldOptions.fks.map((fk, index) => (
+              <div key={fk.id}>
                 <div className="my2 text-medium text-bold text-uppercase text-small">
-                  {fk.field.target.table.display_name}
+                  {fk.name ||
+                    (fk.field.target
+                      ? fk.field.target.table.display_name
+                      : fk.field.display_name)}
                 </div>
                 {fk.dimensions.map((dimension, index) => (
                   <ColumnItem

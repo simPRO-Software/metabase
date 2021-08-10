@@ -1,10 +1,8 @@
-/* @flow */
-
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import { titleize } from "inflection";
 
-import { t } from "c-3po";
+import { t } from "ttag";
 
 import Icon from "metabase/components/Icon";
 
@@ -16,7 +14,7 @@ import {
   getUnsignedPreviewUrl,
   getSignedToken,
 } from "metabase/public/lib/embed";
-import colors from "metabase/lib/colors";
+import { color } from "metabase/lib/colors";
 
 import {
   getSiteUrl,
@@ -28,7 +26,7 @@ import { getUserIsAdmin } from "metabase/selectors/user";
 
 import MetabaseAnalytics from "metabase/lib/analytics";
 
-import type { Parameter, ParameterId } from "metabase/meta/types/Parameter";
+import type { Parameter, ParameterId } from "metabase-types/types/Parameter";
 import type {
   EmbeddableResource,
   EmbeddingParams,
@@ -179,7 +177,7 @@ export default class EmbedModalContent extends Component {
           style={{
             boxShadow:
               embedType === "application"
-                ? `0px 8px 15px -9px ${colors["text-dark"]}`
+                ? `0px 8px 15px -9px ${color("text-dark")}`
                 : undefined,
           }}
         >
@@ -204,7 +202,6 @@ export default class EmbedModalContent extends Component {
             {/* Center only using margins because  */}
             <div className="ml-auto mr-auto" style={{ maxWidth: 1040 }}>
               <SharingPane
-                // $FlowFixMe: Flow doesn't understand these are provided by @connect?
                 {...this.props}
                 publicUrl={getUnsignedPreviewUrl(
                   siteUrl,

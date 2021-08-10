@@ -2,22 +2,20 @@
   (:require [clojure.set :as set]
             [compojure.core :refer [GET]]
             [metabase.api.common :refer [*current-user-id* defendpoint define-routes]]
-            [metabase.models
-             [activity :refer [Activity]]
-             [card :refer [Card]]
-             [dashboard :refer [Dashboard]]
-             [interface :as mi]
-             [view-log :refer [ViewLog]]]
-            [toucan
-             [db :as db]
-             [hydrate :refer [hydrate]]]))
+            [metabase.models.activity :refer [Activity]]
+            [metabase.models.card :refer [Card]]
+            [metabase.models.dashboard :refer [Dashboard]]
+            [metabase.models.interface :as mi]
+            [metabase.models.view-log :refer [ViewLog]]
+            [toucan.db :as db]
+            [toucan.hydrate :refer [hydrate]]))
 
 (defn- dashcard-activity? [activity]
-  (contains? #{:dashboard-add-cards :dashboard-remove-cards}
-             (:topic activity)))
+  (#{:dashboard-add-cards :dashboard-remove-cards}
+   (:topic activity)))
 
 (defn- activities->referenced-objects
-  "Get a map of model name to a set of referenced IDs in these ACTIVITIES.
+  "Get a map of model name to a set of referenced IDs in these `activities`.
 
      (activities->referenced-objects <some-activities>) -> {\"dashboard\" #{41 42 43}, \"card\" #{100 101}, ...}"
   [activities]
@@ -48,7 +46,7 @@
                       nil)}))) ; don't care about other models
 
 (defn- add-model-exists-info
-  "Add `:model_exists` keys to ACTIVITIES, and `:exists` keys to nested dashcards where appropriate."
+  "Add `:model_exists` keys to `activities`, and `:exists` keys to nested dashcards where appropriate."
   [activities]
   (let [existing-objects (-> activities activities->referenced-objects referenced-objects->existing-objects)]
     (for [{:keys [model model_id], :as activity} activities]

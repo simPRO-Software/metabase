@@ -1,5 +1,3 @@
-/* @flow */
-
 // Reducers needed for main application
 
 import { combineReducers } from "redux";
@@ -19,8 +17,7 @@ import * as user from "metabase/user/reducers";
 import dashboard from "metabase/dashboard/dashboard";
 import * as home from "metabase/home/reducers";
 
-/* questions / query builder */
-import new_query from "metabase/new_query/new_query";
+/* query builder */
 import * as qb from "metabase/query_builder/reducers";
 
 /* data reference */
@@ -42,7 +39,6 @@ export default {
   alert,
   dashboard,
   home: combineReducers(home),
-  new_query,
   pulse: combineReducers(pulse),
   qb: combineReducers(qb),
   reference,

@@ -1,7 +1,9 @@
-/* @flow */
 import React from "react";
-import EntityObjectLoader from "metabase/entities/containers/EntityObjectLoader";
-import EntityListLoader from "metabase/entities/containers/EntityListLoader";
+
+import Collection from "metabase/entities/collections";
+import Search from "metabase/entities/search";
+
+const PINNED_DASHBOARDS_LOAD_LIMIT = 500;
 
 type Props = {
   collectionId: number,
@@ -9,17 +11,21 @@ type Props = {
 };
 
 const CollectionItemsLoader = ({ collectionId, children, ...props }: Props) => (
-  <EntityObjectLoader
-    {...props}
-    entityType="collections"
-    entityId={collectionId}
-    children={({ object }) => (
-      <EntityListLoader
+  <Collection.Loader {...props} id={collectionId}>
+    {({ object }) => (
+      <Search.ListLoader
         {...props}
-        entityType="search"
-        entityQuery={{ collection: collectionId }}
+        query={{
+          collection: collectionId,
+          pinned_state: "is_pinned",
+          sort_column: "name",
+          sort_direction: "asc",
+          models: "dashboard",
+          limit: PINNED_DASHBOARDS_LOAD_LIMIT,
+        }}
         wrapped
-        children={({ list }) =>
+      >
+        {({ list }) =>
           object &&
           list &&
           children({
@@ -27,9 +33,9 @@ const CollectionItemsLoader = ({ collectionId, children, ...props }: Props) => (
             items: list,
           })
         }
-      />
+      </Search.ListLoader>
     )}
-  />
+  </Collection.Loader>
 );
 
 export default CollectionItemsLoader;

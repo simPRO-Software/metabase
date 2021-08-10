@@ -3,7 +3,7 @@ import React, { Component } from "react";
 import ReactDOM from "react-dom";
 import PropTypes from "prop-types";
 import { forceRedraw } from "metabase/lib/dom";
-import { t } from "c-3po";
+import { t } from "ttag";
 import { KEYCODE_ENTER, KEYCODE_ESCAPE } from "metabase/lib/keyboard";
 
 export default class TextWidget extends Component {
@@ -33,7 +33,7 @@ export default class TextWidget extends Component {
 
   static format = value => value;
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     if (this.props.value !== nextProps.value) {
       this.setState({ value: nextProps.value }, () => {
         // HACK: Address Safari rendering bug which causes https://github.com/metabase/metabase/issues/5335

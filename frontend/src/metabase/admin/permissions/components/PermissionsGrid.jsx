@@ -1,27 +1,27 @@
 /* eslint-disable react/display-name */
-
+/* eslint-disable react/prop-types */
 import React, { Component } from "react";
 import { connect } from "react-redux";
 
 import { Link } from "react-router";
 
-import PopoverWithTrigger from "metabase/components/PopoverWithTrigger.jsx";
-import Tooltip from "metabase/components/Tooltip.jsx";
-import Icon from "metabase/components/Icon.jsx";
-import ConfirmContent from "metabase/components/ConfirmContent.jsx";
-import Modal from "metabase/components/Modal.jsx";
+import PopoverWithTrigger from "metabase/components/PopoverWithTrigger";
+import Tooltip from "metabase/components/Tooltip";
+import Icon from "metabase/components/Icon";
+import ConfirmContent from "metabase/components/ConfirmContent";
+import Modal from "metabase/components/Modal";
 
-import FixedHeaderGrid from "./FixedHeaderGrid.jsx";
+import FixedHeaderGrid from "./FixedHeaderGrid";
 import { AutoSizer } from "react-virtualized";
 
 import { isAdminGroup, getGroupNameLocalized } from "metabase/lib/groups";
 import cx from "classnames";
 import _ from "underscore";
 
-import colors from "metabase/lib/colors";
+import { color } from "metabase/lib/colors";
 
-const LIGHT_BORDER = colors["text-light"];
-const DARK_BORDER = colors["text-medium"];
+const LIGHT_BORDER = color("text-light");
+const DARK_BORDER = color("text-medium");
 const BORDER_RADIUS = 4;
 
 const getBorderStyles = ({
@@ -48,8 +48,8 @@ const HEADER_WIDTH = 240;
 
 const DEFAULT_OPTION = {
   icon: "unknown",
-  iconColor: colors["text-medium"],
-  bgColor: colors["bg-medium"],
+  iconColor: color("text-medium"),
+  bgColor: color("bg-medium"),
 };
 
 const PermissionsHeader = ({ permissions, isFirst, isLast }) => (
@@ -189,8 +189,8 @@ const PermissionsCell = ({
 
 const ActionsList = connect()(({ actions, dispatch }) => (
   <ul className="border-top">
-    {actions.map(action => (
-      <li>
+    {actions.map((action, index) => (
+      <li key={index}>
         {typeof action === "function" ? (
           action()
         ) : (
@@ -209,6 +209,7 @@ class GroupPermissionCell extends Component {
       confirmAction: null,
       hovered: false,
     };
+    this.popover = React.createRef();
   }
   hoverEnter() {
     // only change the hover state if the group is not the admin
@@ -242,14 +243,14 @@ class GroupPermissionCell extends Component {
     const warning =
       permission.warning && permission.warning(group.id, entity.id);
 
-    let isEditable =
+    const isEditable =
       this.props.isEditable &&
       options.filter(option => option.value !== value).length > 0;
     const option = _.findWhere(options, { value }) || DEFAULT_OPTION;
 
     return (
       <PopoverWithTrigger
-        ref="popover"
+        ref={this.popover}
         disabled={!isEditable}
         triggerClasses="cursor-pointer flex flex-full layout-centered border-column-divider"
         triggerElement={
@@ -274,35 +275,34 @@ class GroupPermissionCell extends Component {
                 size={28}
                 style={{
                   color: this.state.hovered
-                    ? colors["text-white"]
+                    ? color("text-white")
                     : option.iconColor,
                 }}
               />
-              {confirmations &&
-                confirmations.length > 0 && (
-                  <Modal>
-                    <ConfirmContent
-                      {...confirmations[0]}
-                      onAction={() =>
-                        // if it's the last one call confirmAction, otherwise remove the confirmation that was just confirmed
-                        confirmations.length === 1
-                          ? this.setState(
-                              { confirmations: null, confirmAction: null },
-                              this.state.confirmAction,
-                            )
-                          : this.setState({
-                              confirmations: confirmations.slice(1),
-                            })
-                      }
-                      onCancel={() =>
-                        this.setState({
-                          confirmations: null,
-                          confirmAction: null,
-                        })
-                      }
-                    />
-                  </Modal>
-                )}
+              {confirmations && confirmations.length > 0 && (
+                <Modal>
+                  <ConfirmContent
+                    {...confirmations[0]}
+                    onAction={() =>
+                      // if it's the last one call confirmAction, otherwise remove the confirmation that was just confirmed
+                      confirmations.length === 1
+                        ? this.setState(
+                            { confirmations: null, confirmAction: null },
+                            this.state.confirmAction,
+                          )
+                        : this.setState({
+                            confirmations: confirmations.slice(1),
+                          })
+                    }
+                    onCancel={() =>
+                      this.setState({
+                        confirmations: null,
+                        confirmAction: null,
+                      })
+                    }
+                  />
+                </Modal>
+              )}
               {warning && (
                 <div className="absolute top right p1">
                   <Tooltip tooltip={warning} maxWidth="24em">
@@ -328,7 +328,7 @@ class GroupPermissionCell extends Component {
                 postAction: permission.postAction,
               });
             };
-            let confirmations = (
+            const confirmations = (
               (permission.confirm &&
                 permission.confirm(group.id, entity.id, value)) ||
               []
@@ -338,7 +338,7 @@ class GroupPermissionCell extends Component {
             } else {
               confirmAction();
             }
-            this.refs.popover.close();
+            this.popover.current.close();
           }}
         />
         {actions && actions.length > 0 ? (

@@ -1,17 +1,20 @@
-/* @flow */
-
+/* eslint-disable react/prop-types */
 import React from "react";
 import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
 
 export default (entityType?: string) => (
-  ComposedComponent: Class<React$Component<*, *, *>>,
+  ComposedComponent: React.ComponentClass,
 ) => {
   const mapStateToProps = (state, props) => ({
     entityDef:
-      props.entityDef ||
       // dynamic require due to dependency load order issues
-      require("metabase/entities")[entityType || props.entityType],
+      require("metabase/entities")[
+        entityType ||
+          (typeof props.entityType === "function"
+            ? props.entityType(state, props)
+            : props.entityType)
+      ],
   });
   return connect(mapStateToProps)(
     class extends React.Component {
@@ -24,7 +27,7 @@ export default (entityType?: string) => (
         this._bindActionCreators(props);
       }
 
-      componentWillReceiveProps(nextProps) {
+      UNSAFE_componentWillReceiveProps(nextProps) {
         if (
           nextProps.entityDef !== this.props.entityDef ||
           nextProps.dispatch !== this.props.dispatch
@@ -43,7 +46,7 @@ export default (entityType?: string) => (
 
       render() {
         return (
-          <ComposedComponent {...this._boundActionCreators} {...this.props} />
+          <ComposedComponent {...this.props} {...this._boundActionCreators} />
         );
       }
     },

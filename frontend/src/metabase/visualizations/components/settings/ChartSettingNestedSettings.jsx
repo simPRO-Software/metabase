@@ -1,5 +1,3 @@
-/* @flow */
-
 import React from "react";
 
 import ChartSettingsWidget from "../ChartSettingsWidget";
@@ -19,7 +17,7 @@ import type {
   SettingsWidgetsForObjectGetter,
   NestedObjectKeyGetter,
 } from "metabase/visualizations/lib/settings/nested";
-import type { Series } from "metabase/meta/types/Visualization";
+import type { Series } from "metabase-types/types/Visualization";
 
 export type NestedSettingComponentProps = {
   objects: NestedObject[],
@@ -31,9 +29,7 @@ export type NestedSettingComponentProps = {
   settings: Settings,
   allComputedSettings: Settings,
 };
-type NestedSettingComponent = Class<
-  React$Component<NestedSettingComponentProps, *, *>,
->;
+type NestedSettingComponent = React.ComponentClass;
 
 type SettingsByObjectKey = { [key: NestedObjectKey]: Settings };
 
@@ -75,7 +71,7 @@ const chartSettingNestedSettings = ({
       };
     }
 
-    componentWillReceiveProps(nextProps: Props) {
+    UNSAFE_componentWillReceiveProps(nextProps: Props) {
       // reset editingObjectKey if there's only one object
       if (
         nextProps.objects.length === 1 &&
@@ -109,7 +105,7 @@ const chartSettingNestedSettings = ({
       newSettings: Settings,
     ) => {
       const objectKey = getObjectKey(object);
-      if (objectKey) {
+      if (objectKey != null) {
         this.handleChangeSettingsForObjectKey(objectKey, newSettings);
       }
     };

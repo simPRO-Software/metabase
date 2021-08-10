@@ -1,6 +1,6 @@
 import { createEntity, undo } from "metabase/lib/entities";
 import * as Urls from "metabase/lib/urls";
-import { normal } from "metabase/lib/colors";
+import { color } from "metabase/lib/colors";
 
 import {
   canonicalCollectionId,
@@ -40,8 +40,8 @@ const Pulses = createEntity({
   objectSelectors: {
     getName: pulse => pulse && pulse.name,
     getUrl: pulse => pulse && Urls.pulse(pulse.id),
-    getIcon: pulse => "pulse",
-    getColor: pulse => normal.yellow,
+    getIcon: pulse => ({ name: "pulse" }),
+    getColor: pulse => color("pulse"),
   },
 
   form: {
@@ -55,7 +55,7 @@ const Pulses = createEntity({
     ],
   },
 
-  getAnalyticsMetadata(action, object, getState) {
+  getAnalyticsMetadata([object], { action }, getState) {
     const type = object && getCollectionType(object.collection_id, getState());
     return type && `collection=${type}`;
   },
