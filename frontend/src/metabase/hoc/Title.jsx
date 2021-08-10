@@ -6,7 +6,7 @@ const componentStack = [];
 
 let SEPARATOR = " · ";
 let HIERARCHICAL = true;
-let BASE_NAME = null;
+let BASE_NAME = "BI Reporting";
 
 export const setSeparator = separator => (SEPARATOR = separator);
 export const setHierarchical = hierarchical => (HIERARCHICAL = hierarchical);
@@ -25,7 +25,7 @@ const updateDocumentTitle = _.debounce(() => {
       let title = componentStack[i]._documentTitle;
       if (title) {
         if (BASE_NAME) {
-          title += SEPARATOR + BASE_NAME;
+          title += SEPARATOR + "BI Reporting";
         }
         if (document.title !== title) {
           document.title = title;

@@ -428,58 +428,6 @@ export default class QueryHeader extends Component {
       "text-brand": this.props.isShowingDataReference,
       "text-brand-hover": !this.state.isShowingDataReference,
     });
-    buttonSections.push([
-      <Tooltip key="dataReference" tooltip={t`Learn about your data`}>
-        <a className={dataReferenceButtonClasses}>
-          <Icon
-            name="reference"
-            size={ICON_SIZE}
-            onClick={this.onToggleDataReference}
-          />
-        </a>
-      </Tooltip>,
-    ]);
-
-    if (
-      !isEditing &&
-      card &&
-      question.alertType(visualizationSettings) !== null
-    ) {
-      const createAlertItem = {
-        title: t`Get alerts about this`,
-        icon: "alert",
-        action: () => this.setState({ modal: "create-alert" }),
-      };
-      const createAlertAfterSavingQuestionItem = {
-        title: t`Get alerts about this`,
-        icon: "alert",
-        action: () => this.setState({ modal: "save-question-before-alert" }),
-      };
-
-      const updateAlertItem = {
-        title: t`Alerts are on`,
-        icon: "alert",
-        content: (toggleMenu, setMenuFreeze) => (
-          <AlertListPopoverContent
-            closeMenu={toggleMenu}
-            setMenuFreeze={setMenuFreeze}
-          />
-        ),
-      };
-
-      buttonSections.push([
-        <div className="mr1" style={{ marginLeft: "-15px" }}>
-          <EntityMenu
-            triggerIcon="burger"
-            items={[
-              !isNew && Object.values(questionAlerts).length > 0
-                ? updateAlertItem
-                : isNew ? createAlertAfterSavingQuestionItem : createAlertItem,
-            ]}
-          />
-        </div>,
-      ]);
-    }
 
     return (
       <ButtonBar

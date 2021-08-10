@@ -4,6 +4,10 @@
   margin: 0 auto;
 }
 
+.Login-hide {
+  visibility: hidden !important;
+}
+
 /* the login content should always sit on top of the illustration */
 .Login-content {
   position: relative;

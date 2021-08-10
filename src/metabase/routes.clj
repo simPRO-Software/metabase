@@ -30,7 +30,7 @@
 
 (defn- load-file-at-path [path]
   (slurp (or (io/resource path)
-             (throw (Exception. (str "Cannot find '" path "'. Did you remember to build the Metabase frontend?"))))))
+             (throw (Exception. (str "Cannot find '" path "'. Did you remember to build the BI Reporting frontend?"))))))
 
 (defn- load-template [path variables]
   (stencil/render-string (load-file-at-path path) variables))
@@ -40,7 +40,7 @@
   (json/generate-string {"headers" {"language" locale
                                     "plural-forms" "nplurals=2; plural=(n != 1);"}
                          "translations" {"" {"Metabase" {"msgid" "Metabase"
-                                                         "msgstr" ["Metabase"]}}}}))
+                                                         "msgstr" ["BI Reporting"]}}}}))
 
 (defn- load-localization []
   (if (and *locale* (not= (str *locale*) "en"))
@@ -104,7 +104,7 @@
                        ;; if Metabase is not finished initializing, return a generic error message rather than
                        ;; something potentially confusing like "DB is not set up"
                        (if-not (init-status/complete?)
-                         {:status 503, :body "Metabase is still initializing. Please sit tight..."}
+                         {:status 503, :body "BI Reporting is still initializing. Please sit tight..."}
                          (apply api/routes args))))
   ;; ^/app/ -> static files under frontend_client/app
   (context "/app" []

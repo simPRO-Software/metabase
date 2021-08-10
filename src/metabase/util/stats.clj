@@ -143,7 +143,7 @@
    :running_on           (environment-type)
    :application_database (config/config-str :mb-db-type)
    :check_for_updates    (public-settings/check-for-updates)
-   :site_name            (not= (public-settings/site-name) "Metabase")
+   :site_name            (not= (public-settings/site-name) "BI Reporting")
    :report_timezone      (driver/report-timezone)
    :friendly_names       (= (humanization/humanization-strategy) "advanced")
    :email_configured     (email/email-configured?)

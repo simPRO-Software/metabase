@@ -28,7 +28,7 @@ export const FILTERS = [
     name: t`Pulses`,
     filter: "pulse",
     icon: "pulse",
-  },
+  }
 ];
 
 const ItemTypeFilterBar = props => {

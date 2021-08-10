@@ -72,7 +72,7 @@ const DashboardEmptyState = () => (
 const PulseEmptyState = () => (
   <EmptyStateWrapper>
     <EmptyState
-      message={t`Pulses let you send out the latest data to your team on a schedule via email or slack.`}
+      message={t`Pulses let you send out the latest data to your team on a schedule via email. (Only accessible via the BI Reporting Premium option)`}
       illustrationElement={<Icon name="pulse" size={32} />}
     />
   </EmptyStateWrapper>
@@ -680,7 +680,6 @@ class CollectionLanding extends React.Component {
 
 const CollectionSectionHeading = ({ children }) => (
   <h5
-    className="text-uppercase"
     style={{ color: colors["text-medium"], fontWeight: 900 }}
   >
     {children}

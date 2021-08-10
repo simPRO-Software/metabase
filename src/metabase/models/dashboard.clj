@@ -39,6 +39,7 @@
                :left-join [[Card :card] [:= :dashcard.card_id :card.id]]
                :where     [:and
                            [:= :dashcard.dashboard_id (u/get-id dashboard-or-id)]
+                           [:= :card.simpro_removed false]
                            [:or
                             [:= :card.archived false]
                             [:= :card.archived nil]]] ; e.g. DashCards with no corresponding Card, e.g. text Cards

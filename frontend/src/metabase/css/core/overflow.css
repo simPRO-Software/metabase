@@ -3,7 +3,7 @@
 }
 
 .overflow-hidden {
-  overflow: hidden;
+  overflow: hidden !important;
 }
 
 .overflow-x-hidden {

@@ -64,6 +64,7 @@
   [_ collection {:keys [archived?]}]
   (-> (db/select [Card :id :name :description :collection_position :display]
         :collection_id (:id collection)
+        :simpro_removed false
         :archived      archived?)
       (hydrate :favorite)))
 
@@ -78,6 +79,7 @@
   (db/select [Pulse :id :name :collection_position]
     :collection_id   (:id collection)
     :archived        archived?
+    :simpro_removed false
     ;; exclude Alerts
     :alert_condition nil))
 

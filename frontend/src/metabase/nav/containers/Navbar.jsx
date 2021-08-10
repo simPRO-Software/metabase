@@ -29,11 +29,13 @@ import ProfileLink from "metabase/nav/components/ProfileLink.jsx";
 
 import { getPath, getContext, getUser } from "../selectors";
 import { entityListLoader } from "metabase/entities/containers/EntityListLoader";
+import {getMetadata} from "metabase/selectors/metadata";
 
 const mapStateToProps = (state, props) => ({
   path: getPath(state, props),
   context: getContext(state, props),
   user: getUser(state),
+  metadata: getMetadata(state)
 });
 
 const mapDispatchToProps = {
@@ -41,33 +43,34 @@ const mapDispatchToProps = {
 };
 
 const AdminNavItem = ({ name, path, currentPath }) => (
-  <li>
-    <Link
-      to={path}
-      data-metabase-event={`NavBar;${name}`}
-      className={cx("NavItem py1 px2 no-decoration", {
-        "is--selected": currentPath.startsWith(path),
-      })}
-    >
-      {name}
-    </Link>
-  </li>
+    <li>
+      <Link
+          to={path}
+          data-metabase-event={`NavBar;${name}`}
+          className={cx("NavItem py1 px2 no-decoration", {
+            "is--selected": currentPath.startsWith(path),
+          })}
+      >
+        {name}
+      </Link>
+    </li>
 );
 
 const DefaultSearchColor = color(colors.brand)
-  .lighten(0.07)
-  .string();
+    .lighten(0.07)
+    .string();
 const ActiveSearchColor = color(colors.brand)
-  .lighten(0.1)
-  .string();
+    .lighten(0.1)
+    .string();
 
 const SearchWrapper = Flex.extend`
   ${width} background-color: ${props =>
-      props.active ? ActiveSearchColor : DefaultSearchColor};
+    props.active ? ActiveSearchColor : DefaultSearchColor};
   border-radius: 6px;
   align-items: center;
   color: white;
   transition: background 300ms ease-in;
+  margin-left: 20px;
   &:hover {
     background-color: ${ActiveSearchColor};
   }
@@ -113,34 +116,34 @@ class SearchBar extends React.Component {
   render() {
     const { active, searchText } = this.state;
     return (
-      <OnClickOutsideWrapper
-        handleDismissal={() => this.setState({ active: false })}
-      >
-        <SearchWrapper
-          onClick={() => this.setState({ active: true })}
-          active={active}
+        <OnClickOutsideWrapper
+            handleDismissal={() => this.setState({ active: false })}
         >
-          <Icon name="search" ml={2} />
-          <SearchInput
-            w={1}
-            py={2}
-            pr={2}
-            pl={1}
-            value={searchText}
-            placeholder={t`Search` + "…"}
-            onClick={() => this.setState({ active: true })}
-            onChange={e => this.setState({ searchText: e.target.value })}
-            onKeyPress={e => {
-              if (e.key === "Enter" && (searchText || "").trim().length > 0) {
-                this.props.onChangeLocation({
-                  pathname: "search",
-                  query: { q: searchText },
-                });
-              }
-            }}
-          />
-        </SearchWrapper>
-      </OnClickOutsideWrapper>
+          <SearchWrapper
+              onClick={() => this.setState({ active: true })}
+              active={active}
+          >
+            <Icon name="search" ml={2} />
+            <SearchInput
+                w={1}
+                py={2}
+                pr={2}
+                pl={1}
+                value={searchText}
+                placeholder={t`Search` + "…"}
+                onClick={() => this.setState({ active: true })}
+                onChange={e => this.setState({ searchText: e.target.value })}
+                onKeyPress={e => {
+                  if (e.key === "Enter" && (searchText || "").trim().length > 0) {
+                    this.props.onChangeLocation({
+                      pathname: "search",
+                      query: { q: searchText },
+                    });
+                  }
+                }}
+            />
+          </SearchWrapper>
+        </OnClickOutsideWrapper>
     );
   }
 }
@@ -186,160 +189,149 @@ export default class Navbar extends Component {
 
   renderAdminNav() {
     return (
-      // NOTE: DO NOT REMOVE `Nav` CLASS FOR NOW, USED BY MODALS, FULLSCREEN DASHBOARD, ETC
-      // TODO: hide nav using state in redux instead?
-      <nav className={"Nav AdminNav sm-py1"}>
-        <div className="sm-pl4 flex align-center pr1">
-          <div className="NavTitle flex align-center">
-            <Icon name={"gear"} className="AdminGear" size={22} />
-            <span className="NavItem-text ml1 hide sm-show text-bold">{t`Metabase Admin`}</span>
+        // NOTE: DO NOT REMOVE `Nav` CLASS FOR NOW, USED BY MODALS, FULLSCREEN DASHBOARD, ETC
+        // TODO: hide nav using state in redux instead?
+        <nav className={"Nav AdminNav sm-py1"}>
+          <div className="sm-pl4 flex align-center pr1">
+            <div className="NavTitle flex align-center">
+              <Icon name={"gear"} className="AdminGear" size={22} />
+              <span className="NavItem-text ml1 hide sm-show text-bold">{t`BI Reporting Admin`}</span>
+            </div>
+
+            <ul className="sm-ml4 flex flex-full">
+              <AdminNavItem
+                  name={t`Settings`}
+                  path="/admin/settings"
+                  currentPath={this.props.path}
+              />
+              <AdminNavItem
+                  name={t`People`}
+                  path="/admin/people"
+                  currentPath={this.props.path}
+              />
+              <AdminNavItem
+                  name={t`Data Model`}
+                  path="/admin/datamodel"
+                  currentPath={this.props.path}
+              />
+              <AdminNavItem
+                  name={t`Databases`}
+                  path="/admin/databases"
+                  currentPath={this.props.path}
+              />
+              <AdminNavItem
+                  name={t`Permissions`}
+                  path="/admin/permissions"
+                  currentPath={this.props.path}
+              />
+              <AdminNavItem
+                  name={t`Troubleshooting`}
+                  path="/admin/troubleshooting"
+                  currentPath={this.props.path}
+              />
+            </ul>
+
+            <ProfileLink {...this.props} />
           </div>
-
-          <ul className="sm-ml4 flex flex-full">
-            <AdminNavItem
-              name={t`Settings`}
-              path="/admin/settings"
-              currentPath={this.props.path}
-            />
-            <AdminNavItem
-              name={t`People`}
-              path="/admin/people"
-              currentPath={this.props.path}
-            />
-            <AdminNavItem
-              name={t`Data Model`}
-              path="/admin/datamodel"
-              currentPath={this.props.path}
-            />
-            <AdminNavItem
-              name={t`Databases`}
-              path="/admin/databases"
-              currentPath={this.props.path}
-            />
-            <AdminNavItem
-              name={t`Permissions`}
-              path="/admin/permissions"
-              currentPath={this.props.path}
-            />
-            <AdminNavItem
-              name={t`Troubleshooting`}
-              path="/admin/troubleshooting"
-              currentPath={this.props.path}
-            />
-          </ul>
-
-          <ProfileLink {...this.props} />
-        </div>
-        {this.renderModal()}
-      </nav>
+          {this.renderModal()}
+        </nav>
     );
   }
 
   renderEmptyNav() {
     return (
-      // NOTE: DO NOT REMOVE `Nav` CLASS FOR NOW, USED BY MODALS, FULLSCREEN DASHBOARD, ETC
-      // TODO: hide nav using state in redux instead?
-      <nav className="Nav sm-py1 relative">
-        <ul className="wrapper flex align-center">
-          <li>
-            <Link
-              to="/"
-              data-metabase-event={"Navbar;Logo"}
-              className="NavItem cursor-pointer flex align-center"
-            >
-              <LogoIcon className="text-brand my2" />
-            </Link>
-          </li>
-        </ul>
-        {this.renderModal()}
-      </nav>
+        // NOTE: DO NOT REMOVE `Nav` CLASS FOR NOW, USED BY MODALS, FULLSCREEN DASHBOARD, ETC
+        // TODO: hide nav using state in redux instead?
+        <nav className="Nav sm-py1 relative">
+          <ul className="wrapper flex align-center">
+            <li>
+              <Link
+                  to="/"
+                  data-metabase-event={"Navbar;Logo"}
+                  className="NavItem cursor-pointer flex align-center"
+              >
+                <LogoIcon className="text-brand my2" />
+              </Link>
+            </li>
+          </ul>
+          {this.renderModal()}
+        </nav>
     );
   }
 
   renderMainNav() {
     const hasDataAccess =
-      this.props.databases && this.props.databases.length > 0;
+        this.props.databases && this.props.databases.length > 0;
+    const hasSQLPermission = db => db.native_permissions === "write";
+    const showSQLOption =  this.props.databases &&
+        this.props.databases.filter(hasSQLPermission).length > 0;
+    const itemsNav = [
+      {
+        title: t`New dashboard`,
+        icon: `dashboard`,
+        action: () => this.setModal(MODAL_NEW_DASHBOARD),
+        event: `NavBar;New Dashboard Click;`,
+      }];
+    if (showSQLOption) {
+      itemsNav.push({
+        title: t`New pulse`,
+        icon: `pulse`,
+        link: Urls.newPulse(),
+        event: `NavBar;New Pulse Click;`,
+      });
+    }
     return (
-      <Flex
-        // NOTE: DO NOT REMOVE `Nav` CLASS FOR NOW, USED BY MODALS, FULLSCREEN DASHBOARD, ETC
-        // TODO: hide nav using state in redux instead?
-        className="Nav relative bg-brand text-white z3"
-        align="center"
-        py={1}
-        pr={2}
-      >
-        <Link
-          to="/"
-          data-metabase-event={"Navbar;Logo"}
-          className="relative cursor-pointer z2 rounded flex justify-center transition-background"
-          p={1}
-          mx={1}
-          hover={{ backgroundColor: DefaultSearchColor }}
-        >
-          <LogoIcon dark />
-        </Link>
         <Flex
-          className="absolute top left right bottom z1"
-          px={4}
-          align="center"
+            // NOTE: DO NOT REMOVE `Nav` CLASS FOR NOW, USED BY MODALS, FULLSCREEN DASHBOARD, ETC
+            // TODO: hide nav using state in redux instead?
+            className="Nav relative bg-brand text-white z3"
+            align="center"
+            py={1}
+            pr={2}
         >
-          <Box w={2 / 3}>
-            <SearchBar
-              location={this.props.location}
-              onChangeLocation={this.props.onChangeLocation}
+          <Link
+              to="/"
+              data-metabase-event={"Navbar;Logo"}
+              className="relative cursor-pointer z2 rounded flex justify-center transition-background"
+              p={1}
+              mx={1}
+              hover={{ backgroundColor: DefaultSearchColor }}
+          >
+            <LogoIcon dark />
+          </Link>
+          <Flex
+              className="absolute top left right bottom z1"
+              px={4}
+              align="center"
+          >
+            <Box w={2 / 3}>
+              <SearchBar
+                  location={this.props.location}
+                  onChangeLocation={this.props.onChangeLocation}
+              />
+            </Box>
+          </Flex>
+          <Flex ml="auto" align="center" className="relative z2">
+            {hasDataAccess && (
+                <Link
+                    to={Urls.newQuestion()}
+                    mx={2}
+                    className="hide sm-show"
+                    data-metabase-event={`NavBar;New Question`}
+                >
+                  <Button medium>{t`Ask a question`}</Button>
+                </Link>
+            )}
+            <EntityMenu
+                tooltip={t`Create`}
+                className="hide sm-show"
+                triggerIcon="add"
+                items={itemsNav}
             />
-          </Box>
+            <ProfileLink {...this.props} />
+          </Flex>
+          {this.renderModal()}
         </Flex>
-        <Flex ml="auto" align="center" className="relative z2">
-          {hasDataAccess && (
-            <Link
-              to={Urls.newQuestion()}
-              mx={2}
-              className="hide sm-show"
-              data-metabase-event={`NavBar;New Question`}
-            >
-              <Button medium>{t`Ask a question`}</Button>
-            </Link>
-          )}
-          <EntityMenu
-            tooltip={t`Create`}
-            className="hide sm-show"
-            triggerIcon="add"
-            items={[
-              {
-                title: t`New dashboard`,
-                icon: `dashboard`,
-                action: () => this.setModal(MODAL_NEW_DASHBOARD),
-                event: `NavBar;New Dashboard Click;`,
-              },
-              {
-                title: t`New pulse`,
-                icon: `pulse`,
-                link: Urls.newPulse(),
-                event: `NavBar;New Pulse Click;`,
-              },
-            ]}
-          />
-          {hasDataAccess && (
-            <Tooltip tooltip={t`Reference`}>
-              <Link to="reference" data-metabase-event={`NavBar;Reference`}>
-                <IconWrapper>
-                  <Icon name="reference" />
-                </IconWrapper>
-              </Link>
-            </Tooltip>
-          )}
-          <Tooltip tooltip={t`Activity`}>
-            <Link to="activity" data-metabase-event={`NavBar;Activity`}>
-              <IconWrapper>
-                <Icon name="bell" />
-              </IconWrapper>
-            </Link>
-          </Tooltip>
-          <ProfileLink {...this.props} />
-        </Flex>
-        {this.renderModal()}
-      </Flex>
     );
   }
 
@@ -347,14 +339,14 @@ export default class Navbar extends Component {
     const { modal } = this.state;
     if (modal) {
       return (
-        <Modal onClose={() => this.setState({ modal: null })}>
-          {modal === MODAL_NEW_DASHBOARD ? (
-            <CreateDashboardModal
-              createDashboard={this.props.createDashboard}
-              onClose={() => this.setState({ modal: null })}
-            />
-          ) : null}
-        </Modal>
+          <Modal onClose={() => this.setState({ modal: null })}>
+            {modal === MODAL_NEW_DASHBOARD ? (
+                <CreateDashboardModal
+                    createDashboard={this.props.createDashboard}
+                    onClose={() => this.setState({ modal: null })}
+                />
+            ) : null}
+          </Modal>
       );
     } else {
       return null;

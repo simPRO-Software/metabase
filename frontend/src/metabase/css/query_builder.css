@@ -285,7 +285,6 @@
 }
 
 .QueryError-adminEmail:before {
-  content: "Admin Email";
   font-size: 10px;
   text-align: center;
   text-transform: uppercase;

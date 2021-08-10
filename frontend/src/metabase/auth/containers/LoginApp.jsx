@@ -36,7 +36,9 @@ export default class LoginApp extends Component {
       credentials: {},
       valid: false,
       rememberMe: true,
+      hidden: true
     };
+    this.displayLogin = this.displayLogin.bind(this);
   }
 
   validateForm() {
@@ -100,6 +102,10 @@ export default class LoginApp extends Component {
     });
   }
 
+  displayLogin(e) {
+        this.setState({hidden : false});
+    }
+
   formSubmitted(e) {
     e.preventDefault();
 
@@ -115,7 +121,8 @@ export default class LoginApp extends Component {
 
     return (
       <div className="full bg-white flex flex-column flex-full md-layout-centered">
-        <div className="Login-wrapper wrapper Grid Grid--full md-Grid--1of2 relative z2">
+          <div style={{ marginBottom: '40px', color: '#6a6a6a', fontWeight: '700', fontSize: '1.50em'}}>Please sign in to BI Reporting from simPRO</div>
+          <div className={this.state.hidden ? 'Login-hide Login-wrapper wrapper Grid Grid--full md-Grid--1of2 relative z2' : 'Login-wrapper wrapper Grid Grid--full md-Grid--1of2 relative z2'}>
           <div className="Grid-cell flex layout-centered text-brand">
             <LogoIcon className="Logo my4 sm-my0" width={66} height={85} />
           </div>
@@ -125,7 +132,7 @@ export default class LoginApp extends Component {
               name="form"
               onSubmit={e => this.formSubmitted(e)}
             >
-              <h3 className="Login-header Form-offset">{t`Sign in to Metabase`}</h3>
+              <h3 className="Login-header Form-offset">{t`Administrator login`}</h3>
 
               {Settings.ssoEnabled() && (
                 <div className="mx4 mb4 py3 border-bottom relative">
@@ -233,6 +240,7 @@ export default class LoginApp extends Component {
           </div>
         </div>
         <AuthScene />
+          <div onClick={this.displayLogin} style={{ textAlign: 'center', cursor: 'pointer'}}>Admin Login</div>
       </div>
     );
   }

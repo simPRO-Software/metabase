@@ -304,7 +304,7 @@ const FieldGeneralPane = ({
     <Section>
       <SectionHeader
         title={t`Visibility`}
-        description={t`Where this field will appear throughout Metabase`}
+        description={t`Where this field will appear throughout BI Reporting`}
       />
       <div style={{ maxWidth: 400 }}>
         <FieldVisibilityPicker
@@ -362,7 +362,7 @@ const FieldGeneralPane = ({
     <Section last>
       <SectionHeader
         title={t`Cached field values`}
-        description={t`Metabase can scan the values for this field to enable checkbox filters in dashboards and questions.`}
+        description={t`BI Reporting can scan the values for this field to enable checkbox filters in dashboards and questions.`}
       />
       <UpdateCachedFieldValues
         rescanFieldValues={() => rescanFieldValues(field.id)}

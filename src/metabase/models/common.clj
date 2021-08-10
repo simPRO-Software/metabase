@@ -1,7 +1,7 @@
 (ns metabase.models.common)
 
 (def timezones
-  "The different timezones supported by Metabase.
+  "The different timezones supported by BI Reporting.
    Presented as options for the `report-timezone` Setting in the admin panel."
   ["Africa/Algiers"
    "Africa/Cairo"

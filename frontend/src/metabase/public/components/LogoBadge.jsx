@@ -19,7 +19,7 @@ const LogoBadge = ({ dark }: Props) => (
     <span className="text-small">
       <span className="ml1 text-medium">Powered by</span>{" "}
       <span className={cx({ "text-brand": !dark }, { "text-white": dark })}>
-        Metabase
+        BI Reporting
       </span>
     </span>
   </a>

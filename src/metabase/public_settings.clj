@@ -25,7 +25,7 @@
 
 (defsetting site-name
   (tru "The name used for this instance of Metabase.")
-  :default "Metabase")
+  :default "BI Reporting")
 
 (defsetting site-uuid
   ;; Don't i18n this docstring because it's not user-facing! :)
