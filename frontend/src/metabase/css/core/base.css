@@ -55,7 +55,7 @@
 }
 
 :root {
-  --default-font-family: "Lato";
+  --default-font-family: "Roboto";
   --default-font-size: 0.875em;
   --default-font-color: var(--color-text-dark);
   --default-bg-color: var(--color-bg-light);

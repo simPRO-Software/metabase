@@ -47,7 +47,7 @@ export default class ForgotPasswordApp extends Component {
                       {
                         name: "email",
                         title: t`Email address`,
-                        placeholder: t`The email you use for your Metabase account`,
+                        placeholder: t`The email you use for your Report Builder account`,
                         validate: validate.email(),
                       },
                     ],
