@@ -23,6 +23,20 @@
 
     <base href="{{{baseHref}}}" />
 
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-102747842-6"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-102747842-6', {
+        // Allow the user to be tracked when navigating from a simprosuite.com address to a simprocloud.com address.
+        // https://developers.google.com/analytics/devguides/collection/gtagjs/cross-domain
+        'linker': {
+          'domains': ['simprocloud.com']
+        }
+      });
+    </script>
+
     <script type="application/json" id="_metabaseBootstrap">
       {{{bootstrapJSON}}}
     </script>
@@ -46,7 +60,7 @@
     <!-- Google Analytics -->
     <!-- If you modify this script, make sure you update the whitelisted Content-Security-Policy hash in metabase.server.middleware.security -->
     {{#enableAnonTracking}}
-      <script type="text/javascript">{{{googleAnalyticsJS}}}</script>
+      <!--<script type="text/javascript">{{{googleAnalyticsJS}}}</script>-->
     {{/enableAnonTracking}}
   </body>
 </html>

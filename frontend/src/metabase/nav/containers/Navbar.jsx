@@ -106,7 +106,7 @@ export default class Navbar extends Component {
         <div className="sm-pl4 flex align-center pr1">
           <div className="NavTitle flex align-center">
             <Icon name={"gear"} className="AdminGear" size={22} />
-            <span className="NavItem-text ml1 hide sm-show text-bold">{t`Metabase Admin`}</span>
+            <span className="NavItem-text ml1 hide sm-show text-bold">{t`Report Builder Admin`}</span>
           </div>
 
           <ul className="sm-ml4 flex flex-full">
@@ -269,13 +269,7 @@ export default class Navbar extends Component {
                 icon: `dashboard`,
                 action: () => this.setModal(MODAL_NEW_DASHBOARD),
                 event: `NavBar;New Dashboard Click;`,
-              },
-              {
-                title: t`New pulse`,
-                icon: `pulse`,
-                link: Urls.newPulse(),
-                event: `NavBar;New Pulse Click;`,
-              },
+              }
             ]}
           />
           {hasNativeWrite && (
