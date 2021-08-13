@@ -1,9 +1,3 @@
-/*global ga*/
-
-import MetabaseSettings from "metabase/lib/settings";
-
-import { DEBUG } from "metabase/lib/debug";
-
 // Simple module for in-app analytics.  Currently sends data to GA but could be extended to anything else.
 const MetabaseAnalytics = {
   // track a pageview (a.k.a. route change)

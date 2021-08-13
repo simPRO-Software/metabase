@@ -39,14 +39,6 @@ export default class ProfileLink extends Component {
     const admin = this.props.user.is_superuser;
     const adminContext = this.props.context === "admin";
     return [
-      ...(admin && [
-        {
-          title: t`Account settings`,
-          icon: null,
-          link: Urls.accountSettings(),
-          event: `Navbar;Profile Dropdown;Edit Profile`,
-        },
-      ]),
       ...(MetabaseSettings.isHosted() &&
         admin && [
           {
@@ -64,6 +56,14 @@ export default class ProfileLink extends Component {
           event: `Navbar;Profile Dropdown;${
             adminContext ? "Exit Admin" : "Enter Admin"
           }`,
+        },
+      ]),
+      ...(admin && [
+        {
+          title: t`Account settings`,
+          icon: null,
+          link: Urls.accountSettings(),
+          event: `Navbar;Profile Dropdown;Edit Profile`,
         },
       ]),
       {
@@ -95,7 +95,7 @@ export default class ProfileLink extends Component {
     const adminContext = this.props.context === "admin";
     const { tag, date, ...versionExtra } = MetabaseSettings.get("version");
     // don't show trademark if application name is whitelabeled
-    const showTrademark = t`Metabase` === "Metabase";
+    //const showTrademark = t`Metabase` === "Metabase";
     return (
       <Box>
         <EntityMenu
