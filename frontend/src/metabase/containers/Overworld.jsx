@@ -238,104 +238,6 @@ class Overworld extends React.Component {
             </Link>
           </Box>
         </Box>
-        {showHomepageData && (
-          <Database.ListLoader>
-            {({ databases }) => {
-              if (databases.length === 0) {
-                return null;
-              }
-              return (
-                <Box
-                  pt={2}
-                  px={PAGE_PADDING}
-                  className="hover-parent hover--visibility"
-                >
-                  <SectionHeading>
-                    <Flex align="center">
-                      {t`Our data`}
-                      {user.is_superuser && (
-                        <ModalWithTrigger
-                          triggerElement={
-                            <Tooltip tooltip={t`Hide this section`}>
-                              <Icon
-                                ml="4"
-                                name="close"
-                                className="block hover-child text-brand-hover"
-                              />
-                            </Tooltip>
-                          }
-                          title={t`Remove this section?`}
-                          footer={
-                            <Button
-                              danger
-                              onClick={onClose => {
-                                updateSetting({
-                                  key: "show-homepage-data",
-                                  value: false,
-                                });
-                              }}
-                            >
-                              {t`Remove`}
-                            </Button>
-                          }
-                        >
-                          <Box>
-                            {t`"Our Data" won’t show up on the homepage for any of your users anymore, but you can always browse through your databases and tables by clicking Browse Data in the main navigation.`}
-                          </Box>
-                        </ModalWithTrigger>
-                      )}
-                    </Flex>
-                  </SectionHeading>
-                  <Box mb={4}>
-                    <Grid>
-                      {databases.map(database => (
-                        <GridItem w={[1, 1 / 3]} key={database.id}>
-                          <Link
-                            to={Urls.browseDatabase(database)}
-                            hover={{ color: color("brand") }}
-                            data-metabase-event={`Homepage;Browse DB Clicked; DB Type ${database.engine}`}
-                          >
-                            <Box
-                              p={3}
-                              bg={color("bg-medium")}
-                              className="hover-parent hover--visibility"
-                            >
-                              <Icon
-                                name="database"
-                                color={color("database")}
-                                mb={3}
-                                size={28}
-                              />
-                              <Flex align="center">
-                                <h3 className="text-wrap">{database.name}</h3>
-                                <Box ml="auto" mr={1} className="hover-child">
-                                  <Flex align="center">
-                                    <Tooltip
-                                      tooltip={t`Learn about this database`}
-                                    >
-                                      <Link
-                                        to={`reference/databases/${database.id}`}
-                                      >
-                                        <Icon
-                                          name="reference"
-                                          color={color("text-light")}
-                                        />
-                                      </Link>
-                                    </Tooltip>
-                                  </Flex>
-                                </Box>
-                              </Flex>
-                            </Box>
-                          </Link>
-                        </GridItem>
-                      ))}
-                    </Grid>
-                  </Box>
-                </Box>
-              );
-            }}
-          </Database.ListLoader>
-        )}
       </Box>
     );
   }
@@ -398,12 +300,11 @@ export class AdminPinMessage extends React.Component {
 
 const SectionHeading = ({ children }) => (
   <Box mb={1}>
-    <h5
-      className="text-uppercase"
-      style={{ color: color("text-medium"), fontWeight: 900 }}
+    <h1
+      style={{fontWeight: 900 }}
     >
       {children}
-    </h5>
+    </h1>
   </Box>
 );
 

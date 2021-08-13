@@ -32,6 +32,7 @@ import {
   getPlainNativeQuery,
 } from "metabase/new_query/selectors";
 import Database from "metabase/entities/databases";
+import {getMetadata} from "metabase/selectors/metadata";
 
 const mapStateToProps = (state, props) => ({
   path: getPath(state, props),
@@ -40,6 +41,7 @@ const mapStateToProps = (state, props) => ({
   plainNativeQuery: getPlainNativeQuery(state),
   hasDataAccess: getHasDataAccess(state),
   hasNativeWrite: getHasNativeWrite(state),
+  metadata: getMetadata(state)
 });
 
 import { DefaultSearchColor } from "metabase/nav/constants";
