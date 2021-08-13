@@ -58,14 +58,12 @@ export default class ProfileLink extends Component {
           }`,
         },
       ]),
-      ...(admin && [
-        {
-          title: t`Account settings`,
-          icon: null,
-          link: Urls.accountSettings(),
-          event: `Navbar;Profile Dropdown;Edit Profile`,
-        },
-      ]),
+      {
+        title: t`Account settings`,
+        icon: null,
+        link: Urls.accountSettings(),
+        event: `Navbar;Profile Dropdown;Edit Profile`,
+      },
       {
         title: t`Activity`,
         icon: null,

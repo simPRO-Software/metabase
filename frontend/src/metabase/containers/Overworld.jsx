@@ -24,7 +24,6 @@ import * as Urls from "metabase/lib/urls";
 import { color } from "metabase/lib/colors";
 import Greeting from "metabase/lib/greeting";
 
-import Database from "metabase/entities/databases";
 import Search from "metabase/entities/search";
 import { ROOT_COLLECTION } from "metabase/entities/collections";
 
@@ -67,7 +66,6 @@ class Overworld extends React.Component {
     const {
       greeting,
       user,
-      showHomepageData,
       showHomepageXrays,
       updateSetting,
     } = this.props;
