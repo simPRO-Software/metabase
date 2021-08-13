@@ -73,10 +73,7 @@ const MODAL_NEW_DASHBOARD = "MODAL_NEW_DASHBOARD";
   // set this to false to prevent a potential spinner on the main nav
   loadingAndErrorWrapper: false,
 })
-@connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)
+@connect(mapStateToProps, mapDispatchToProps)
 export default class Navbar extends Component {
   state = {
     modal: null,
@@ -269,7 +266,7 @@ export default class Navbar extends Component {
                 icon: `dashboard`,
                 action: () => this.setModal(MODAL_NEW_DASHBOARD),
                 event: `NavBar;New Dashboard Click;`,
-              }
+              },
             ]}
           />
           {hasNativeWrite && (
