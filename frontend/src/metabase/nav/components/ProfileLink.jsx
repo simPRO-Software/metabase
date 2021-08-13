@@ -77,6 +77,12 @@ export default class ProfileLink extends Component {
         externalLink: true,
         event: `Navbar;Profile Dropdown;About ${tag}`,
       },
+      {
+        title: t`About Metabase`,
+        icon: null,
+        action: () => this.openModal("about"),
+        event: `Navbar;Profile Dropdown;About ${tag}`,
+      },
       ...(admin && [
         {
           title: t`Sign out`,
