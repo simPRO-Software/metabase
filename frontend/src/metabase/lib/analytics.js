@@ -7,10 +7,10 @@ const MetabaseAnalytics = {
   trackEvent: function (
     category: string,
     action?: ?string,
-  label?: ?(string | number | boolean),
-  value?: ?number
-) {},
-};
+    label?: ?(string | number | boolean),
+    value?: ?number
+  ) {}
+}
 
 export default MetabaseAnalytics;
 
