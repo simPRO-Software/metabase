@@ -6,7 +6,7 @@ pipeline {
     }
   }
   environment {
-    HOME = "/.cache
+    HOME = "/.cache"
   }
   stages {
     stage("print env variables") {
