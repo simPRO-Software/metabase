@@ -70,6 +70,11 @@
 
 ;;; ## API Endpoints
 
+(def ^:private login-throttlers
+  {:username   (throttle/make-throttler :username)
+   ;; IP Address doesn't have an actual UI field so just show error by username
+   :ip-address (throttle/make-throttler :username, :attempts-threshold 50)})
+
 (def ^:private password-fail-message (deferred-tru "Password did not match stored password."))
 (def ^:private password-fail-snippet (deferred-tru "did not match stored password"))
 
@@ -165,7 +170,8 @@
     (if throttling-disabled?
       (do-login)
       (http-401-on-error
-       (throttle/with-throttling []
+       (throttle/with-throttling [(login-throttlers :ip-address) ip-address
+                                  (login-throttlers :username)   username]
            (do-login))))))
 
 
