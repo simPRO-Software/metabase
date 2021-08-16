@@ -272,7 +272,7 @@
   (if throttling-disabled?
     (google/do-google-auth request)
     (http-401-on-error
-     (throttle/with-throttling [() (request.u/ip-address request)]
+     (throttle/with-throttling [(login-throttlers :ip-address) (request.u/ip-address request)]
        (let [user (google/do-google-auth request)
              {session-uuid :id, :as session} (create-session! :sso user (request.u/device-info request))
              response {:id (str session-uuid)}
