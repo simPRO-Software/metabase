@@ -122,7 +122,7 @@ export default class ProfileLink extends Component {
               <h2
                 style={{ fontSize: "1.75em" }}
                 className="text-dark"
-              >{t`Thanks for using Report Builder!`}</h2>
+              >{t`Thanks for using BI Reporting!`}</h2>
               <div className="pt2">
                 <h3 className="text-dark mb1">
                   {t`You're on version`} {tag}
