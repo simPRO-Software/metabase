@@ -9,7 +9,6 @@ import CollectionItemsLoader from "metabase/containers/CollectionItemsLoader";
 import CandidateListLoader from "metabase/containers/CandidateListLoader";
 import ExplorePane from "metabase/components/ExplorePane";
 import Tooltip from "metabase/components/Tooltip";
-import MetabotLogo from "metabase/components/MetabotLogo";
 import CollectionList from "metabase/components/CollectionList";
 import ModalWithTrigger from "metabase/components/ModalWithTrigger";
 import Button from "metabase/components/Button";
@@ -18,7 +17,6 @@ import Card from "metabase/components/Card";
 import { Grid, GridItem } from "metabase/components/Grid";
 import Icon from "metabase/components/Icon";
 import Link from "metabase/components/Link";
-import Subhead from "metabase/components/type/Subhead";
 
 import * as Urls from "metabase/lib/urls";
 import { color } from "metabase/lib/colors";
@@ -62,17 +60,9 @@ const getGreeting = createSelector([getUser], (user) =>
 )
 class Overworld extends React.Component {
   render() {
-    const { greeting, user, showHomepageXrays, updateSetting } = this.props;
+    const { user, showHomepageXrays, updateSetting } = this.props;
     return (
       <Box>
-        <Flex px={PAGE_PADDING} pt={3} pb={1} align="center">
-          <Tooltip tooltip={t`Don't tell anyone, but you're my favorite.`}>
-            <MetabotLogo />
-          </Tooltip>
-          <Box ml={2}>
-            <Subhead>{greeting}</Subhead>
-          </Box>
-        </Flex>
         <CollectionItemsLoader collectionId="root">
           {({ items }) => {
             if (showHomepageXrays && !items.length > 0) {
