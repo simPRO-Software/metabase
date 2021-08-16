@@ -36,8 +36,9 @@ import {
 const PAGE_PADDING = [1, 2, 4];
 const ROOT_COLLECTIONS_LOAD_LIMIT = 500;
 
-const getGreeting = createSelector([getUser], (user) =>
-  Greeting.sayHello(user.first_name)
+const getGreeting = createSelector(
+  [getUser],
+  user => Greeting.sayHello(user.first_name),
 );
 
 //class Overworld extends Zelda
@@ -56,7 +57,7 @@ const getGreeting = createSelector([getUser], (user) =>
     showHomepageXrays: getShowHomepageXrays(state),
     greeting: getGreeting(state, props),
   }),
-  { updateSetting }
+  { updateSetting },
 )
 class Overworld extends React.Component {
   render() {
@@ -100,7 +101,7 @@ class Overworld extends React.Component {
                                   footer={
                                     <Button
                                       danger
-                                      onClick={(onClose) => {
+                                      onClick={onClose => {
                                         updateSetting({
                                           key: "show-homepage-xrays",
                                           value: false,
@@ -143,7 +144,7 @@ class Overworld extends React.Component {
               <Box px={PAGE_PADDING} mt={2}>
                 <SectionHeading>{t`Start here`}</SectionHeading>
                 <Grid>
-                  {items.map((pin) => {
+                  {items.map(pin => {
                     return (
                       <GridItem
                         w={[1, 1 / 2, 1 / 3]}
@@ -177,7 +178,7 @@ class Overworld extends React.Component {
         <Box px={PAGE_PADDING} my={3}>
           <SectionHeading>{ROOT_COLLECTION.name}</SectionHeading>
           <Box p={[1, 2]} mt={2} bg={color("bg-medium")}>
-            {this.props.list.filter((c) => c.id !== user.personal_collection_id)
+            {this.props.list.filter(c => c.id !== user.personal_collection_id)
               .length > 0 ? (
               <CollectionList
                 collections={this.props.list}
