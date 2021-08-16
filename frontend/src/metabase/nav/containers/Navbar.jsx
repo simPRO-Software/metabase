@@ -32,7 +32,7 @@ import {
   getPlainNativeQuery,
 } from "metabase/new_query/selectors";
 import Database from "metabase/entities/databases";
-import {getMetadata} from "metabase/selectors/metadata";
+import { getMetadata } from "metabase/selectors/metadata";
 
 const mapStateToProps = (state, props) => ({
   path: getPath(state, props),
@@ -41,7 +41,7 @@ const mapStateToProps = (state, props) => ({
   plainNativeQuery: getPlainNativeQuery(state),
   hasDataAccess: getHasDataAccess(state),
   hasNativeWrite: getHasNativeWrite(state),
-  metadata: getMetadata(state)
+  metadata: getMetadata(state),
 });
 
 import { DefaultSearchColor } from "metabase/nav/constants";
@@ -75,7 +75,10 @@ const MODAL_NEW_DASHBOARD = "MODAL_NEW_DASHBOARD";
   // set this to false to prevent a potential spinner on the main nav
   loadingAndErrorWrapper: false,
 })
-@connect(mapStateToProps, mapDispatchToProps)
+@connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)
 export default class Navbar extends Component {
   state = {
     modal: null,
