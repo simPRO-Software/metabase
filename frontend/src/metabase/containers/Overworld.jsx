@@ -30,7 +30,6 @@ import { updateSetting } from "metabase/admin/settings/settings";
 import { getUser } from "metabase/home/selectors";
 import {
   getShowHomepageData,
-  getShowHomepageXrays,
 } from "metabase/selectors/settings";
 
 const PAGE_PADDING = [1, 2, 4];
@@ -54,7 +53,6 @@ const getGreeting = createSelector(
   (state, props) => ({
     user: getUser(state, props),
     showHomepageData: getShowHomepageData(state),
-    //showHomepageXrays: getShowHomepageXrays(state),
     showHomepageXrays: false,
     greeting: getGreeting(state, props),
   }),
