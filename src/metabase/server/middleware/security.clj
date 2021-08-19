@@ -63,6 +63,23 @@
                                    "https://www.google-analytics.com" ; Safari requires the protocol
                                    "https://*.googleapis.com"
                                    "*.gstatic.com"
+                                   "https://cdn.walkme.com"
+                                   "https://playerserver.walkme.com"
+                                   "https://ec.walkme.com"
+                                   "https://rapi.walkme.com"
+                                   "https://papi.walkme.com"
+                                   "https://editor.walkme.com"
+                                   "https://insights2.walkme.com"
+                                   "https://analytics.walkme.com"
+                                   "https://insights.walkme.com/"
+                                   "https://api.walkme.com/"
+                                   "https://dap.walkme.com/"
+                                   "https://editorsite.walkme.com"
+                                   "*.walkme.com"
+                                   "https://s3.amazonaws.com"
+                                   "https://d3sbxpiag177w8.cloudfront.net"
+                                   "https://d2qhvajt3imc89.cloudfront.net"
+                                   "https://d3b3ehuo35wzeh.cloudfront.net"
                                    ;; for webpack hot reloading
                                    (when config/is-dev?
                                      "localhost:8080")
@@ -73,6 +90,23 @@
                                    (when-not config/is-dev?
                                      (map (partial format "'sha256-%s'") inline-js-hashes)))
                   :child-src    ["'self'"
+                   "https://cdn.walkme.com"
+                   "https://playerserver.walkme.com"
+                   "https://ec.walkme.com"
+                   "https://rapi.walkme.com"
+                   "https://papi.walkme.com"
+                   "https://editor.walkme.com"
+                   "https://insights2.walkme.com"
+                   "https://analytics.walkme.com"
+                   "https://insights.walkme.com/"
+                   "https://api.walkme.com/"
+                   "https://dap.walkme.com/"
+                   "https://editorsite.walkme.com"
+                   "*.walkme.com"
+                   "https://s3.amazonaws.com"
+                   "https://d3sbxpiag177w8.cloudfront.net"
+                   "https://d2qhvajt3imc89.cloudfront.net"
+                   "https://d3b3ehuo35wzeh.cloudfront.net"
                                  ;; TODO - double check that we actually need this for Google Auth
                                  "https://accounts.google.com"]
                   :style-src    ["'self'"
@@ -84,7 +118,24 @@
                                  "'self' data:"]
                   :connect-src  ["'self'"
                                  ;; MailChimp. So people can sign up for the Metabase mailing list in the sign up process
-                                 "metabase.us10.list-manage.com"
+                                  "metabase.us10.list-manage.com"
+                                  "https://cdn.walkme.com"
+                                  "https://playerserver.walkme.com"
+                                  "https://ec.walkme.com"
+                                  "https://rapi.walkme.com"
+                                  "https://papi.walkme.com"
+                                  "https://editor.walkme.com"
+                                  "https://insights2.walkme.com"
+                                  "https://analytics.walkme.com"
+                                  "https://insights.walkme.com/"
+                                  "https://api.walkme.com/"
+                                  "https://dap.walkme.com/"
+                                  "https://editorsite.walkme.com"
+                                  "*.walkme.com"
+                                  "https://s3.amazonaws.com"
+                                  "https://d3sbxpiag177w8.cloudfront.net"
+                                  "https://d2qhvajt3imc89.cloudfront.net"
+                                  "https://d3b3ehuo35wzeh.cloudfront.net"
                                  (when config/is-dev?
                                    "localhost:8080 ws://localhost:8080")]
                   :manifest-src ["'self'"]}]
