@@ -158,6 +158,7 @@
        :where     [:and
                    [:= :p.collection_id      (:id collection)]
                    [:= :p.archived           (boolean archived?)]
+                   [:= :p.simpro_removed false]
                    ;; exclude alerts
                    [:= :p.alert_condition    nil]
                    ;; exclude dashboard subscriptions
@@ -203,6 +204,7 @@
                    [:core_user :u] [:= :u.id :r.user_id]]
        :where     [:and
                    [:= :collection_id (:id collection)]
+                   [:= :simpro_removed false]
                    [:= :archived (boolean archived?)]]}
       (h/merge-where (pinned-state->clause pinned-state))))
 

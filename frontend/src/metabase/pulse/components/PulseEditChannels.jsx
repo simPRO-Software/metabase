@@ -258,7 +258,12 @@ export default class PulseEditChannels extends Component {
     const { pulse, user } = this.props;
     const channels = pulse.channels
       .map((c, i) => [c, i])
-      .filter(([c, i]) => c.enabled && c.channel_type === channelSpec.type)
+      .filter(
+        ([c, i]) =>
+          c.enabled &&
+          c.channel_type === channelSpec.type &&
+          c.channel_type !== "slack",
+      )
       .map(([channel, index]) =>
         this.renderChannel(channel, index, channelSpec),
       );
