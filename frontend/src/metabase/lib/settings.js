@@ -157,6 +157,10 @@ class Settings {
     return `https://www.metabase.com/docs/${tag}/${page}${anchor}`;
   }
 
+  helpUrl() {
+    return `https://helpguide.simprogroup.com/Content/Service-and-Enterprise/Report-builder.htm`;
+  }
+
   storeUrl(path = "") {
     return `https://store.metabase.com/${path}`;
   }

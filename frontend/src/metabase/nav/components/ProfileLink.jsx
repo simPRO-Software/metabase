@@ -73,7 +73,7 @@ export default class ProfileLink extends Component {
       {
         title: t`Help`,
         icon: null,
-        link: MetabaseSettings.docsUrl(),
+        link: MetabaseSettings.helpUrl(),
         externalLink: true,
         event: `Navbar;Profile Dropdown;About ${tag}`,
       },

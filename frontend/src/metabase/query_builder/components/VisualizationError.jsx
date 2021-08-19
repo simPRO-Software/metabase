@@ -14,8 +14,8 @@ const EmailAdmin = () => {
   return (
     adminEmail && (
       <span className="QueryError-adminEmail">
-        <a className="no-decoration" href={`mailto:${adminEmail}`}>
-          {adminEmail}
+        <a className="no-decoration" href="https://helpdesk.simprogroup.com/">
+          helpdesk.simprogroup.com
         </a>
       </span>
     )
