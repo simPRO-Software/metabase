@@ -294,14 +294,6 @@ const TagEditorHelp = ({
         datasetQuery={examples.optionalDimension}
         setDatasetQuery={setQueryWithDatasetId}
       />
-
-      <p className="pt2 link">
-        <ExternalLink
-          href={MetabaseSettings.docsUrl("users-guide/13-sql-parameters")}
-          target="_blank"
-          data-metabase-event={"QueryBuilder;Template Tag Documentation Click"}
-        >{t`Read the full documentation`}</ExternalLink>
-      </p>
     </div>
   );
 };
