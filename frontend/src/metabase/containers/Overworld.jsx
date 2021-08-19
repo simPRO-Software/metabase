@@ -54,7 +54,8 @@ const getGreeting = createSelector(
   (state, props) => ({
     user: getUser(state, props),
     showHomepageData: getShowHomepageData(state),
-    showHomepageXrays: getShowHomepageXrays(state),
+    //showHomepageXrays: getShowHomepageXrays(state),
+    showHomepageXrays: false,
     greeting: getGreeting(state, props),
   }),
   { updateSetting },
