@@ -28,9 +28,7 @@ import { ROOT_COLLECTION } from "metabase/entities/collections";
 import { updateSetting } from "metabase/admin/settings/settings";
 
 import { getUser } from "metabase/home/selectors";
-import {
-  getShowHomepageData,
-} from "metabase/selectors/settings";
+import { getShowHomepageData } from "metabase/selectors/settings";
 
 const PAGE_PADDING = [1, 2, 4];
 const ROOT_COLLECTIONS_LOAD_LIMIT = 500;
