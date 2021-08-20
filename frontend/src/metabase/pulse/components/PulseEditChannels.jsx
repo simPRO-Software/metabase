@@ -267,33 +267,35 @@ export default class PulseEditChannels extends Component {
       .map(([channel, index]) =>
         this.renderChannel(channel, index, channelSpec),
       );
-    return (
-      <li key={channelSpec.type} className="border-row-divider">
-        <div className="flex align-center p3 border-row-divider">
-          {CHANNEL_ICONS[channelSpec.type] && (
-            <Icon
-              className="mr1 text-light"
-              name={CHANNEL_ICONS[channelSpec.type]}
-              size={28}
+    if (channelSpec.type === "email") {
+      return (
+        <li key={channelSpec.type} className="border-row-divider">
+          <div className="flex align-center p3 border-row-divider">
+            {CHANNEL_ICONS[channelSpec.type] && (
+              <Icon
+                className="mr1 text-light"
+                name={CHANNEL_ICONS[channelSpec.type]}
+                size={28}
+              />
+            )}
+            <h2>{channelSpec.name}</h2>
+            <Toggle
+              className="flex-align-right"
+              value={channels.length > 0}
+              onChange={this.toggleChannel.bind(this, channelSpec.type)}
             />
-          )}
-          <h2>{channelSpec.name}</h2>
-          <Toggle
-            className="flex-align-right"
-            value={channels.length > 0}
-            onChange={this.toggleChannel.bind(this, channelSpec.type)}
-          />
-        </div>
-        {channels.length > 0 && channelSpec.configured ? (
-          <ul className="bg-light px3">{channels}</ul>
-        ) : channels.length > 0 && !channelSpec.configured ? (
-          <div className="p4 text-centered">
-            <h3 className="mb2">{t`${channelSpec.name} needs to be set up by an administrator.`}</h3>
-            <ChannelSetupMessage user={user} channels={[channelSpec.name]} />
           </div>
-        ) : null}
-      </li>
-    );
+          {channels.length > 0 && channelSpec.configured ? (
+            <ul className="bg-light px3">{channels}</ul>
+          ) : channels.length > 0 && !channelSpec.configured ? (
+            <div className="p4 text-centered">
+              <h3 className="mb2">{t`${channelSpec.name} needs to be set up by an administrator.`}</h3>
+              <ChannelSetupMessage user={user} channels={[channelSpec.name]} />
+            </div>
+          ) : null}
+        </li>
+      );
+    }
   }
 
   render() {
