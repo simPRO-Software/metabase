@@ -1,6 +1,5 @@
 /* eslint-disable react/prop-types */
 import React, { Component } from "react";
-import { Box, Flex } from "grid-styled";
 import PropTypes from "prop-types";
 import { t, jt, ngettext, msgid } from "ttag";
 
@@ -14,14 +13,10 @@ import WhatsAPulse from "./WhatsAPulse";
 import ActionButton from "metabase/components/ActionButton";
 import Button from "metabase/components/Button";
 import DeleteModalWithConfirm from "metabase/components/DeleteModalWithConfirm";
-import Icon from "metabase/components/Icon";
 import MetabaseAnalytics from "metabase/lib/analytics";
 import ModalWithTrigger from "metabase/components/ModalWithTrigger";
 import ModalContent from "metabase/components/ModalContent";
-import Subhead from "metabase/components/type/Subhead";
-import Text from "metabase/components/type/Text";
 
-import { color } from "metabase/lib/colors";
 import MetabaseSettings from "metabase/lib/settings";
 import { pulseIsValid, cleanPulse, emailIsEnabled } from "metabase/lib/pulse";
 import * as Urls from "metabase/lib/urls";
@@ -143,12 +138,6 @@ export default class PulseEdit extends Component {
     const { pulse, formInput } = this.props;
     const isValid = pulseIsValid(pulse, formInput.channels);
     const attachmentsEnabled = emailIsEnabled(pulse);
-    const link = (
-      <a
-        className="link"
-        href={MetabaseSettings.docsUrl("users-guide/dashboard-subscriptions")}
-      >{t`dashboard subscriptions`}</a>
-    );
     return (
       <div className="PulseEdit">
         <div className="PulseEdit-header flex align-center border-bottom py3">
