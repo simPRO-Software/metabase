@@ -58,18 +58,22 @@ export default class ProfileLink extends Component {
           }`,
         },
       ]),
-      {
-        title: t`Account settings`,
-        icon: null,
-        link: Urls.accountSettings(),
-        event: `Navbar;Profile Dropdown;Edit Profile`,
-      },
-      {
-        title: t`Activity`,
-        icon: null,
-        link: "/activity",
-        event: `Navbar;Profile Dropdown;Activity ${tag}`,
-      },
+      ...(admin && [
+        {
+          title: t`Account settings`,
+          icon: null,
+          link: Urls.accountSettings(),
+          event: `Navbar;Profile Dropdown;Edit Profile`,
+        },
+      ]),
+      ...(admin && [
+        {
+          title: t`Activity`,
+          icon: null,
+          link: "/activity",
+          event: `Navbar;Profile Dropdown;Activity ${tag}`,
+        },
+      ]),
       {
         title: t`Help`,
         icon: null,
@@ -77,18 +81,22 @@ export default class ProfileLink extends Component {
         externalLink: true,
         event: `Navbar;Profile Dropdown;About ${tag}`,
       },
-      {
-        title: t`About Metabase`,
-        icon: null,
-        action: () => this.openModal("about"),
-        event: `Navbar;Profile Dropdown;About ${tag}`,
-      },
-      {
-        title: t`Sign out`,
-        icon: null,
-        link: "auth/logout",
-        event: `Navbar;Profile Dropdown;Logout`,
-      },
+      ...(admin && [
+        {
+          title: t`About Metabase`,
+          icon: null,
+          action: () => this.openModal("about"),
+          event: `Navbar;Profile Dropdown;About ${tag}`,
+        },
+      ]),
+      ...(admin && [
+        {
+          title: t`Sign out`,
+          icon: null,
+          link: "auth/logout",
+          event: `Navbar;Profile Dropdown;Logout`,
+        },
+      ]),
     ];
   };
 

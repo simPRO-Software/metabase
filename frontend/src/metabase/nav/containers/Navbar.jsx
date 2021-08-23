@@ -14,7 +14,7 @@ import { Flex, Box } from "grid-styled";
 import * as Urls from "metabase/lib/urls";
 import { color, darken } from "metabase/lib/colors";
 
-import Icon, { IconWrapper } from "metabase/components/Icon";
+import Icon from "metabase/components/Icon";
 import EntityMenu from "metabase/components/EntityMenu";
 import Link from "metabase/components/Link";
 import LogoIcon from "metabase/components/LogoIcon";
@@ -187,7 +187,7 @@ export default class Navbar extends Component {
   }
 
   renderMainNav() {
-    const { hasDataAccess, hasNativeWrite } = this.props;
+    const { hasDataAccess } = this.props;
 
     return (
       <Flex
@@ -241,25 +241,6 @@ export default class Navbar extends Component {
               <h4 className="hide sm-show ml1 text-nowrap">{t`Ask a question`}</h4>
             </Link>
           )}
-          {hasDataAccess && (
-            <IconWrapper
-              className="relative hide sm-show mr1 overflow-hidden"
-              hover={NavHover}
-            >
-              <Link
-                to="browse"
-                className="flex align-center rounded transition-background"
-                data-metabase-event={`NavBar;Data Browse`}
-              >
-                <Icon
-                  name="table_spaced"
-                  size={14}
-                  p={"11px"}
-                  tooltip={t`Browse data`}
-                />
-              </Link>
-            </IconWrapper>
-          )}
           <EntityMenu
             tooltip={t`Create`}
             className="hide sm-show mr1"
@@ -280,20 +261,6 @@ export default class Navbar extends Component {
               },
             ]}
           />
-          {hasNativeWrite && (
-            <IconWrapper
-              className="relative hide sm-show mr1 overflow-hidden"
-              hover={NavHover}
-            >
-              <Link
-                to={this.props.plainNativeQuery.question().getUrl()}
-                className="flex align-center"
-                data-metabase-event={`NavBar;SQL`}
-              >
-                <Icon size={18} p={"11px"} name="sql" tooltip={t`Write SQL`} />
-              </Link>
-            </IconWrapper>
-          )}
           <ProfileLink {...this.props} />
         </Flex>
         {this.renderModal()}

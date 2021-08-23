@@ -174,21 +174,6 @@ export default class PulseEdit extends Component {
           </ModalWithTrigger>
         </div>
         <div className="PulseEdit-content pt2 pb4">
-          <Flex
-            bg={color("bg-medium")}
-            p={2}
-            my={3}
-            align="top"
-            style={{ borderRadius: 8 }}
-            className="hover-parent hover--visibility"
-          >
-            <Icon name="warning" color={color("warning")} size={24} mr={1} />
-            <Box ml={1}>
-              <Subhead>{t`Pulses are being phased out`}</Subhead>
-              <Text>{jt`You can now set up ${link} instead. We'll remove Pulses in a future release, and help you migrate any that you still have.`}</Text>
-            </Box>
-          </Flex>
-
           <PulseEditName {...this.props} setPulse={this.setPulse} />
           <PulseEditCollection {...this.props} setPulse={this.setPulse} />
           <PulseEditCards

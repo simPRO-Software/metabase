@@ -129,10 +129,6 @@ export default class SettingsSetupList extends Component {
             )}
           </LoadingAndErrorWrapper>
         </div>
-
-        {!MetabaseSettings.isHosted() && !MetabaseSettings.isEnterprise() && (
-          <MarginHostingCTA tagline={t`Have your server maintained for you.`} />
-        )}
       </Flex>
     );
   }
