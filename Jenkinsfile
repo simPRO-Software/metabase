@@ -1,8 +1,8 @@
 pipeline {
   agent {
     docker {
-      image 'metabasepackage'
-      args '-v /.npm:/.npm -v /.cache:/.cache -v /.yarn:/.yarn'
+      image 'metabase/ci:java-11-lein-2.9.6-clj-1.10.3.822-04-22-2021'
+      args '-v `pwd`:/app -w /app -v /.npm:/.npm -v /.cache:/.cache -v /.yarn:/.yarn'
     }
   }
   environment {
@@ -18,7 +18,7 @@ pipeline {
     }
     stage("run build") {
       steps {
-        sh './bin/build no-translations'
+        sh './bin/build'
       }
     }
   }
