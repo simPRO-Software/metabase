@@ -16,21 +16,19 @@ pipeline {
         }
       }
     }
-    stage("run build") {
+    stage("Clean workspace") {
       steps {
+        // When the build runs, it creates a bunch of files as root.
+        // These files can't be removed by jenkins outside of docker because jenkins doesn't have sudo.
+        // So we do the cleanup inside docker
         sh 'git reset --hard'
         sh 'git clean -fdx'
-        sh './bin/build'
       }
     }
-  }
-  post {
-    success {
-      archiveArtifacts artifacts: 'target/uberjar/metabase.jar'
-      slackSend color: 'good', channel: '#jenkins-metabasepackage', message: "*SUCCESSED* - Packaged metabase.  Download jar file from Jenkins: <${env.BUILD_URL}|build ${env.BUILD_NUMBER}>"
-    }
-    failure {
-      slackSend color: 'danger', channel: '#jenkins-metabasepackage', message: "*FAILED* - Metabase build failed (<${env.BUILD_URL}|build ${env.BUILD_NUMBER}>) - <${env.BUILD_URL}console|click here to see the console output>"
+    stage("Run build") {
+      steps {
+        sh './bin/build'
+      }
     }
   }
 }
