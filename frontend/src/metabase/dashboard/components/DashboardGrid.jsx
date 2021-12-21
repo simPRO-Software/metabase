@@ -6,8 +6,11 @@ import ExplicitSize from "metabase/components/ExplicitSize";
 
 import Modal from "metabase/components/Modal";
 
+import { PLUGIN_COLLECTIONS } from "metabase/plugins";
+
 import { getVisualizationRaw } from "metabase/visualizations";
-import MetabaseAnalytics from "metabase/lib/analytics";
+import * as MetabaseAnalytics from "metabase/lib/analytics";
+import { color } from "metabase/lib/colors";
 
 import {
   GRID_WIDTH,
@@ -23,7 +26,7 @@ import cx from "classnames";
 
 import GridLayout from "./grid/GridLayout";
 import { generateMobileLayout } from "./grid/utils";
-import AddSeriesModal from "./AddSeriesModal";
+import AddSeriesModal from "./AddSeriesModal/AddSeriesModal";
 import RemoveFromDashboardModal from "./RemoveFromDashboardModal";
 import DashCard from "./DashCard";
 
@@ -109,7 +112,7 @@ export default class DashboardGrid extends Component {
 
     if (changes.length > 0) {
       setMultipleDashCardAttributes(changes);
-      MetabaseAnalytics.trackEvent("Dashboard", "Layout Changed");
+      MetabaseAnalytics.trackStructEvent("Dashboard", "Layout Changed");
     }
   };
 
@@ -164,6 +167,18 @@ export default class DashboardGrid extends Component {
       defaultCardHeight: 6,
     });
     return { desktop, mobile };
+  }
+
+  getRowHeight() {
+    const { width } = this.props;
+
+    const hasScroll = window.innerWidth > document.documentElement.offsetWidth;
+    const aspectHeight = width / GRID_WIDTH / GRID_ASPECT_RATIO;
+    const actualHeight = Math.max(aspectHeight, MIN_ROW_HEIGHT);
+
+    // prevent infinite re-rendering when the scroll bar appears/disappears
+    // https://github.com/metabase/metabase/issues/17229
+    return hasScroll ? Math.ceil(actualHeight) : Math.floor(actualHeight);
   }
 
   renderRemoveModal() {
@@ -224,10 +239,36 @@ export default class DashboardGrid extends Component {
     this.setState({ addSeriesModalDashCard: dc });
   }
 
+  getDashboardCardIcon = dashCard => {
+    const { isRegularCollection } = PLUGIN_COLLECTIONS;
+    const { dashboard } = this.props;
+    const isRegularQuestion = isRegularCollection({
+      authority_level: dashCard.collection_authority_level,
+    });
+    const isRegularDashboard = isRegularCollection({
+      authority_level: dashboard.collection_authority_level,
+    });
+    if (isRegularDashboard && !isRegularQuestion) {
+      const authorityLevel = dashCard.collection_authority_level;
+      const opts = PLUGIN_COLLECTIONS.AUTHORITY_LEVEL[authorityLevel];
+      const iconSize = 14;
+      return {
+        name: opts.icon,
+        color: color(opts.color),
+        tooltip: opts.tooltips?.belonging,
+        size: iconSize,
+
+        // Workaround: headerIcon on cards in a first column have incorrect offset out of the box
+        targetOffsetX: dashCard.col === 0 ? iconSize : 0,
+      };
+    }
+  };
+
   renderDashCard(dc, { isMobile, gridItemWidth }) {
     return (
       <DashCard
         dashcard={dc}
+        headerIcon={this.getDashboardCardIcon(dc)}
         dashcardData={this.props.dashcardData}
         parameterValues={this.props.parameterValues}
         slowCards={this.props.slowCards}
@@ -284,10 +325,7 @@ export default class DashboardGrid extends Component {
   renderGrid() {
     const { dashboard, width } = this.props;
     const { layouts } = this.state;
-    const rowHeight = Math.max(
-      Math.floor(width / GRID_WIDTH / GRID_ASPECT_RATIO),
-      MIN_ROW_HEIGHT,
-    );
+    const rowHeight = this.getRowHeight();
     return (
       <GridLayout
         className={cx("DashboardGrid", {

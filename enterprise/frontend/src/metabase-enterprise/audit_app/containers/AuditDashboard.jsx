@@ -9,7 +9,7 @@ import DashboardData from "metabase/dashboard/hoc/DashboardData";
 
 const DashboardWithData = DashboardData(Dashboard);
 
-import { AuditMode } from "../lib/util";
+import { AuditMode } from "../lib/mode";
 
 import type { AuditCard } from "../types";
 
@@ -54,7 +54,4 @@ const mapDispatchToProps = {
   onChangeLocation: push,
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(AuditDashboard);
+export default connect(mapStateToProps, mapDispatchToProps)(AuditDashboard);

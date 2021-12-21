@@ -4,13 +4,25 @@ import moment from "moment-timezone";
 
 import fillMissingValuesInDatas from "metabase/visualizations/lib/fill_data";
 
+// jsdom doesn't support layout methods like getBBox, so we need to mock it.
+window.SVGElement.prototype.getBBox = () => ({
+  x: 0,
+  y: 0,
+  width: 1000,
+  height: 1000,
+});
+
 testAcrossTimezones(reportTz => {
   describe("fillMissingValuesInDatas", () => {
     it("should fill zeros for timeseries across DST boundary", () => {
       const time1 = moment.tz("2019-03-01T00:00:00", reportTz);
       const time2 = moment.tz("2019-03-30T00:00:00", reportTz);
       const time3 = moment.tz("2019-03-31T00:00:00", reportTz);
-      const rows = [[time1, 1], [time2, 2], [time3, 3]];
+      const rows = [
+        [time1, 1],
+        [time2, 2],
+        [time3, 3],
+      ];
       const [filledData] = fillMissingValuesInDatas(
         {
           series: [{}],

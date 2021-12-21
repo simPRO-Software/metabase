@@ -17,7 +17,7 @@ import {
   makeGetParameterMappingOptions,
   getMappingsByParameter,
 } from "../selectors";
-import { setParameterMapping } from "../dashboard";
+import { setParameterMapping } from "../actions";
 
 import cx from "classnames";
 import { getIn } from "icepick";
@@ -51,10 +51,7 @@ const mapDispatchToProps = {
   fetchDatabaseMetadata,
 };
 
-@connect(
-  makeMapStateToProps,
-  mapDispatchToProps,
-)
+@connect(makeMapStateToProps, mapDispatchToProps)
 export default class DashCardCardParameterMapper extends Component {
   props: {
     card: Card,

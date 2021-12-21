@@ -33,9 +33,8 @@ import { getShowHomepageData } from "metabase/selectors/settings";
 const PAGE_PADDING = [1, 2, 4];
 const ROOT_COLLECTIONS_LOAD_LIMIT = 500;
 
-const getGreeting = createSelector(
-  [getUser],
-  user => Greeting.sayHello(user.first_name),
+const getGreeting = createSelector([getUser], user =>
+  Greeting.sayHello(user.first_name),
 );
 
 //class Overworld extends Zelda
@@ -144,7 +143,7 @@ class Overworld extends React.Component {
                   {items.map(pin => {
                     return (
                       <GridItem
-                        w={[1, 1 / 2, 1 / 3]}
+                        width={[1, 1 / 2, 1 / 3]}
                         key={`${pin.model}-${pin.id}`}
                       >
                         <Link
@@ -180,7 +179,6 @@ class Overworld extends React.Component {
               <CollectionList
                 collections={this.props.list}
                 analyticsContext="Homepage"
-                asCards={true}
               />
             ) : (
               <Box className="text-centered">

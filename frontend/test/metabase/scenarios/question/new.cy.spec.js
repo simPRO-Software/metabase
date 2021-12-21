@@ -2,6 +2,7 @@ import {
   browse,
   restore,
   popover,
+  visualize,
   openOrdersTable,
   openReviewsTable,
 } from "__support__/e2e/cypress";
@@ -71,7 +72,9 @@ describe("scenarios > question > new", () => {
         .click();
       cy.findByText("Rating").click();
     });
-    cy.button("Visualize").click();
+
+    visualize();
+
     cy.get(".Visualization .bar").should("have.length", 6);
   });
 
@@ -131,7 +134,8 @@ describe("scenarios > question > new", () => {
 
       it("should allow to search saved questions", () => {
         cy.findByText("Orders, Count").click();
-        cy.findByText("Visualize").click();
+
+        visualize();
         cy.findByText("18,760");
       });
 
@@ -140,7 +144,9 @@ describe("scenarios > question > new", () => {
           .closest("li")
           .findByText("Table in")
           .click();
-        cy.findByText("Visualize").click();
+
+        visualize();
+
         cy.url().should("include", "question#");
         cy.findByText("Sample Dataset");
         cy.findByText("Orders");
@@ -200,7 +206,9 @@ describe("scenarios > question > new", () => {
         cy.findByText("Orders, Count, Grouped by Created At (year)");
         cy.findByText("Orders");
         cy.findByText("Orders, Count").click();
-        cy.button("Visualize").click();
+
+        visualize();
+
         cy.findByText("18,760");
       });
 
@@ -208,13 +216,14 @@ describe("scenarios > question > new", () => {
         cy.findByText("Orders, Count").click();
 
         // Try to choose a different saved question
-        cy.get("[icon=table2]").click();
+        cy.findByTestId("data-step-cell").click();
 
         cy.findByText("Our analytics");
         cy.findByText("Orders");
         cy.findByText("Orders, Count, Grouped by Created At (year)").click();
 
-        cy.button("Visualize").click();
+        visualize();
+
         cy.findByText("2016");
         cy.findByText("5,834");
       });
@@ -222,13 +231,17 @@ describe("scenarios > question > new", () => {
       it("should perform a search scoped to saved questions", () => {
         cy.findByPlaceholderText("Search for a question").type("Grouped");
         cy.findByText("Orders, Count, Grouped by Created At (year)").click();
-        cy.button("Visualize").click();
+
+        visualize();
+
         cy.findByText("2018");
       });
 
       it("should reopen saved question picker after returning back to editor mode", () => {
         cy.findByText("Orders, Count, Grouped by Created At (year)").click();
-        cy.button("Visualize").click();
+
+        visualize();
+
         cy.icon("notebook").click();
         cy.findByTestId("data-step-cell").click();
 
@@ -301,7 +314,7 @@ describe("scenarios > question > new", () => {
       });
     });
 
-    it.skip("should remove `/notebook` from URL when converting question to SQL/Native (metabase#12651)", () => {
+    it("should remove `/notebook` from URL when converting question to SQL/Native (metabase#12651)", () => {
       cy.server();
       cy.route("POST", "/api/dataset").as("dataset");
       openOrdersTable();
@@ -315,7 +328,7 @@ describe("scenarios > question > new", () => {
       cy.url().should("include", "question#");
     });
 
-    it.skip("should correctly choose between 'Object Detail' and 'Table (metabase#13717)", () => {
+    it("should correctly choose between 'Object Detail' and 'Table (metabase#13717)", () => {
       // set ID to `No semantic type`
       cy.request("PUT", `/api/field/${ORDERS.ID}`, {
         semantic_type: null,
@@ -340,7 +353,7 @@ describe("scenarios > question > new", () => {
       cy.log(
         "**It should display the table with all orders with the selected quantity.**",
       );
-      cy.findByText("Fantastic Wool Shirt"); // order ID#3 with the same quantity
+      cy.get(".TableInteractive");
     });
 
     it("should display date granularity on Summarize when opened from saved question (metabase#11439)", () => {
@@ -375,7 +388,7 @@ describe("scenarios > question > new", () => {
     });
 
     it("should display timeseries filter and granularity widgets at the bottom of the screen (metabase#11183)", () => {
-      cy.createQuestion({
+      const questionDetails = {
         name: "11183",
         query: {
           "source-table": ORDERS_ID,
@@ -385,14 +398,10 @@ describe("scenarios > question > new", () => {
           ],
         },
         display: "line",
-      }).then(({ body: { id: QUESTION_ID } }) => {
-        cy.server();
-        cy.route("POST", `/api/card/${QUESTION_ID}/query`).as("cardQuery");
+      };
 
-        cy.visit(`/question/${QUESTION_ID}`);
-      });
+      cy.createQuestion(questionDetails, { visitQuestion: true });
 
-      cy.wait("@cardQuery");
       cy.log("Reported missing in v0.33.1");
       cy.get(".AdminSelect")
         .as("select")
@@ -408,7 +417,9 @@ describe("scenarios > question > new", () => {
       cy.contains("Custom question").click();
       cy.contains("Sample Dataset").click();
       cy.contains("Orders").click();
-      cy.contains("Visualize").click();
+
+      visualize();
+
       cy.contains("37.65");
     });
 
@@ -423,7 +434,9 @@ describe("scenarios > question > new", () => {
         cy.findByPlaceholderText("Name (required)").type("twice max total");
         cy.findByText("Done").click();
       });
-      cy.button("Visualize").click();
+
+      visualize();
+
       cy.findByText("318.7");
     });
 

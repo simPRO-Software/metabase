@@ -1,5 +1,4 @@
 import React from "react";
-import "@testing-library/jest-dom/extend-expect";
 import { render } from "@testing-library/react";
 
 // these tests use ChartSettings directly, but logic we're testing lives in ChartNestedSettingSeries
@@ -10,7 +9,10 @@ function getSeries(display) {
     {
       card: { display, visualization_settings: {} },
       data: {
-        rows: [["a", 1], ["b", 2]],
+        rows: [
+          ["a", 1],
+          ["b", 2],
+        ],
         cols: [{ name: "foo" }, { name: "bar" }],
       },
     },

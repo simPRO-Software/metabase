@@ -6,11 +6,10 @@ import {
 
 import { push } from "react-router-redux";
 
-import MetabaseAnalytics from "metabase/lib/analytics";
-import { clearGoogleAuthCredentials } from "metabase/lib/auth";
+import * as MetabaseAnalytics from "metabase/lib/analytics";
+import { clearGoogleAuthCredentials, deleteSession } from "metabase/lib/auth";
 
 import { refreshSiteSettings } from "metabase/redux/settings";
-import { refreshCurrentUser } from "metabase/redux/user";
 
 import { SessionApi } from "metabase/services";
 
@@ -22,7 +21,11 @@ export const login = createThunkAction(
     // NOTE: this request will return a Set-Cookie header for the session
     await SessionApi.create(credentials);
 
-    MetabaseAnalytics.trackEvent("Auth", "Login");
+    MetabaseAnalytics.trackStructEvent("Auth", "Login");
+
+    // unable to use a top-level `import` here because of a circular dependency
+    const { refreshCurrentUser } = require("metabase/redux/user");
+
     await Promise.all([
       dispatch(refreshCurrentUser()),
       dispatch(refreshSiteSettings()),
@@ -44,7 +47,10 @@ export const loginGoogle = createThunkAction(LOGIN_GOOGLE, function(
         token: googleUser.getAuthResponse().id_token,
       });
 
-      MetabaseAnalytics.trackEvent("Auth", "Google Auth Login");
+      MetabaseAnalytics.trackStructEvent("Auth", "Google Auth Login");
+
+      // unable to use a top-level `import` here because of a circular dependency
+      const { refreshCurrentUser } = require("metabase/redux/user");
 
       await Promise.all([
         dispatch(refreshCurrentUser()),
@@ -63,12 +69,12 @@ export const LOGOUT = "metabase/auth/LOGOUT";
 export const logout = createThunkAction(LOGOUT, function() {
   return async function(dispatch, getState) {
     // actively delete the session and remove the cookie
-    await SessionApi.delete();
+    await deleteSession();
 
     // clear Google auth credentials if any are present
     await clearGoogleAuthCredentials();
 
-    MetabaseAnalytics.trackEvent("Auth", "Logout");
+    MetabaseAnalytics.trackStructEvent("Auth", "Logout");
 
     dispatch(push("/auth/login"));
 

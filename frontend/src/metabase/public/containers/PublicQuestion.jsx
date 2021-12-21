@@ -13,10 +13,13 @@ import type { Card } from "metabase-types/types/Card";
 import type { Dataset } from "metabase-types/types/Dataset";
 import type { ParameterValues } from "metabase-types/types/Parameter";
 
-import { getParametersBySlug } from "metabase/meta/Parameter";
 import {
-  getParameters,
-  getParametersWithExtras,
+  getParameterValuesBySlug,
+  getParameterValuesByIdFromQueryParams,
+} from "metabase/meta/Parameter";
+import {
+  getParametersFromCard,
+  getValueAndFieldIdPopulatedParametersFromCard,
   applyParameters,
 } from "metabase/meta/Card";
 
@@ -62,10 +65,7 @@ const mapDispatchToProps = {
   addFields,
 };
 
-@connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)
+@connect(mapStateToProps, mapDispatchToProps)
 @title(({ card }) => card && card.name)
 @ExplicitSize()
 export default class PublicQuestion extends Component {
@@ -112,15 +112,20 @@ export default class PublicQuestion extends Component {
         this.props.addFields(card.param_fields);
       }
 
-      const parameterValues: ParameterValues = {};
-      for (const parameter of getParameters(card)) {
-        parameterValues[String(parameter.id)] = query[parameter.slug];
-      }
+      const parameters = getValueAndFieldIdPopulatedParametersFromCard(card);
+      const parameterValuesById = getParameterValuesByIdFromQueryParams(
+        parameters,
+        query,
+        this.props.metadata,
+      );
 
-      this.setState({ card, parameterValues }, async () => {
-        await this.run();
-        this.setState({ initialized: true });
-      });
+      this.setState(
+        { card, parameterValues: parameterValuesById },
+        async () => {
+          await this.run();
+          this.setState({ initialized: true });
+        },
+      );
     } catch (error) {
       console.error("error", error);
       setErrorPage(error);
@@ -139,18 +144,6 @@ export default class PublicQuestion extends Component {
     );
   };
 
-  setMultipleParameterValues = parameterValues => {
-    this.setState(
-      {
-        parameterValues: {
-          ...this.state.parameterValues,
-          ...parameterValues,
-        },
-      },
-      this.run,
-    );
-  };
-
   run = async (): void => {
     const {
       setErrorPage,
@@ -162,7 +155,7 @@ export default class PublicQuestion extends Component {
       return;
     }
 
-    const parameters = getParameters(card);
+    const parameters = getParametersFromCard(card);
 
     try {
       this.setState({ result: null });
@@ -170,14 +163,20 @@ export default class PublicQuestion extends Component {
       let newResult;
       if (token) {
         // embeds apply parameter values server-side
-        newResult = await maybeUsePivotEndpoint(EmbedApi.cardQuery, card)({
+        newResult = await maybeUsePivotEndpoint(
+          EmbedApi.cardQuery,
+          card,
+        )({
           token,
-          ...getParametersBySlug(parameters, parameterValues),
+          ...getParameterValuesBySlug(parameters, parameterValues),
         });
       } else if (uuid) {
         // public links currently apply parameters client-side
         const datasetQuery = applyParameters(card, parameters, parameterValues);
-        newResult = await maybeUsePivotEndpoint(PublicApi.cardQuery, card)({
+        newResult = await maybeUsePivotEndpoint(
+          PublicApi.cardQuery,
+          card,
+        )({
           uuid,
           parameters: JSON.stringify(datasetQuery.parameters),
         });
@@ -207,7 +206,8 @@ export default class PublicQuestion extends Component {
       />
     );
 
-    const parameters = card && getParametersWithExtras(card);
+    const parameters =
+      card && getValueAndFieldIdPopulatedParametersFromCard(card);
 
     return (
       <EmbedFrame

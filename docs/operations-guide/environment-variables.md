@@ -681,7 +681,7 @@ Server port, usually 389 or 636 if SSL is used.
 
 #### `MB_LDAP_SECURITY`
 
-Type: string<br>
+Type: string (`"none"`, `"ssl"`, `"starttls"`)<br>
 Default: `"none"`
 
 Use SSL, TLS or plain text.
@@ -940,6 +940,13 @@ Type: boolean<br>
 Default: `true`
 
 Send email notifications to users in Admin group, when a new SSO users is created on Metabase.
+
+#### `MB_SEND_EMAIL_ON_FIRST_LOGIN_FROM_NEW_DEVICE`
+
+Type: boolean<br>
+Default: `true`
+
+Send email notification to user, when they login from a new device. Set to `false` to stop sending "We've noticed a new login on your Metabase account" emails for all users.
 
 #### `MB_SESSION_COOKIES`
 

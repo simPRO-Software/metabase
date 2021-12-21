@@ -6,7 +6,7 @@
             [honeysql.helpers :as h]
             [metabase.db.metadata-queries :as metadata-queries]
             [metabase.db.util :as mdb.u]
-            [metabase.models.field :refer [Field]]
+            [metabase.models.field :as field :refer [Field]]
             [metabase.query-processor.store :as qp.store]
             [metabase.sync.analyze.fingerprint.fingerprinters :as f]
             [metabase.sync.interface :as i]
@@ -217,7 +217,7 @@
   ;; TODO: Maybe the driver should have a function to tell you if it supports fingerprinting?
   (fingerprint-fields-for-db!* database tables log-progress-fn))
 
-(def max-refingerprint-field-count
+(def ^:private max-refingerprint-field-count
   "Maximum number of fields to refingerprint. Balance updating our fingerprinting values while not spending too much
   time in the db."
   1000)
@@ -235,3 +235,9 @@
                                  log-progress-fn
                                  (fn [stats-acc]
                                    (< (:fingerprints-attempted stats-acc) max-refingerprint-field-count)))))
+
+(s/defn refingerprint-field
+  "Refingerprint a field"
+  [field :- i/FieldInstance]
+  (let [table (field/table field)]
+    (fingerprint-table! table [field])))

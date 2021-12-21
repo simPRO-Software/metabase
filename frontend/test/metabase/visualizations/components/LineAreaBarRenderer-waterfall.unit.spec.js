@@ -54,6 +54,14 @@ function MainSeries(settings, rows) {
   };
 }
 
+// jsdom doesn't support layout methods like getBBox, so we need to mock it.
+window.SVGElement.prototype.getBBox = () => ({
+  x: 0,
+  y: 0,
+  width: 1000,
+  height: 1000,
+});
+
 describe("LineAreaBarRenderer-waterfall", () => {
   let element;
   const qsa = selector => [...element.querySelectorAll(selector)];
@@ -93,7 +101,10 @@ describe("LineAreaBarRenderer-waterfall", () => {
   it("should render a waterfall chart with two rows", () => {
     const onHoverChange = jest.fn();
     const settings = {};
-    const rows = [["Apple", 10], ["Banana", 4]];
+    const rows = [
+      ["Apple", 10],
+      ["Banana", 4],
+    ];
     renderLineAreaBar(element, [MainSeries(settings, rows)], {
       onHoverChange,
     });
@@ -122,7 +133,11 @@ describe("LineAreaBarRenderer-waterfall", () => {
   it("should render a waterfall chart with negative values", () => {
     const onHoverChange = jest.fn();
     const settings = {};
-    const rows = [["X", -5], ["Y", -13], ["Z", -7]];
+    const rows = [
+      ["X", -5],
+      ["Y", -13],
+      ["Z", -7],
+    ];
     renderLineAreaBar(element, [MainSeries(settings, rows)], {
       onHoverChange,
     });
@@ -158,7 +173,11 @@ describe("LineAreaBarRenderer-waterfall", () => {
     const settings = {
       "waterfall.show_total": false,
     };
-    const rows = [["A", 3], ["B", 5], ["C", 7]];
+    const rows = [
+      ["A", 3],
+      ["B", 5],
+      ["C", 7],
+    ];
     renderLineAreaBar(element, [MainSeries(settings, rows)], {
       onHoverChange,
     });

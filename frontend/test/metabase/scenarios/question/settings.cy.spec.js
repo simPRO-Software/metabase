@@ -4,6 +4,7 @@ import {
   openOrdersTable,
   visitQuestionAdhoc,
   popover,
+  sidebar,
 } from "__support__/e2e/cypress";
 
 import { SAMPLE_DATASET } from "__support__/e2e/cypress_sample_dataset";
@@ -26,7 +27,7 @@ describe("scenarios > question > settings", () => {
       cy.contains("Settings").click();
 
       // wait for settings sidebar to open
-      cy.get(".border-right.overflow-x-hidden")
+      cy.findByTestId("sidebar-left")
         .invoke("width")
         .should("be.gt", 350);
 
@@ -164,7 +165,41 @@ describe("scenarios > question > settings", () => {
       popover().within(() => cy.icon("gear").click()); // open subtotal column settings
 
       cy.findByText("Table options").should("not.exist"); // no longer displaying the top level settings
-      cy.findByText("Column title"); // shows subtotal column settings
+      cy.findByText("Separator style"); // shows subtotal column settings
+
+      cy.get(".TableInteractive")
+        .findByText("Created At")
+        .click(); // open created_at column header actions
+      popover().within(() => cy.icon("gear").click()); // open created_at column settings
+      cy.findByText("Date style"); // shows created_at column settings
+    });
+
+    it.skip("should respect renamed column names in the settings sidebar (metabase#18476)", () => {
+      const newColumnTitle = "Pre-tax";
+
+      const questionDetails = {
+        dataset_query: {
+          database: 1,
+          query: { "source-table": 2 },
+          type: "query",
+        },
+        display: "table",
+        visualization_settings: {
+          column_settings: {
+            [`["ref",["field",${ORDERS.SUBTOTAL},null]]`]: {
+              column_title: newColumnTitle,
+            },
+          },
+        },
+      };
+
+      visitQuestionAdhoc(questionDetails);
+
+      cy.findByText(newColumnTitle);
+
+      cy.findByTestId("viz-settings-button").click();
+
+      sidebar().findByText(newColumnTitle);
     });
   });
 

@@ -13,7 +13,7 @@ import {
   getVisualizationTransformed,
 } from "metabase/visualizations";
 import { getComputedSettingsForSeries } from "metabase/visualizations/lib/settings/visualization";
-import { getParametersWithExtras } from "metabase/meta/Card";
+import { getValueAndFieldIdPopulatedParametersFromCard } from "metabase/meta/Card";
 import { normalizeParameterValue } from "metabase/meta/Parameter";
 
 import Utils from "metabase/lib/utils";
@@ -60,9 +60,8 @@ export const getDatabaseId = createSelector(
   card => card && card.dataset_query && card.dataset_query.database,
 );
 
-export const getTableId = createSelector(
-  [getCard],
-  card => getIn(card, ["dataset_query", "query", "source-table"]),
+export const getTableId = createSelector([getCard], card =>
+  getIn(card, ["dataset_query", "query", "source-table"]),
 );
 
 export const getTableForeignKeyReferences = state =>
@@ -118,7 +117,8 @@ export const getDatabaseFields = createSelector(
 
 export const getParameters = createSelector(
   [getCard, getParameterValues],
-  (card, parameterValues) => getParametersWithExtras(card, parameterValues),
+  (card, parameterValues) =>
+    getValueAndFieldIdPopulatedParametersFromCard(card, parameterValues),
 );
 
 const getLastRunDatasetQuery = createSelector(
@@ -142,42 +142,55 @@ const getLastRunParameterValues = createSelector(
   [getLastRunParameters],
   parameters => parameters.map(parameter => parameter.value),
 );
-const getNextRunParameterValues = createSelector(
-  [getParameters],
-  parameters =>
-    parameters
-      .filter(
-        // parameters with an empty value get filtered out before a query run,
-        // so in order to compare current parameters to previously-used parameters we need
-        // to filter them here as well
-        parameter => parameter.value != null,
-      )
-      .map(parameter =>
-        // parameters are "normalized" immediately before a query run, so in order
-        // to compare current parameters to previously-used parameters we need
-        // to run parameters through this normalization function
-        normalizeParameterValue(parameter.type, parameter.value),
-      )
-      .filter(p => p !== undefined),
+const getNextRunParameterValues = createSelector([getParameters], parameters =>
+  parameters
+    .filter(
+      // parameters with an empty value get filtered out before a query run,
+      // so in order to compare current parameters to previously-used parameters we need
+      // to filter them here as well
+      parameter => parameter.value != null,
+    )
+    .map(parameter =>
+      // parameters are "normalized" immediately before a query run, so in order
+      // to compare current parameters to previously-used parameters we need
+      // to run parameters through this normalization function
+      normalizeParameterValue(parameter.type, parameter.value),
+    )
+    .filter(p => p !== undefined),
 );
 
+function normalizeClause(clause) {
+  return typeof clause?.raw === "function" ? clause.raw() : clause;
+}
+
 // Certain differences in a query should be ignored. `normalizeQuery`
-// standardizes the query before comparision in `getIsResultDirty`.
-function normalizeQuery(query, tableMetadata) {
+// standardizes the query before comparison in `getIsResultDirty`.
+export function normalizeQuery(query, tableMetadata) {
   if (!query) {
     return query;
   }
-  if (query.query && tableMetadata) {
-    query = updateIn(query, ["query", "fields"], fields => {
-      fields = fields
-        ? // if the query has fields, copy them before sorting
-          [...fields]
-        : // if the fields aren't set, we get them from the table metadata
-          tableMetadata.fields.map(({ id }) => ["field", id, null]);
-      return fields.sort((a, b) =>
-        JSON.stringify(b).localeCompare(JSON.stringify(a)),
-      );
-    });
+  if (query.query) {
+    if (tableMetadata) {
+      query = updateIn(query, ["query", "fields"], fields => {
+        fields = fields
+          ? // if the query has fields, copy them before sorting
+            [...fields]
+          : // if the fields aren't set, we get them from the table metadata
+            tableMetadata.fields.map(({ id }) => ["field", id, null]);
+        return fields.sort((a, b) =>
+          JSON.stringify(b).localeCompare(JSON.stringify(a)),
+        );
+      });
+    }
+    ["aggregation", "breakout", "filter", "joins", "order-by"].forEach(
+      clauseList => {
+        if (query.query[clauseList]) {
+          query = updateIn(query, ["query", clauseList], clauses =>
+            clauses.map(normalizeClause),
+          );
+        }
+      },
+    );
   }
   if (query.native && query.native["template-tags"] == null) {
     query = assocIn(query, ["native", "template-tags"], {});
@@ -234,8 +247,12 @@ export const getMode = createSelector(
 );
 
 export const getIsObjectDetail = createSelector(
-  [getMode],
-  mode => mode && mode.name() === "object",
+  [getMode, getQueryResults],
+  (mode, results) => {
+    // It handles filtering by a manually set PK column that is not unique
+    const hasMultipleRows = results?.some(({ data }) => data?.rows.length > 1);
+    return mode?.name() === "object" && !hasMultipleRows;
+  },
 );
 
 export const getIsDirty = createSelector(
@@ -286,6 +303,7 @@ export const getRawSeries = createSelector(
   ) => {
     let display = question && question.display();
     let settings = question && question.settings();
+
     if (isObjectDetail) {
       display = "object";
     } else if (isShowingRawTable) {
@@ -461,4 +479,9 @@ export const getIsLiveResizable = createSelector(
       return false;
     }
   },
+);
+
+export const getQuestionDetailsTimelineDrawerState = createSelector(
+  [getUiControls],
+  uiControls => uiControls && uiControls.questionDetailsTimelineDrawerState,
 );

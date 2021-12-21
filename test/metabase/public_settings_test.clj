@@ -1,10 +1,12 @@
 (ns metabase.public-settings-test
   (:require [clojure.test :refer :all]
-            [metabase.models.setting :as setting]
+            [metabase.models.setting :as setting :refer [Setting]]
+            [metabase.models.user :refer [User]]
             [metabase.public-settings :as public-settings]
             [metabase.test :as mt]
             [metabase.test.fixtures :as fixtures]
-            [metabase.util.i18n :as i18n :refer [tru]]))
+            [metabase.util.i18n :as i18n :refer [tru]]
+            [toucan.db :as db]))
 
 (use-fixtures :once (fixtures/initialize :db))
 
@@ -118,7 +120,7 @@
 
   (testing "query-caching-max-kb should throw an error if you try to put in a huge value"
     (mt/discard-setting-changes [query-caching-max-kb]
-      (is (thrown?
+      (is (thrown-with-msg?
            IllegalArgumentException
            #"Values greater than 204,800 \(200\.0 MB\) are not allowed"
            (public-settings/query-caching-max-kb (* 1024 1024)))))))
@@ -129,16 +131,18 @@
       (testing "invalid format"
         (testing "blank string"
           (mt/with-temporary-setting-values [site-locale "en_US"]
-            (is (thrown?
+            (is (thrown-with-msg?
                  clojure.lang.ExceptionInfo
+                 #"Invalid locale \"\""
                  (public-settings/site-locale "")))
             (is (= "en_US"
                    (public-settings/site-locale)))))
 
         (testing "non-existant locale"
           (mt/with-temporary-setting-values [site-locale "en_US"]
-            (is (thrown?
+            (is (thrown-with-msg?
                  clojure.lang.ExceptionInfo
+                 #"Invalid locale \"en_EN\""
                  (public-settings/site-locale "en_EN")))
             (is (= "en_US"
                    (public-settings/site-locale)))))))
@@ -176,3 +180,24 @@
                  (public-settings/redirect-all-requests-to-https v)))
             (is (= false
                    (public-settings/redirect-all-requests-to-https)))))))))
+
+(deftest instance-creation-test
+  (let [original-value (db/select-one-field :value Setting :key "instance-creation")]
+    (try
+      (testing "Instance creation timestamp is set only once when setting is first fetched"
+        (db/delete! Setting {:key "instance-creation"})
+        (with-redefs [public-settings/first-user-creation (constantly nil)]
+          (let [first-value (public-settings/instance-creation)]
+            (Thread/sleep 10) ;; short sleep since java.time.Instant is not necessarily monotonic
+            (is (= first-value
+                   (public-settings/instance-creation))))))
+
+      (testing "If a user already exists, we should use the first user's creation timestamp"
+        (db/delete! Setting {:key "instance-creation"})
+        (mt/with-test-user :crowberto
+          (let [first-user-creation (:min (db/select-one [User [:%min.date_joined :min]]))
+                instance-creation   (public-settings/instance-creation)]
+            (is (= (java-time/local-date-time first-user-creation)
+                   (java-time/local-date-time instance-creation))))))
+      (finally
+        (db/update-where! Setting {:key "instance-creation"} :value original-value)))))

@@ -98,7 +98,7 @@ export default class AlertListPopoverContent extends Component {
               className="link flex align-center text-bold text-small"
               onClick={this.onAdd}
             >
-              <Icon name="add" style={{ marginLeft: 9, marignRight: 17 }} />{" "}
+              <Icon name="add" style={{ marginLeft: 9, marginRight: 17 }} />{" "}
               {t`Set up your own alert`}
             </a>
           </div>
@@ -116,13 +116,10 @@ export default class AlertListPopoverContent extends Component {
   }
 }
 
-@connect(
-  state => ({ user: getUser(state) }),
-  {
-    unsubscribeFromAlert,
-    deleteAlert,
-  },
-)
+@connect(state => ({ user: getUser(state) }), {
+  unsubscribeFromAlert,
+  deleteAlert,
+})
 export class AlertListItem extends Component {
   props: {
     alert: any,
@@ -286,7 +283,6 @@ export class AlertScheduleText extends Component {
 
       return `${verbose ? "daily at " : "Daily, "} ${hour} ${amPm}`;
     } else if (scheduleType === "weekly") {
-      console.log(schedule);
       const hourOfDay = schedule.schedule_hour;
       const day = _.find(
         DAY_OF_WEEK_OPTIONS,

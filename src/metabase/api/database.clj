@@ -32,7 +32,8 @@
             [metabase.util.schema :as su]
             [schema.core :as s]
             [toucan.db :as db]
-            [toucan.hydrate :refer [hydrate]])
+            [toucan.hydrate :refer [hydrate]]
+            [toucan.models :as models])
   (:import metabase.models.database.DatabaseInstance))
 
 (def DBEngineString
@@ -124,18 +125,30 @@
   [& {:keys [additional-constraints xform], :or {xform identity}}]
   (when-let [ids-of-dbs-that-support-source-queries (not-empty (ids-of-dbs-that-support-source-queries))]
     (transduce
-     (comp (filter card-can-be-used-as-source-query?) xform)
+     (comp (map (partial models/do-post-select Card))
+           (filter card-can-be-used-as-source-query?)
+           xform)
      (completing conj #(hydrate % :collection))
      []
-     (db/select-reducible [Card :name :description :database_id :dataset_query :id :collection_id :result_metadata]
-       {:where    (into [:and
-                         [:not= :result_metadata nil]
-                         [:= :archived false]
-                         [:in :database_id ids-of-dbs-that-support-source-queries]
-                         (collection/visible-collection-ids->honeysql-filter-clause
-                          (collection/permissions-set->visible-collection-ids @api/*current-user-permissions-set*))]
-                        additional-constraints)
-       :order-by [[:%lower.name :asc]]}))))
+     (db/reducible-query {:select   [:name :description :database_id :dataset_query :id :collection_id :result_metadata
+                                     [{:select   [:status]
+                                       :from     [:moderation_review]
+                                       :where    [:and
+                                                  [:= :moderated_item_type "card"]
+                                                  [:= :moderated_item_id :report_card.id]
+                                                  [:= :most_recent true]]
+                                       :order-by [[:id :desc]]
+                                       :limit    1}
+                                      :moderated_status]]
+                          :from     [:report_card]
+                          :where    (into [:and
+                                           [:not= :result_metadata nil]
+                                           [:= :archived false]
+                                           [:in :database_id ids-of-dbs-that-support-source-queries]
+                                           (collection/visible-collection-ids->honeysql-filter-clause
+                                            (collection/permissions-set->visible-collection-ids @api/*current-user-permissions-set*))]
+                                          additional-constraints)
+                          :order-by [[:%lower.name :asc]]}))))
 
 (defn- source-query-cards-exist?
   "Truthy if a single Card that can be used as a source query exists."
@@ -301,15 +314,16 @@
 
 ;;; --------------------------------- GET /api/database/:id/autocomplete_suggestions ---------------------------------
 
-(defn- autocomplete-tables [db-id prefix]
+(defn- autocomplete-tables [db-id prefix limit]
   (db/select [Table :id :db_id :schema :name]
     {:where    [:and [:= :db_id db-id]
                      [:= :active true]
                      [:like :%lower.name (str (str/lower-case prefix) "%")]
                      [:= :visibility_type nil]]
-     :order-by [[:%lower.name :asc]]}))
+     :order-by [[:%lower.name :asc]]
+     :limit    limit}))
 
-(defn- autocomplete-fields [db-id prefix]
+(defn- autocomplete-fields [db-id prefix limit]
   (db/select [Field :name :base_type :semantic_type :id :table_id [:table.name :table_name]]
     :metabase_field.active          true
     :%lower.metabase_field.name     [:like (str (str/lower-case prefix) "%")]
@@ -317,22 +331,28 @@
     :table.db_id                    db-id
     {:order-by  [[:%lower.metabase_field.name :asc]
                  [:%lower.table.name :asc]]
-     :left-join [[:metabase_table :table] [:= :table.id :metabase_field.table_id]]}))
+     :left-join [[:metabase_table :table] [:= :table.id :metabase_field.table_id]]
+     :limit     limit}))
 
-(defn- autocomplete-results [tables fields]
-  (concat (for [{table-name :name} tables]
-            [table-name "Table"])
-          (for [{:keys [table_name base_type semantic_type name]} fields]
-            [name (str table_name
-                       " "
-                       base_type
-                       (when semantic_type
-                         (str " " semantic_type)))])))
+(defn- autocomplete-results [tables fields limit]
+  (let [tbl-count   (count tables)
+        fld-count   (count fields)
+        take-tables (min tbl-count (- limit (/ fld-count 2)))
+        take-fields (- limit take-tables)]
+    (concat (for [{table-name :name} (take take-tables tables)]
+              [table-name "Table"])
+            (for [{:keys [table_name base_type semantic_type name]} (take take-fields fields)]
+              [name (str table_name
+                         " "
+                         base_type
+                         (when semantic_type
+                           (str " " semantic_type)))]))))
 
 (defn- autocomplete-suggestions [db-id prefix]
-  (let [tables (filter mi/can-read? (autocomplete-tables db-id prefix))
-        fields (readable-fields-only (autocomplete-fields db-id prefix))]
-    (autocomplete-results tables fields)))
+  (let [limit  50
+        tables (filter mi/can-read? (autocomplete-tables db-id prefix limit))
+        fields (readable-fields-only (autocomplete-fields db-id prefix limit))]
+    (autocomplete-results tables fields limit)))
 
 (api/defendpoint GET "/:id/autocomplete_suggestions"
   "Return a list of autocomplete suggestions for a given `prefix`.
@@ -453,14 +473,15 @@
 
 (api/defendpoint POST "/"
   "Add a new `Database`."
-  [:as {{:keys [name engine details is_full_sync is_on_demand schedules auto_run_queries]} :body}]
+  [:as {{:keys [name engine details is_full_sync is_on_demand schedules auto_run_queries cache_ttl]} :body}]
   {name             su/NonBlankString
    engine           DBEngineString
    details          su/Map
    is_full_sync     (s/maybe s/Bool)
    is_on_demand     (s/maybe s/Bool)
    schedules        (s/maybe sync.schedules/ExpandedSchedulesMap)
-   auto_run_queries (s/maybe s/Bool)}
+   auto_run_queries (s/maybe s/Bool)
+   cache_ttl        (s/maybe su/IntGreaterThanZero)}
   (api/check-superuser)
   (let [is-full-sync?    (or (nil? is_full_sync)
                              (boolean is_full_sync))
@@ -475,7 +496,8 @@
                                    :engine       engine
                                    :details      details-or-error
                                    :is_full_sync is-full-sync?
-                                   :is_on_demand (boolean is_on_demand)}
+                                   :is_on_demand (boolean is_on_demand)
+                                   :cache_ttl    cache_ttl}
                                   (sync.schedules/schedule-map->cron-strings
                                     (if (:let-user-control-scheduling details)
                                       (sync.schedules/scheduling schedules)
@@ -526,7 +548,7 @@
 (api/defendpoint PUT "/:id"
   "Update a `Database`."
   [id :as {{:keys [name engine details is_full_sync is_on_demand description caveats points_of_interest schedules
-                   auto_run_queries refingerprint]} :body}]
+                   auto_run_queries refingerprint cache_ttl]} :body}]
   {name               (s/maybe su/NonBlankString)
    engine             (s/maybe DBEngineString)
    refingerprint      (s/maybe s/Bool)
@@ -535,7 +557,8 @@
    description        (s/maybe s/Str)                ; s/Str instead of su/NonBlankString because we don't care
    caveats            (s/maybe s/Str)                ; whether someone sets these to blank strings
    points_of_interest (s/maybe s/Str)
-   auto_run_queries   (s/maybe s/Bool)}
+   auto_run_queries   (s/maybe s/Bool)
+   cache_ttl          (s/maybe su/IntGreaterThanZero)}
   (api/check-superuser)
   ;; TODO - ensure that custom schedules and let-user-control-scheduling go in lockstep
   (api/let-404 [existing-database (Database id)]
@@ -577,10 +600,13 @@
 
                                                        ;; if user is controlling schedules
                                                        (:let-user-control-scheduling details)
-                                                       (sync.schedules/schedule-map->cron-strings (sync.schedules/scheduling schedules))
+                                                       (sync.schedules/schedule-map->cron-strings (sync.schedules/scheduling schedules))))))
                                                        ;; do nothing in the case that user is not in control of
                                                        ;; scheduling. leave them as they are in the db
-                                                       ))))
+
+          ;; unlike the other fields, folks might want to nil out cache_ttl
+          (api/check-500 (db/update! Database id {:cache_ttl cache_ttl}))
+
           (let [db (Database id)]
             (events/publish-event! :database-update db)
             ;; return the DB with the expanded schedules back in place
@@ -671,13 +697,17 @@
   at least some of its tables?)"
   [database-id schema-name]
   (perms/set-has-partial-permissions? @api/*current-user-permissions-set*
-                                      (perms/object-path database-id schema-name)))
+                                      (perms/data-perms-path database-id schema-name)))
 
 (api/defendpoint GET "/:id/schemas"
   "Returns a list of all the schemas found for the database `id`"
   [id]
   (api/read-check Database id)
-  (->> (db/select-field :schema Table :db_id id, :active true, {:order-by [[:%lower.schema :asc]]})
+  (->> (db/select-field :schema Table
+         :db_id id :active true
+         ;; a non-nil value means Table is hidden -- see [[metabase.models.table/visibility-types]]
+         :visibility_type nil
+         {:order-by [[:%lower.schema :asc]]})
        (filter (partial can-read-schema? id))
        ;; for `nil` schemas return the empty string
        (map #(if (nil? %) "" %))
@@ -704,8 +734,9 @@
                          :db_id           db-id
                          :schema          schema
                          :active          true
+                         ;; a non-nil value means Table is hidden -- see [[metabase.models.table/visibility-types]]
                          :visibility_type nil
-                         {:order-by [[:name :asc]]})))
+                         {:order-by [[:display_name :asc]]})))
 
 (api/defendpoint GET "/:id/schema/:schema"
   "Returns a list of Tables for the given Database `id` and `schema`"
@@ -729,5 +760,16 @@
                                       [:in :collection_id (api/check-404 (seq (db/select-ids Collection :name schema)))])])
          (map table-api/card->virtual-table))))
 
+(api/defendpoint GET "/db-ids-with-deprecated-drivers"
+  "Return a list of database IDs using currently deprecated drivers."
+  []
+  (map
+    u/the-id
+    (filter
+      (fn [database]
+        (let [info (driver.u/available-drivers-info)
+              d    (driver.u/database->driver database)]
+          (some? (:superseded-by (d info)))))
+      (db/select-ids Database))))
 
 (api/define-routes)

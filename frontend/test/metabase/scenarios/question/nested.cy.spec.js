@@ -1,10 +1,10 @@
 import {
   restore,
   popover,
-  createNativeQuestion,
   openOrdersTable,
   remapDisplayValueToFK,
   visitQuestionAdhoc,
+  visualize,
 } from "__support__/e2e/cypress";
 
 import { SAMPLE_DATASET } from "__support__/e2e/cypress_sample_dataset";
@@ -25,6 +25,12 @@ describe("scenarios > question > nested (metabase#12568)", () => {
         breakout: [["field", ORDERS.CREATED_AT, { "temporal-unit": "week" }]],
       },
       display: "line",
+    }).then(({ body }) => {
+      cy.intercept("POST", `/api/card/${body.id}/query`).as("cardMetadata");
+
+      cy.visit(`/question/${body.id}`);
+      // We have to wait for the metadata to load
+      cy.wait("@cardMetadata");
     });
 
     // Create a native question of orders by day
@@ -35,6 +41,12 @@ describe("scenarios > question > nested (metabase#12568)", () => {
           "SELECT date_trunc('day', CREATED_AT) as date, COUNT(*) as count FROM ORDERS GROUP BY date_trunc('day', CREATED_AT)",
       },
       display: "scalar",
+    }).then(({ body }) => {
+      cy.intercept("POST", `/api/card/${body.id}/query`).as("nativeMetadata");
+
+      cy.visit(`/question/${body.id}`);
+      // We have to wait for the metadata to load
+      cy.wait("@nativeMetadata");
     });
 
     // [quarantine] The whole CI was timing out
@@ -80,7 +92,7 @@ describe("scenarios > question > nested (metabase#12568)", () => {
     cy.contains("Count").click();
     cy.contains("Distribution").click();
     cy.contains("Count by Count: Auto binned");
-    cy.get(".bar").should("have.length.of.at.least", 10);
+    cy.get(".bar").should("have.length.of.at.least", 8);
   });
 
   it("should allow Sum over time on a Saved Simple Question", () => {
@@ -102,7 +114,7 @@ describe("scenarios > question > nested (metabase#12568)", () => {
     cy.contains("COUNT").click();
     cy.contains("Distribution").click();
     cy.contains("Count by COUNT: Auto binned");
-    cy.get(".bar").should("have.length.of.at.least", 10);
+    cy.get(".bar").should("have.length.of.at.least", 8);
   });
 
   // [quarantine] The whole CI was timing out
@@ -184,11 +196,16 @@ describe("scenarios > question > nested", () => {
   });
 
   it.skip("should show all filter options for a nested question (metabase#13186)", () => {
-    cy.log("Create and save native question Q1");
+    const nativeQuestionDetails = {
+      name: "13816_Q1",
+      native: {
+        query: "SELECT * FROM PRODUCTS",
+      },
+    };
 
-    createNativeQuestion("13816_Q1", "SELECT * FROM PRODUCTS").then(
+    cy.createNativeQuestion(nativeQuestionDetails).then(
       ({ body: { id: Q1_ID } }) => {
-        cy.log("Convert it to `query` and save as Q2");
+        cy.log("Convert Q1 to `query` and save as Q2");
         cy.createQuestion({
           name: "13816_Q2",
           query: {
@@ -198,7 +215,7 @@ describe("scenarios > question > nested", () => {
       },
     );
 
-    cy.createDashboard("13186D").then(({ body: { id: DASBOARD_ID } }) => {
+    cy.createDashboard().then(({ body: { id: DASBOARD_ID } }) => {
       cy.visit(`/dashboard/${DASBOARD_ID}`);
     });
 
@@ -211,7 +228,8 @@ describe("scenarios > question > nested", () => {
 
     // Add filter to the dashboard...
     cy.icon("filter").click();
-    cy.findByText("Other Categories").click();
+    cy.findByText("Text or Category").click();
+    cy.findByText("Dropdown").click();
     // ...and try to connect it to the question
     cy.findByText("Select…").click();
 
@@ -554,7 +572,8 @@ describe("scenarios > question > nested", () => {
       cy.findByText("Pick a column to group by").click();
       cy.findByText("CAT").click();
 
-      cy.button("Visualize").click();
+      visualize();
+
       cy.get("@consoleWarn").should(
         "not.be.calledWith",
         "Removing invalid MBQL clause",
@@ -566,8 +585,8 @@ describe("scenarios > question > nested", () => {
       cy.findByText("Pick a column to group by").click();
       cy.findByText("CAT").click();
 
-      cy.button("Visualize").click();
-      cy.wait("@dataset");
+      visualize();
+
       cy.findAllByRole("button")
         .contains("Summarize")
         .click();

@@ -1,11 +1,11 @@
-import { restore, sidebar, popover } from "__support__/e2e/cypress";
+import { restore, sidebar, popover, visualize } from "__support__/e2e/cypress";
 
 describe("smoketest > user", () => {
   // Goal: user can use all the features of the simple question and notebook editor
   before(restore);
   beforeEach(cy.signInAsNormalUser);
 
-  it("should be able to ask a custom questions", () => {
+  it("should be able to ask a custom question", () => {
     cy.visit("/");
     cy.findByText("Ask a question").click();
     cy.findByText("Custom question").click();
@@ -24,7 +24,7 @@ describe("smoketest > user", () => {
 
     cy.findByText("Average of Rating");
 
-    cy.button("Visualize").click();
+    visualize();
 
     cy.icon("bar");
     cy.findAllByText("Vendor is not empty");
@@ -67,7 +67,8 @@ describe("smoketest > user", () => {
     popover().within(() => {
       cy.findAllByText("Title").click();
     });
-    cy.button("Visualize").click();
+
+    visualize();
 
     cy.get("@firstTableCell").contains("Aerodynamic Bronze Hat");
 
@@ -106,9 +107,9 @@ describe("smoketest > user", () => {
     cy.findByText("Greater than or equal to").click();
     cy.get("input[placeholder='Enter a number']").type("5");
     cy.findByText("Add filter").click();
-    cy.button("Visualize").click();
 
-    cy.button("Visualize").should("not.exist");
+    visualize();
+
     cy.get("svg");
     cy.findByText("Average of Rating is greater than or equal to 5");
 
@@ -180,55 +181,11 @@ describe("smoketest > user", () => {
     cy.findByText("Count of rows").click();
     cy.findByText("Pick a column to group by").click();
     cy.icon("calendar").click();
-    cy.button("Visualize").click();
+
+    visualize();
 
     cy.get("svg");
     cy.findAllByText("Created At");
-  });
-
-  /**
-   * NOTE: - There is a HIGH chance that there are still references to the old "drill-through"/actions popover
-   *         among the skipped tests. Because of the urgency to fix smoke tests (2020-11-26) there is not enough
-   *         time to fully commit to cleaning skipped tests as well.
-   *
-   *       - In general, all smoke tests need serious refactoring
-   *
-   * TODO: - Once that work starts, make sure to update obsolete references in popover!
-   */
-
-  it.skip("should be able to create custom columns in the notebook editor", () => {
-    cy.icon("notebook").click();
-
-    // Delete last summary
-    cy.findAllByText("Count")
-      .first()
-      .click(70, 20);
-
-    // Switch table from Product to Orders
-
-    cy.findAllByText("Products")
-      .last()
-      .click();
-    cy.findByText("Orders").click();
-
-    // Create custom column
-    cy.icon("add_data").click();
-    cy.findByText("Product → Price").click();
-    cy.findByText("-").click();
-    cy.findByText("Subtotal").click();
-    cy.get(".PopoverBody")
-      .first()
-      .click();
-    cy.get("input[placeholder='Something nice and descriptive']").type(
-      "Demo Column",
-    );
-    cy.findByText("Done").click();
-    cy.button("Visualize").click();
-
-    cy.findByText("ID");
-    cy.icon("table2");
-    cy.wait(1000).findByText("Demo Column");
-    cy.findByText("Products").should("not.exist");
   });
 
   it.skip("should be able to use all notebook editor functions", () => {
@@ -238,7 +195,8 @@ describe("smoketest > user", () => {
 
     cy.icon("join_left_outer").click();
     cy.findByText("People").click(); // column selection happens automatcially
-    cy.button("Visualize").click();
+
+    visualize();
 
     cy.findByText("User → ID");
     cy.findByText("Created At");
@@ -250,7 +208,8 @@ describe("smoketest > user", () => {
 
     cy.findByText("Row limit").click();
     cy.get("input[type='number']").type("10");
-    cy.button("Visualize").click();
+
+    visualize();
 
     cy.get(".TableInteractive-cellWrapper--firstColumn").should(
       "have.length",
@@ -281,7 +240,7 @@ describe("smoketest > user", () => {
     // Distinctions
     // *** This test needs to be improved with variables that will change if the Sample data changes
 
-    cy.button("Visualize").click();
+    visualize();
 
     cy.findByText("Category").click();
     cy.findByText("Distincts").click();
@@ -375,7 +334,8 @@ describe("smoketest > user", () => {
       .last()
       .click();
     cy.findByText("People").click();
-    cy.button("Visualize").click();
+
+    visualize();
 
     cy.findByText("Longitude").click();
 

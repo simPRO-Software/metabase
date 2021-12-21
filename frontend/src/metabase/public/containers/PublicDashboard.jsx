@@ -27,7 +27,7 @@ import {
   getParameterValues,
 } from "metabase/dashboard/selectors";
 
-import * as dashboardActions from "metabase/dashboard/dashboard";
+import * as dashboardActions from "metabase/dashboard/actions";
 
 import {
   setPublicDashboardEndpoints,
@@ -84,10 +84,7 @@ type Props = {
   setErrorPage: (error: { status: number }) => void,
 };
 
-@connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)
+@connect(mapStateToProps, mapDispatchToProps)
 @title(({ dashboard }) => dashboard && dashboard.name)
 @DashboardControls
 // NOTE: this should use DashboardData HoC

@@ -1,26 +1,20 @@
-import { restore, popover } from "__support__/e2e/cypress";
+import { restore, popover, visualize } from "__support__/e2e/cypress";
+
+const questionDetails = {
+  name: "SQL Binning",
+  native: {
+    query:
+      "SELECT ORDERS.CREATED_AT, ORDERS.TOTAL, PEOPLE.LONGITUDE FROM ORDERS JOIN PEOPLE ON orders.user_id = people.id",
+  },
+};
 
 describe("scenarios > binning > from a saved sql question", () => {
   beforeEach(() => {
-    cy.intercept("POST", "/api/card/*/query").as("cardQuery");
     cy.intercept("POST", "/api/dataset").as("dataset");
 
     restore();
     cy.signInAsAdmin();
-    cy.createNativeQuestion({
-      name: "SQL Binning",
-      native: {
-        query:
-          "SELECT ORDERS.CREATED_AT, ORDERS.TOTAL, PEOPLE.LONGITUDE FROM ORDERS JOIN PEOPLE ON orders.user_id = people.id",
-      },
-    }).then(({ body }) => {
-      /**
-       * We need to visit the question and to wait for the result metadata to load first.
-       * Please see: https://github.com/metabase/metabase/pull/16707#issuecomment-866126310
-       */
-      cy.visit(`/question/${body.id}`);
-      cy.wait("@cardQuery");
-    });
+    cy.createNativeQuestion(questionDetails, { loadMetadata: true });
   });
 
   context("via simple question", () => {
@@ -110,9 +104,11 @@ describe("scenarios > binning > from a saved sql question", () => {
       cy.findByText("Year").click();
 
       cy.findByText("Count by CREATED_AT: Year");
-      cy.button("Visualize").click();
 
-      waitAndAssertOnRequest("@dataset");
+      visualize(response => {
+        assertOnResponse(response);
+      });
+
       cy.get("circle");
     });
 
@@ -123,9 +119,11 @@ describe("scenarios > binning > from a saved sql question", () => {
       cy.findByText("50 bins").click();
 
       cy.findByText("Count by TOTAL: 50 bins");
-      cy.button("Visualize").click();
 
-      waitAndAssertOnRequest("@dataset");
+      visualize(response => {
+        assertOnResponse(response);
+      });
+
       cy.get(".bar");
     });
 
@@ -143,9 +141,11 @@ describe("scenarios > binning > from a saved sql question", () => {
       cy.findByText("10°").click();
 
       cy.findByText("Count by LONGITUDE: 10°");
-      cy.button("Visualize").click();
 
-      waitAndAssertOnRequest("@dataset");
+      visualize(response => {
+        assertOnResponse(response);
+      });
+
       cy.get(".bar");
     });
   });
@@ -221,7 +221,11 @@ function assertOnXYAxisLabels({ xLabel, yLabel } = {}) {
 }
 
 function waitAndAssertOnRequest(requestAlias) {
-  cy.wait(requestAlias).then(xhr => {
-    expect(xhr.response.body.error).to.not.exist;
+  cy.wait(requestAlias).then(({ response }) => {
+    assertOnResponse(response);
   });
+}
+
+function assertOnResponse(response) {
+  expect(response.body.error).to.not.exist;
 }

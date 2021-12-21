@@ -1,5 +1,4 @@
-import path from "path";
-import { restore, sidebar } from "__support__/e2e/cypress";
+import { restore, sidebar, visualize } from "__support__/e2e/cypress";
 import { USERS } from "__support__/e2e/cypress_data";
 
 const { admin } = USERS;
@@ -52,10 +51,8 @@ describe("metabase-smoketest > admin", () => {
       cy.findByText("H2").click();
       cy.findByLabelText("Name").type("Metabase H2");
 
-      const dbPath = path.resolve(
-        Cypress.config("fileServerFolder"),
-        "frontend/test/__runner__/empty.db",
-      );
+      const dbFilename = "frontend/test/__runner__/empty.db";
+      const dbPath = Cypress.config("fileServerFolder") + "/" + dbFilename;
       cy.findByLabelText("Connection String").type(`file:${dbPath}`);
       cy.findByText("Next").click();
 
@@ -168,7 +165,8 @@ describe("metabase-smoketest > admin", () => {
 
       cy.findByText("Join data").click();
       cy.findByText("People").click();
-      cy.button("Visualize").click();
+
+      visualize();
 
       // Summarize by State
       cy.findAllByText("Summarize")

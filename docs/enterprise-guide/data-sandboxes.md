@@ -1,6 +1,8 @@
-## Sandboxing your data
+## Data sandboxes 
 
-Data sandboxes are a powerful and flexible permissions tool in Metabase Enterprise Edition that allow you to grant filtered access to specific tables.
+{% include plans-blockquote.html feature="Data sandboxes" %}
+
+Data sandboxes are a powerful and flexible permissions tool in Metabase Enterprise Edition that allow you to grant filtered access to specific tables. If you haven't already, check out our [overview of how permissions work in Metabase][permissions-overview].
 
 Say you have users who you want to be able to log into your Metabase instance, but who should only be able to view data that pertains to them. For example, you might have some customers or partners who you want to let view your Orders table, but you only want them to see their orders. Sandboxes let you do just that.
 
@@ -22,7 +24,7 @@ Metabase gives you two options for filtering a sandboxed table:
 #### Option 1: filter using a column in the table
 
 The simplest way to filter a sandboxed table is to pick a column in the sandboxed table and match it up with a user attribute so that any time a user with sandboxed access to this table views it, they’ll only see rows in the table where that column’s value is equal to the value that user has for that attribute.
-
+	
 #### Option 2: create a custom view of the table with a saved question
 
 Metabase also gives you the option of creating a custom view for a sandboxed table using a saved question.  For example, you might have columns in your Orders table that you don’t want any of your users to see. You can create a SQL-based saved question that only returns the columns you want users to see. For even more surgical access controls, you can map variables in a SQL question to user attributes in order to customize the view for that user. For example, if you only want users to see _their_ order data, you could map a variable in the `where` clause of the filtering saved question to one of their user attributes, like `where orders.user_id = {% raw %}{{user_id_attr_var}}{% endraw %}`, and the user would only have access to order information related to that user ID.
@@ -47,9 +49,7 @@ Next we’ll see a worksheet that will ask us how we want to filter this table f
 
 ![Sandbox settings](images/sandboxing/select-user-attribute.png)
 
-We’ll click Done, then we’ll click Save Changes at the top of the screen to save the changes we’ve made to our permissions. If we ever want to edit how this table should be filtered for users in this group, we can just click on the blue box and select “Edit sandboxed access.”
-
-![Edit access](images/sandboxing/edit-sandboxed-access.png)
+We’ll click Done, then we’ll click Save Changes at the top of the screen to save the changes we’ve made to our permissions. If we ever want to edit how this table should be filtered for users in this group, we can just click on the __Data access__ dropdown for that group and select __Edit sandboxed access__.
 
 To test this out, we’ll open up a new incognito browser window and log in with our test user account. We’ll click on the Sample Dataset on the home page and then pick the Orders table. As you can see here, this user correctly only sees orders where the User ID column is equal to 1, because that’s what this user’s user_id attribute is.
 
@@ -99,6 +99,21 @@ The filtering question that I'll create will exclude columns that I don't want t
 
 ![Filtering question](images/sandboxing/advanced-example-2-filtering-question.png)
 
+And here's the code:
+
+```
+SELECT
+  id,
+  created_at, 
+  product_id, 
+  quantity, 
+  total, 
+  user_id 
+FROM 
+  orders
+[[WHERE user_id = {%raw%}{{cid}}{%endraw%}]]
+```
+
 Going back over to the Permissions section, when I open up the sandboxed access modal and select the second option and select my filtering question, I'll see an additional section which allows me to map the variable I defined in my question with a user attribute:
 
 ![Sandboxing options](images/sandboxing/advanced-example-2-sandboxing-options.png)
@@ -135,8 +150,17 @@ An important distinction to make is that you can use a saved SQL query in the _c
 
 Public questions and dashboards can't be sandboxed. Sandboxing works by filtering data based on the group membership and user attributes of an authenticated user — so since a user doesn't have to log in to see a public question or dashboard, Metabase has no knowledge of who that user is.
 
+## Further reading
+
+- [Learn track on permissions][permissions]
+- [Troubleshooting access to columns and rows][troubleshoot-sandbox]
+
 ---
 
 ## Next: embedding Metabase in your web app
 
 The next section will explain [how to embed](full-app-embedding.md) interactive dashboards and charts, or even whole sections of Metabase within your app.
+
+[permissions]: /learn/permissions/index.html
+[permissions-overview]: ../administration-guide/05-setting-permissions.md
+[troubleshoot-sandbox]: ../troubleshooting-guide/sandboxing.html

@@ -64,22 +64,30 @@ import { getMetadata } from "metabase/selectors/metadata";
 
 import NativeQuery from "metabase-lib/lib/queries/NativeQuery";
 
+import ExplicitSize from "metabase/components/ExplicitSize";
 import { loadMetadataForCard } from "metabase/query_builder/actions";
 
 const mapStateToProps = state => ({ metadata: getMetadata(state) });
 const mapDispatchToProps = { loadMetadataForCard };
 
-@connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)
+@connect(mapStateToProps, mapDispatchToProps)
+@ExplicitSize()
 class QueryBuilderReadOnly extends React.Component {
+  state = {
+    isNativeEditorOpen: false,
+  };
+
+  setIsNativeEditorOpen = open => {
+    this.setState({ isNativeEditorOpen: open });
+  };
+
   componentDidMount() {
     const { card, loadMetadataForCard } = this.props;
     loadMetadataForCard(card);
   }
+
   render() {
-    const { card, metadata } = this.props;
+    const { card, metadata, height } = this.props;
     const question = new Question(card, metadata);
 
     const query = question.query();
@@ -91,6 +99,9 @@ class QueryBuilderReadOnly extends React.Component {
           query={query}
           location={{ query: {} }}
           readOnly
+          viewHeight={height}
+          isNativeEditorOpen={this.state.isNativeEditorOpen}
+          setIsNativeEditorOpen={this.setIsNativeEditorOpen}
         />
       );
     } else {

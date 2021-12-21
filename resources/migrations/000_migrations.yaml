@@ -8283,6 +8283,70 @@ databaseChangeLog:
             - sql: ALTER SEQUENCE collection_revision_id_seq RENAME TO collection_permission_graph_revision_id_seq
 
   - changeSet:
+      id: 303
+      author: tsmacdonald
+      comment: Added 0.40.0
+      changes:
+        - createTable:
+            tableName: moderation_review
+            remarks: "Reviews (from moderators) for a given question/dashboard (BUCM)"
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: ${timestamp_type}
+                  defaultValueComputed: current_timestamp
+                  remarks: "most recent modification time"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: ${timestamp_type}
+                  defaultValueComputed: current_timestamp
+                  remarks: "creation time"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(255)
+                  remarks: "verified, misleading, confusing, not_misleading, pending"
+              - column:
+                  name: text
+                  type: text
+                  remarks: "Explanation of the review"
+                  # I don't think it needs to be non-nullable
+              - column:
+                  name: moderated_item_id
+                  type: int
+                  remarks: "either a document or question ID; the item that needs review"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: moderated_item_type
+                  type: varchar(255)
+                  remarks: "whether it's a question or dashboard"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: moderator_id
+                  type: int
+                  remarks: "ID of the user who did the review"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: most_recent
+                  type: boolean
+                  remarks: "tag for most recent review"
+                  constraints:
+                    nullable: false
+
+  - changeSet:
       id: 304
       author: camsaul
       comment: Added 0.40.0 (replaces a data migration dating back to 0.20.0)
@@ -8399,6 +8463,122 @@ databaseChangeLog:
             sql: |
                 UPDATE setting SET value='simple' WHERE key='humanization-strategy'
                 AND value='advanced'
+
+  - changeSet:
+      id: 312
+      author: noahmoss
+      comment: Added 0.41.0 Backfill collection_id for dashboard subscriptions
+      changes:
+        - sql:
+            dbms: mariadb,mysql
+            sql: >-
+              UPDATE pulse p
+              INNER JOIN report_dashboard d
+              ON p.dashboard_id = d.id
+              SET p.collection_id = d.collection_id;
+        - sql:
+            dbms: postgresql
+            sql: >-
+              UPDATE pulse p
+              SET collection_id = d.collection_id
+              FROM report_dashboard d
+              WHERE p.dashboard_id = d.id
+              AND p.dashboard_id IS NOT NULL;
+        - sql:
+            dbms: h2
+            sql: >-
+              UPDATE pulse p
+              SET collection_id = (
+                SELECT d.collection_id
+                FROM report_dashboard d
+                WHERE d.id = p.dashboard_id
+              )
+              WHERE dashboard_id IS NOT NULL;
+
+  - changeSet:
+      id: 314
+      author: howonlee
+      comment: Added 0.41.0 Fine grained caching controls
+      changes:
+        - addColumn:
+            tableName: metabase_database
+            columns:
+              - column:
+                  name: cache_ttl
+                  type: integer
+                  remarks: "Granular cache TTL for specific database."
+                  constraints:
+                    nullable: true
+
+  - changeSet:
+      id: 315
+      author: howonlee
+      comment: Added 0.41.0 Fine grained caching controls, pt 2
+      changes:
+        - addColumn:
+            tableName: report_dashboard
+            columns:
+              - column:
+                  name: cache_ttl
+                  type: integer
+                  remarks: "Granular cache TTL for specific dashboard."
+                  constraints:
+                    nullable: true
+
+  - changeSet:
+      id: 316
+      author: howonlee
+      comment: Added 0.41.0 Fine grained caching controls, pt 3
+      changes:
+        - addColumn:
+            tableName: view_log
+            columns:
+              - column:
+                  name: metadata
+                  type: text
+                  remarks: "Serialized JSON corresponding to metadata for view."
+                  constraints:
+                    nullable: true
+
+  - changeSet:
+      id: 381
+      author: camsaul
+      comment: Added 0.41.2 Add index to QueryExecution card_id to fix performance issues (#18759)
+      changes:
+        - createIndex:
+            tableName: query_execution
+            indexName: idx_query_execution_card_id
+            columns:
+              - column:
+                  name: card_id
+
+  - changeSet:
+      id: 382
+      author: camsaul
+      comment: Added 0.41.2 Add index to ModerationReview moderated_item_type + moderated_item_id to fix performance issues (#18759)
+      changes:
+        - createIndex:
+            tableName: moderation_review
+            indexName: idx_moderation_review_item_type_item_id
+            columns:
+              - column:
+                  name: moderated_item_type
+              - column:
+                  name: moderated_item_id
+
+  - changeSet:
+      id: 383
+      author: camsaul
+      comment: Added 0.41.3 -- Add index to QueryExecution card_id + started_at to fix performance issue #19053
+      changes:
+        - createIndex:
+            tableName: query_execution
+            indexName: idx_query_execution_card_id_started_at
+            columns:
+              - column:
+                  name: card_id
+              - column:
+                  name: started_at
 
 # >>>>>>>>>> DO NOT ADD NEW MIGRATIONS BELOW THIS LINE! ADD THEM ABOVE <<<<<<<<<<
 

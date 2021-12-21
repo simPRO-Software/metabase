@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import { t } from "ttag";
 
 import Icon from "metabase/components/Icon";
-
+import { DEFAULT_SEARCH_LIMIT } from "metabase/lib/constants";
 import Search from "metabase/entities/search";
 
 import { SearchResultItem } from "./SearchResultItem";
@@ -29,7 +29,7 @@ export function SearchResults({
   const query = {
     q: searchQuery,
     models: searchModels,
-    limit: SEARCH_LIMIT,
+    limit: DEFAULT_SEARCH_LIMIT,
   };
 
   if (databaseId) {

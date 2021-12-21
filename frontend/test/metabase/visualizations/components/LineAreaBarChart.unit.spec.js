@@ -379,7 +379,13 @@ const numberCard = {
     public_uuid: null,
   },
   data: {
-    rows: [[1, 59], [2, 77], [3, 64], [4, 550], [5, 328]],
+    rows: [
+      [1, 59],
+      [2, 77],
+      [3, 64],
+      [4, 550],
+      [5, 328],
+    ],
     columns: ["RATING", "count"],
     native_form: {
       query:
@@ -437,6 +443,14 @@ const numberCard = {
     },
   },
 };
+
+// jsdom doesn't support layout methods like getBBox, so we need to mock it.
+window.SVGElement.prototype.getBBox = () => ({
+  x: 0,
+  y: 0,
+  width: 1000,
+  height: 1000,
+});
 
 describe("LineAreaBarChart", () => {
   it("should let you combine series with datetimes only", () => {

@@ -37,13 +37,12 @@ import QueryBuilder from "metabase/query_builder/containers/QueryBuilder";
 import CollectionEdit from "metabase/collections/containers/CollectionEdit";
 import CollectionCreate from "metabase/collections/containers/CollectionCreate";
 import ArchiveCollectionModal from "metabase/components/ArchiveCollectionModal";
-import CollectionPermissionsModal from "metabase/admin/permissions/containers/CollectionPermissionsModal";
+import CollectionPermissionsModal from "metabase/admin/permissions/components/CollectionPermissionsModal/CollectionPermissionsModal";
 import UserCollectionList from "metabase/containers/UserCollectionList";
 
 import PulseEditApp from "metabase/pulse/containers/PulseEditApp";
 import SetupApp from "metabase/setup/containers/SetupApp";
 import PostSetupApp from "metabase/setup/containers/PostSetupApp";
-import UserSettingsApp from "metabase/user/containers/UserSettingsApp";
 // new question
 import NewQueryOptions from "metabase/new_query/containers/NewQueryOptions";
 
@@ -72,6 +71,7 @@ import TableQuestionsContainer from "metabase/reference/databases/TableQuestions
 import FieldListContainer from "metabase/reference/databases/FieldListContainer";
 import FieldDetailContainer from "metabase/reference/databases/FieldDetailContainer";
 
+import getAccountRoutes from "metabase/account/routes";
 import getAdminRoutes from "metabase/admin/routes";
 
 import PublicQuestion from "metabase/public/containers/PublicQuestion";
@@ -88,6 +88,7 @@ import Overworld from "metabase/containers/Overworld";
 
 import ArchiveApp from "metabase/home/containers/ArchiveApp";
 import SearchApp from "metabase/home/containers/SearchApp";
+import { trackPageView } from "metabase/lib/analytics";
 
 const MetabaseIsSetup = UserAuthWrapper({
   predicate: authData => !authData.hasSetupToken,
@@ -144,6 +145,10 @@ export const getRoutes = store => (
         if (!MetabaseSettings.hasSetupToken()) {
           replace("/");
         }
+        trackPageView(location.pathname);
+      }}
+      onChange={(prevState, nextState) => {
+        trackPageView(nextState.location.pathname);
       }}
     />
 
@@ -157,7 +162,11 @@ export const getRoutes = store => (
     <Route
       onEnter={async (nextState, replace, done) => {
         await store.dispatch(loadCurrentUser());
+        trackPageView(nextState.location.pathname);
         done();
+      }}
+      onChange={(prevState, nextState) => {
+        trackPageView(nextState.location.pathname);
       }}
     >
       {/* AUTH */}
@@ -320,8 +329,8 @@ export const getRoutes = store => (
         </Route>
       </Route>
 
-      {/* USER */}
-      <Route path="/user/edit_current" component={UserSettingsApp} />
+      {/* ACCOUNT */}
+      {getAccountRoutes(store, IsAuthenticated)}
 
       {/* ADMIN */}
       {getAdminRoutes(store, IsAdmin)}

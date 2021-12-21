@@ -15,7 +15,7 @@ import Text from "metabase/components/type/Text";
 import ModalWithTrigger from "metabase/components/ModalWithTrigger";
 import RecipientPicker from "metabase/pulse/components/RecipientPicker";
 import SchedulePicker from "metabase/components/SchedulePicker";
-import SendTestEmail from "metabase/components/SendTestEmail";
+import SendTestPulse from "metabase/components/SendTestPulse";
 import Sidebar from "metabase/dashboard/components/Sidebar";
 import Toggle from "metabase/components/Toggle";
 import Select, { Option } from "metabase/components/Select";
@@ -74,12 +74,13 @@ function _AddEditEmailSidebar({
   handleArchive,
   setPulseParameters,
 }) {
+  const isValid = dashboardPulseIsValid(pulse, formInput.channels);
+
   return (
     <Sidebar
+      closeIsDisabled={!isValid}
       onClose={handleSave}
       onCancel={onCancel}
-      className="text-dark"
-      closeIsDisabled={!dashboardPulseIsValid(pulse, formInput.channels)}
     >
       <div className="pt4 px4 flex align-center">
         <Icon name="mail" className="mr1" size={21} />
@@ -97,6 +98,9 @@ function _AddEditEmailSidebar({
             users={users}
             onRecipientsChange={recipients =>
               onChannelPropertyChange("recipients", recipients)
+            }
+            invalidRecipientText={domains =>
+              t`You're only allowed to email subscriptions to addresses ending in ${domains}`
             }
           />
         </div>
@@ -125,10 +129,14 @@ function _AddEditEmailSidebar({
           }
         />
         <div className="pt2 pb1">
-          <SendTestEmail
+          <SendTestPulse
             channel={channel}
+            channelSpecs={formInput.channels}
             pulse={pulse}
             testPulse={testPulse}
+            normalText={t`Send email now`}
+            successText={t`Email sent`}
+            disabled={!isValid}
           />
         </div>
         {PLUGIN_DASHBOARD_SUBSCRIPTION_PARAMETERS_SECTION_OVERRIDE.Component ? (
@@ -238,7 +246,7 @@ function getConfirmItems(pulse) {
               c.recipients.length,
             )}
           </strong>
-        )} ${<strong key="type">{c.schedule_type}</strong>}`}
+        )} ${(<strong key="type">{c.schedule_type}</strong>)}`}
         .
       </span>
     ) : c.channel_type === "slack" ? (
@@ -276,16 +284,18 @@ function _AddEditSlackSidebar({
   onCancel,
   onChannelPropertyChange,
   onChannelScheduleChange,
+  testPulse,
   toggleSkipIfEmpty,
   handleArchive,
   setPulseParameters,
 }) {
+  const isValid = dashboardPulseIsValid(pulse, formInput.channels);
+
   return (
     <Sidebar
+      closeIsDisabled={!isValid}
       onClose={handleSave}
       onCancel={onCancel}
-      className="text-dark"
-      closeIsDisabled={!dashboardPulseIsValid(pulse, formInput.channels)}
     >
       <div className="pt4 flex align-center px4 mb3">
         <Icon name="slack" className="mr1" size={21} />
@@ -317,6 +327,17 @@ function _AddEditSlackSidebar({
             onChannelScheduleChange(newSchedule, changedProp)
           }
         />
+        <div className="pt2 pb1">
+          <SendTestPulse
+            channel={channel}
+            channelSpecs={formInput.channels}
+            pulse={pulse}
+            testPulse={testPulse}
+            normalText={t`Send to Slack now`}
+            successText={t`Slack sent`}
+            disabled={!isValid}
+          />
+        </div>
         {PLUGIN_DASHBOARD_SUBSCRIPTION_PARAMETERS_SECTION_OVERRIDE.Component ? (
           <PLUGIN_DASHBOARD_SUBSCRIPTION_PARAMETERS_SECTION_OVERRIDE.Component
             className="py3 mt2 border-top"
@@ -364,6 +385,7 @@ _AddEditSlackSidebar.propTypes = {
   onCancel: PropTypes.func.isRequired,
   onChannelPropertyChange: PropTypes.func.isRequired,
   onChannelScheduleChange: PropTypes.func.isRequired,
+  testPulse: PropTypes.func.isRequired,
   toggleSkipIfEmpty: PropTypes.func.isRequired,
   handleArchive: PropTypes.func.isRequired,
   setPulseParameters: PropTypes.func.isRequired,

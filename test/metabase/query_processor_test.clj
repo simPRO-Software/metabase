@@ -12,16 +12,18 @@
             [metabase.models.table :refer [Table]]
             [metabase.query-processor :as qp]
             [metabase.query-processor.middleware.add-implicit-joins :as joins]
+            [metabase.test-runner.init :as test-runner.init]
             [metabase.test.data :as data]
             [metabase.test.data.env :as tx.env]
             [metabase.test.data.interface :as tx]
             [metabase.test.util :as tu]
             [metabase.util :as u]
+            [schema.core :as s]
             [toucan.db :as db]))
 
 ;;; ---------------------------------------------- Helper Fns + Macros -----------------------------------------------
 
-;; Non-"normal" drivers are tested in `timeseries-query-processor-test` and elsewhere
+;; Non-"normal" drivers are tested in [[metabase.timeseries-query-processor-test]] and elsewhere
 (def ^:private abnormal-drivers
   "Drivers that are so weird that we can't run the normal driver tests against them."
   #{:druid :googleanalytics})
@@ -32,13 +34,16 @@
   (set/difference (tx.env/test-drivers) abnormal-drivers))
 
 (defn normal-drivers-with-feature
-  "Set of engines that support a given `feature`. If additional features are given, it will ensure all features are
+  "Set of drivers that support a given `feature`. If additional features are given, it will ensure all features are
   supported."
   [feature & more-features]
+  ;; Can't use [[normal-drivers-with-feature]] during test initialization, because it means we end up having to load
+  ;; plugins and a bunch of other nonsense.
+  (test-runner.init/assert-tests-are-not-initializing (pr-str (list* 'normal-drivers-with-feature feature more-features)))
   (let [features (set (cons feature more-features))]
     (set (for [driver (normal-drivers)
                :let   [driver (tx/the-driver-with-test-extensions driver)]
-               :when  (set/subset? features (driver.u/features driver))]
+               :when  (set/subset? features (driver.u/features driver (data/db)))]
            driver))))
 
 (alter-meta! #'normal-drivers-with-feature assoc :arglists (list (into ['&] (sort driver/driver-features))))
@@ -107,6 +112,10 @@
   ([table-kw cols]
    (mapv (partial col table-kw) cols)))
 
+(defn- backfill-effective-type [{:keys [base_type effective_type] :as col}]
+  (cond-> col
+    (and (nil? effective_type) base_type) (assoc :effective_type base_type)))
+
 (defn aggregate-col
   "Return the column information we'd expect for an aggregate column. For all columns besides `:count`, you'll need to
   pass the `Field` in question as well.
@@ -115,13 +124,16 @@
     (aggregate-col :avg (col :venues :id))
     (aggregate-col :avg :venues :id)"
   ([ag-type]
-   (tx/aggregate-column-info (tx/driver) ag-type))
+   (backfill-effective-type
+    (tx/aggregate-column-info (tx/driver) ag-type)))
 
   ([ag-type field]
-   (tx/aggregate-column-info (tx/driver) ag-type field))
+   (backfill-effective-type
+    (tx/aggregate-column-info (tx/driver) ag-type field)))
 
   ([ag-type table-kw field-kw]
-   (tx/aggregate-column-info (tx/driver) ag-type (col table-kw field-kw))))
+   (backfill-effective-type
+    (tx/aggregate-column-info (tx/driver) ag-type (col table-kw field-kw)))))
 
 (defn breakout-col
   "Return expected `:cols` info for a Field used as a breakout.
@@ -406,12 +418,12 @@
     (is (= {:database 1, :type :query, :query {:source-query {:source-query {:native "wow"}}}}
            (nest-query {:database 1, :type :native, :native {:query "wow"}} 2)))))
 
-(defn do-with-bigquery-fks [f]
-  (if-not (= driver/*driver* :bigquery)
+(defn do-with-bigquery-fks [d f]
+  (if-not (= driver/*driver* d)
     (f)
     (let [supports? driver/supports?]
       (with-redefs [driver/supports? (fn [driver feature]
-                                       (if (= [driver feature] [:bigquery :foreign-keys])
+                                       (if (= [driver feature] [d :foreign-keys])
                                          true
                                          (supports? driver feature)))]
         (let [thunk (reduce
@@ -428,8 +440,42 @@
 
 (defmacro with-bigquery-fks
   "Execute `body` with test-data `checkins.user_id`, `checkins.venue_id`, and `venues.category_id` marked as foreign
-  keys and with `:foreign-keys` a supported feature when testing against BigQuery. BigQuery does not support Foreign
-  Key constraints, but we still let people mark them manually. The macro helps replicate the situation where somebody
-  has manually marked FK relationships for BigQuery."
-  [& body]
-  `(do-with-bigquery-fks (fn [] ~@body)))
+  keys and with `:foreign-keys` a supported feature when testing against BigQuery, for the BigQuery based driver `d`.
+  BigQuery does not support Foreign Key constraints, but we still let people mark them manually. The macro helps
+  replicate the situation where somebody has manually marked FK relationships for BigQuery."
+  [d & body]
+  `(do-with-bigquery-fks ~d (fn [] ~@body)))
+
+(deftest query->preprocessed-caching-test
+  (testing "`query->preprocessed` should work the same even if query has cached results (#18579)"
+    ;; make a copy of the `test-data` DB so there will be no cache entries from previous test runs possibly affecting
+    ;; this test.
+    (data/with-temp-copy-of-db
+      (tu/with-temporary-setting-values [enable-query-caching  true
+                                         query-caching-min-ttl 0]
+        (let [query            (assoc (data/mbql-query venues {:order-by [[:asc $id]], :limit 5})
+                                      :cache-ttl 10)
+              run-query        (fn []
+                                 (let [results (qp/process-query query)]
+                                   {:cached?  (boolean (:cached results))
+                                    :num-rows (count (rows results))}))
+              expected-results (qp/query->preprocessed query)]
+          (testing "Check query->preprocessed before caching to make sure results make sense"
+            (is (schema= {:database (s/eq (data/id))
+                          s/Keyword s/Any}
+                         expected-results)))
+          (testing "Run the query a few of times so we know it's cached"
+            (testing "first run"
+              (is (= {:cached?  false
+                      :num-rows 5}
+                     (run-query))))
+            ;; run a few more times to make sure stuff got a chance to be cached.
+            (run-query)
+            (run-query)
+            (testing "should be cached now"
+              (is (= {:cached?  true
+                      :num-rows 5}
+                     (run-query))))
+            (testing "query->preprocessed should return same results even when query was cached."
+              (is (= expected-results
+                     (qp/query->preprocessed query))))))))))

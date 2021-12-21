@@ -3,10 +3,11 @@
             [clojure.tools.logging :as log]
             [java-time :as t]
             [metabase.config :as config]
+            [metabase.driver :as driver]
             [metabase.driver.util :as driver.u]
             [metabase.models.setting :as setting :refer [defsetting]]
             [metabase.plugins.classloader :as classloader]
-            [metabase.public-settings.metastore :as metastore]
+            [metabase.public-settings.premium-features :as premium-features]
             [metabase.util :as u]
             [metabase.util.i18n :as i18n :refer [available-locales-with-names deferred-tru trs tru]]
             [metabase.util.password :as password]
@@ -14,7 +15,7 @@
   (:import java.util.UUID))
 
 ;; These modules register settings but are otherwise unused. They still must be imported.
-(comment metabase.public-settings.metastore/keep-me)
+(comment metabase.public-settings.premium-features/keep-me)
 
 (defn- google-auth-configured? []
   (boolean (setting/get :google-auth-client-id)))
@@ -56,6 +57,14 @@
   (deferred-tru "The name used for this instance of Metabase.")
   :default "BI Reporting")
 
+(defn- uuid-nonce
+  "Getter for settings that should be set to a UUID the first time they are fetched."
+  [setting]
+  (or (setting/get-string setting)
+      (let [value (str (UUID/randomUUID))]
+        (setting/set-string! setting value)
+        value)))
+
 (defsetting site-uuid
   ;; Don't i18n this docstring because it's not user-facing! :)
   "Unique identifier used for this instance of Metabase. This is set once and only once the first time it is fetched via
@@ -63,11 +72,35 @@
   :visibility :internal
   :setter     :none
   ;; magic getter will either fetch value from DB, or if no value exists, set the value to a random UUID.
+  :getter     #(uuid-nonce :site-uuid))
+
+(defsetting analytics-uuid
+  (str (deferred-tru "Unique identifier to be used in Snowplow analytics, to identify this instance of Metabase.")
+       " "
+       (deferred-tru "This is a public setting since some analytics events are sent prior to initial setup."))
+  :visibility :public
+  :setter     :none
+  :getter     #(uuid-nonce :analytics-uuid))
+
+(defn- first-user-creation
+  "Returns the timestamp at which the first user was created."
+  []
+  (:min (db/select-one ['User [:%min.date_joined :min]])))
+
+(defsetting instance-creation
+  (deferred-tru "The approximate timestamp at which this instance of Metabase was created, for inclusion in analytics.")
+  :visibility :public
+  :type       :timestamp
+  :setter     :none
   :getter     (fn []
-                (or (setting/get-string :site-uuid)
-                    (let [value (str (UUID/randomUUID))]
-                      (setting/set-string! :site-uuid value)
-                      value))))
+                (if-let [value (setting/get-timestamp :instance-creation)]
+                  value
+                  ;; For instances that were started before this setting was added (in 0.41.3), use the creation
+                  ;; timestamp of the first user. For all new instances, use the timestamp at which this setting
+                  ;; is first read.
+                  (do (setting/set-timestamp! :instance-creation (or (first-user-creation)
+                                                                     (java-time/offset-date-time)))
+                      (setting/get-timestamp :instance-creation)))))
 
 (defn- normalize-site-url [^String s]
   (let [ ;; remove trailing slashes
@@ -197,13 +230,13 @@
 (defsetting query-caching-max-ttl
   (deferred-tru "The absolute maximum time to keep any cached query results, in seconds.")
   :type    :double
-  :default (* 60 60 24 100)) ; 100 days
+  :default (* 60.0 60.0 24.0 100.0)) ; 100 days
 
 ;; TODO -- this isn't really a TTL at all. Consider renaming to something like `-min-duration`
 (defsetting query-caching-min-ttl
   (deferred-tru "Metabase will cache all saved questions with an average query execution time longer than this many seconds:")
   :type    :double
-  :default 60)
+  :default 60.0)
 
 (defsetting query-caching-ttl-ratio
   (str (deferred-tru "To determine how long each saved question''s cached result should stick around, we take the query''s average execution time and multiply that by whatever you input here.")
@@ -252,8 +285,13 @@
   :type       :boolean
   :default    true
   :getter     (fn []
-                (or (setting/get-boolean :enable-password-login)
-                    (not (sso-configured?)))))
+                ;; if `:enable-password-login` has an *explict* (non-default) value, and SSO is configured, use that;
+                ;; otherwise this always returns true.
+                (let [v (setting/get-boolean :enable-password-login)]
+                  (if (and (some? v)
+                           (sso-configured?))
+                    v
+                    true))))
 
 (defsetting breakout-bins-num
   (deferred-tru "When using the default binning strategy and a number of bins is not provided, this number will be used as the default.")
@@ -353,7 +391,7 @@
   "Current report timezone abbreviation"
   :visibility :public
   :setter     :none
-  :getter     (fn [] (short-timezone-name (setting/get :report-timezone))))
+  :getter     (fn [] (short-timezone-name (driver/report-timezone))))
 
 (defsetting version
   "Metabase's version info"
@@ -361,15 +399,19 @@
   :setter     :none
   :getter     (constantly config/mb-version-info))
 
-(defsetting premium-features
-  "Premium EE features enabled for this instance."
+(defsetting token-features
+  "Features registered for this instance's token"
   :visibility :public
   :setter     :none
-  :getter     (fn [] {:embedding  (metastore/hide-embed-branding?)
-                      :whitelabel (metastore/enable-whitelabeling?)
-                      :audit_app  (metastore/enable-audit-app?)
-                      :sandboxes  (metastore/enable-sandboxes?)
-                      :sso        (metastore/enable-sso?)}))
+  :getter     (fn [] {:embedding            (premium-features/hide-embed-branding?)
+                      :whitelabel           (premium-features/enable-whitelabeling?)
+                      :audit_app            (premium-features/enable-audit-app?)
+                      :sandboxes            (premium-features/enable-sandboxes?)
+                      :sso                  (premium-features/enable-sso?)
+                      :advanced_config      (premium-features/enable-advanced-config?)
+                      :advanced_permissions (premium-features/enable-advanced-permissions?)
+                      :content_management   (premium-features/enable-content-management?)
+                      :hosting              (premium-features/is-hosted?)}))
 
 (defsetting redirect-all-requests-to-https
   (deferred-tru "Force all traffic to use HTTPS via a redirect, if the site URL is HTTPS")
@@ -390,16 +432,10 @@
   It won''t affect SQL queries.")
   :visibility :public
   :type       :keyword
-  :default    "sunday")
+  :default    :sunday)
 
 (defsetting ssh-heartbeat-interval-sec
   (deferred-tru "Controls how often the heartbeats are sent when an SSH tunnel is established (in seconds).")
   :visibility :public
   :type       :integer
   :default    180)
-
-(defsetting redshift-fetch-size
-  (deferred-tru "Controls the fetch size used for Redshift queries (in PreparedStatement), via defaultRowFetchSize.")
-  :visibility :public
-  :type       :integer
-  :default    5000)

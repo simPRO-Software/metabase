@@ -8,14 +8,14 @@ import ChartSettingInputNumeric from "metabase/visualizations/components/setting
 import ChartSettingRadio from "metabase/visualizations/components/settings/ChartSettingRadio";
 import ChartSettingSelect from "metabase/visualizations/components/settings/ChartSettingSelect";
 import ChartSettingToggle from "metabase/visualizations/components/settings/ChartSettingToggle";
-import ChartSettingButtonGroup from "metabase/visualizations/components/settings/ChartSettingButtonGroup";
+import ChartSettingSegmentedControl from "metabase/visualizations/components/settings/ChartSettingSegmentedControl";
 import ChartSettingFieldPicker from "metabase/visualizations/components/settings/ChartSettingFieldPicker";
 import ChartSettingFieldsPicker from "metabase/visualizations/components/settings/ChartSettingFieldsPicker";
 import ChartSettingFieldsPartition from "metabase/visualizations/components/settings/ChartSettingFieldsPartition";
 import ChartSettingColorPicker from "metabase/visualizations/components/settings/ChartSettingColorPicker";
 import ChartSettingColorsPicker from "metabase/visualizations/components/settings/ChartSettingColorsPicker";
 
-import MetabaseAnalytics from "metabase/lib/analytics";
+import * as MetabaseAnalytics from "metabase/lib/analytics";
 
 export type SettingId = string;
 
@@ -70,7 +70,7 @@ const WIDGETS = {
   radio: ChartSettingRadio,
   select: ChartSettingSelect,
   toggle: ChartSettingToggle,
-  buttonGroup: ChartSettingButtonGroup,
+  segmentedControl: ChartSettingSegmentedControl,
   field: ChartSettingFieldPicker,
   fields: ChartSettingFieldsPicker,
   fieldsPartition: ChartSettingFieldsPartition,
@@ -251,7 +251,7 @@ export function updateSettings(
   changedSettings: Settings,
 ): Settings {
   for (const key of Object.keys(changedSettings)) {
-    MetabaseAnalytics.trackEvent("Chart Settings", "Change Setting", key);
+    MetabaseAnalytics.trackStructEvent("Chart Settings", "Change Setting", key);
   }
   const newSettings = {
     ...storedSettings,

@@ -5,7 +5,6 @@
             [clojure.test :refer :all]
             [metabase.api.session :as session-api]
             [metabase.driver.h2 :as h2]
-            [metabase.email-test :as et]
             [metabase.http-client :as http-client]
             [metabase.models :refer [LoginHistory]]
             [metabase.models.session :refer [Session]]
@@ -68,7 +67,8 @@
       (let [body (assoc (mt/user->credentials :rasta) :remember false)
             response (mt/client-full-response :post 200 "session" body)]
         (is (nil? (get-in response [:cookies session-cookie :expires]))))))
-  (testing "failure should log an error(#14317)"
+  ;; disabled due to CVE-2021-44228
+  #_(testing "failure should log an error(#14317)"
     (mt/with-temp User [user]
       (is (schema= [(s/one (s/eq :error)
                            "log type")
@@ -111,7 +111,8 @@
       (testing "throttling should now be triggered"
         (is (re= #"^Too many attempts! You must wait \d+ seconds before trying again\.$"
                  (login))))
-      (testing "Error should be logged (#14317)"
+      ;; disabled due to CVE-2021-44228
+      #_(testing "Error should be logged (#14317)"
         (is (schema= [(s/one (s/eq :error)
                              "log type")
                       (s/one clojure.lang.ExceptionInfo
@@ -154,9 +155,9 @@
                         :body
                         json/parse-string
                         (get-in ["errors" "username"])))]
-        (is (re= #"^Too many attempts! You must wait 1\d seconds before trying again\.$"
+        (is (re= #"^Too many attempts! You must wait \d+ seconds before trying again\.$"
                  (error)))
-        (is (re= #"^Too many attempts! You must wait 4\d seconds before trying again\.$"
+        (is (re= #"^Too many attempts! You must wait \d+ seconds before trying again\.$"
                  (error)))))))
 
 (deftest failure-threshold-per-request-source
@@ -215,31 +216,39 @@
     ;; deref forgot-password-impl for the tests since it returns a future
     (with-redefs [session-api/forgot-password-impl
                   (let [orig @#'session-api/forgot-password-impl]
-                     (fn [& args] (u/deref-with-timeout (apply orig args) 1000)))]
+                    (fn [& args] (u/deref-with-timeout (apply orig args) 1000)))]
       (testing "Test that we can initiate password reset"
-        (et/with-fake-inbox
+        (mt/with-fake-inbox
           (letfn [(reset-fields-set? []
                     (let [{:keys [reset_token reset_triggered]} (db/select-one [User :reset_token :reset_triggered]
-                                                                  :id (mt/user->id :rasta))]
+                                                                               :id (mt/user->id :rasta))]
                       (boolean (and reset_token reset_triggered))))]
             ;; make sure user is starting with no values
             (db/update! User (mt/user->id :rasta), :reset_token nil, :reset_triggered nil)
             (assert (not (reset-fields-set?)))
             ;; issue reset request (token & timestamp should be saved)
             (is (= nil
-                   (mt/user-http-request :rasta :post 204 "session/forgot_password" {:email (:username (mt/user->credentials :rasta))}))
+                   (mt/user-http-request :rasta :post 204 "session/forgot_password"
+                                         {:email (:username (mt/user->credentials :rasta))}))
                 "Request should return no content")
             (is (= true
                    (reset-fields-set?))
                 "User `:reset_token` and `:reset_triggered` should be updated")
             (is (= "[Metabase] Password Reset Request"
-                   (-> @et/inbox (get "rasta@metabase.com") first :subject))
+                   (-> @mt/inbox (get "rasta@metabase.com") first :subject))
                 "User should get a password reset email"))))
-
+      (testing "We use `site-url` in the email"
+        (let [my-url "abcdefghij"]
+          (mt/with-temporary-setting-values [site-url my-url]
+            (mt/with-fake-inbox
+              (mt/user-http-request :rasta :post 204 "session/forgot_password"
+                                    {:email (:username (mt/user->credentials :rasta))})
+              (let [rasta-emails (-> (mt/regex-email-bodies (re-pattern my-url))
+                                     (get (:username (mt/user->credentials :rasta))))]
+                (is (some #(get-in % [:body my-url]) rasta-emails)))))))
       (testing "test that email is required"
         (is (= {:errors {:email "value must be a valid email address."}}
                (mt/client :post 400 "session/forgot_password" {}))))
-
       (testing "Test that email not found also gives 200 as to not leak existence of user"
         (is (= nil
                (mt/client :post 204 "session/forgot_password" {:email "not-found@metabase.com"})))))))
@@ -265,7 +274,7 @@
 (deftest reset-password-test
   (testing "POST /api/session/reset_password"
     (testing "Test that we can reset password from token (AND after token is used it gets removed)"
-      (et/with-fake-inbox
+      (mt/with-fake-inbox
         (let [password {:old "password"
                         :new "whateverUP12!!"}]
           (mt/with-temp User [{:keys [email id]} {:password (:old password), :reset_triggered (System/currentTimeMillis)}]
@@ -369,11 +378,11 @@
 
 (deftest google-auth-test
   (testing "POST /google_auth"
-    (mt/with-temporary-setting-values [google-auth-client-id "PRETEND-GOOD-GOOGLE-CLIENT-ID"]
+    (mt/with-temporary-setting-values [google-auth-client-id "pretend-client-id.apps.googleusercontent.com"]
       (testing "Google auth works with an active account"
         (mt/with-temp User [user {:email "test@metabase.com" :is_active true}]
           (with-redefs [http/post (fn [url] {:status 200
-                                             :body   (str "{\"aud\":\"PRETEND-GOOD-GOOGLE-CLIENT-ID\","
+                                             :body   (str "{\"aud\":\"pretend-client-id.apps.googleusercontent.com\","
                                                           "\"email_verified\":\"true\","
                                                           "\"first_name\":\"test\","
                                                           "\"last_name\":\"user\","
@@ -383,7 +392,7 @@
       (testing "Google auth throws exception for a disabled account"
         (mt/with-temp User [user {:email "test@metabase.com" :is_active false}]
           (with-redefs [http/post (fn [url] {:status 200
-                                             :body   (str "{\"aud\":\"PRETEND-GOOD-GOOGLE-CLIENT-ID\","
+                                             :body   (str "{\"aud\":\"pretend-client-id.apps.googleusercontent.com\","
                                                           "\"email_verified\":\"true\","
                                                           "\"first_name\":\"test\","
                                                           "\"last_name\":\"user\","
@@ -396,8 +405,10 @@
 (deftest ldap-login-test
   (ldap.test/with-ldap-server
     (testing "Test that we can login with LDAP"
-      (let [user-id (test-users/user->id :rasta)]
+      (let [user-id (mt/user->id :rasta)]
         (try
+          ;; TODO -- it's not so nice to go around permanently deleting stuff like Sessions like this in tests. We
+          ;; should just create a temp User instead for this test
           (db/simple-delete! Session :user_id user-id)
           (is (schema= SessionResponse
                        (mt/client :post 200 "session" (mt/user->credentials :rasta))))
@@ -419,7 +430,7 @@
              (mt/client :post 401 "session" (mt/user->credentials :lucky)))))
 
     (testing "Test that a deactivated user cannot login with LDAP"
-      (let [user-id (test-users/user->id :rasta)]
+      (let [user-id (mt/user->id :rasta)]
         (try
           (db/update! User user-id :is_active false)
           (is (= {:errors {:_error "Your account is disabled."}}
@@ -430,7 +441,7 @@
     (testing "Test that login will fallback to local for broken LDAP settings"
       (mt/with-temporary-setting-values [ldap-user-base "cn=wrong,cn=com"]
         ;; delete all other sessions for the bird first, otherwise test doesn't seem to work (TODO - why?)
-        (let [user-id (test-users/user->id :rasta)]
+        (let [user-id (mt/user->id :rasta)]
           (try
             (db/simple-delete! Session :user_id user-id)
             (is (schema= SessionResponse

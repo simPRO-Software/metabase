@@ -89,10 +89,9 @@ const Tables = createEntity({
       ({ id }, options = {}) => async (dispatch, getState) => {
         await dispatch(Tables.actions.fetchMetadata({ id }, options));
         // fetch foreign key linked table's metadata as well
-        const table = Tables.selectors[options.selectorName || "getObject"](
-          getState(),
-          { entityId: id },
-        );
+        const table = Tables.selectors[
+          options.selectorName || "getObjectUnfiltered"
+        ](getState(), { entityId: id });
         await Promise.all(
           getTableForeignKeyTableIds(table).map(id =>
             dispatch(Tables.actions.fetchMetadata({ id }, options)),
@@ -113,9 +112,10 @@ const Tables = createEntity({
       return { id: entityObject.id, fks: fks };
     }),
 
-    setFieldOrder: compose(withAction(UPDATE_TABLE_FIELD_ORDER))(
-      ({ id }, fieldOrder) => (dispatch, getState) =>
-        updateFieldOrder({ id, fieldOrder }, { bodyParamName: "fieldOrder" }),
+    setFieldOrder: compose(
+      withAction(UPDATE_TABLE_FIELD_ORDER),
+    )(({ id }, fieldOrder) => (dispatch, getState) =>
+      updateFieldOrder({ id, fieldOrder }, { bodyParamName: "fieldOrder" }),
     ),
   },
 
@@ -180,7 +180,7 @@ const Tables = createEntity({
   objectSelectors: {
     getUrl: table =>
       Urls.tableRowsQuery(table.database_id, table.table_id, null),
-    getIcon: table => "table",
+    getIcon: table => ({ name: "table" }),
     getColor: table => color("accent2"),
   },
 

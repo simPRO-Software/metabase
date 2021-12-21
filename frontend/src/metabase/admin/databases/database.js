@@ -6,11 +6,13 @@ import {
 } from "metabase/lib/redux";
 import { push } from "react-router-redux";
 import { t } from "ttag";
-import MetabaseAnalytics from "metabase/lib/analytics";
+import * as MetabaseAnalytics from "metabase/lib/analytics";
 import MetabaseSettings from "metabase/lib/settings";
 
 import { MetabaseApi } from "metabase/services";
 import Databases from "metabase/entities/databases";
+
+import { editParamsForUserControlledScheduling } from "./editParamsForUserControlledScheduling";
 
 // Default schedules for db sync and deep analysis
 export const DEFAULT_SCHEDULES = {
@@ -149,7 +151,7 @@ export const addSampleDataset = createThunkAction(
             reload: true,
           }),
         );
-        MetabaseAnalytics.trackEvent("Databases", "Add Sample Data");
+        MetabaseAnalytics.trackStructEvent("Databases", "Add Sample Data");
         return sampleDataset;
       } catch (error) {
         console.error("error adding sample dataset", error);
@@ -165,10 +167,12 @@ export const proceedWithDbCreation = function(database) {
     if (database.details["let-user-control-scheduling"]) {
       try {
         dispatch.action(VALIDATE_DATABASE_STARTED);
+
         const { valid } = await MetabaseApi.db_validate({ details: database });
+
         if (valid) {
           dispatch.action(SET_DATABASE_CREATION_STEP, {
-            database: database,
+            database,
             step: DB_EDIT_FORM_SCHEDULING_TAB,
           });
         } else {
@@ -190,18 +194,24 @@ export const proceedWithDbCreation = function(database) {
 };
 
 export const createDatabase = function(database) {
+  editParamsForUserControlledScheduling(database);
+
   return async function(dispatch, getState) {
     try {
       dispatch.action(CREATE_DATABASE_STARTED, {});
       const action = await dispatch(Databases.actions.create(database));
       const createdDatabase = Databases.HACK_getObjectFromAction(action);
-      MetabaseAnalytics.trackEvent("Databases", "Create", database.engine);
+      MetabaseAnalytics.trackStructEvent(
+        "Databases",
+        "Create",
+        database.engine,
+      );
 
       dispatch.action(CREATE_DATABASE);
       dispatch(push("/admin/databases?created=" + createdDatabase.id));
     } catch (error) {
       console.error("error creating a database", error);
-      MetabaseAnalytics.trackEvent(
+      MetabaseAnalytics.trackStructEvent(
         "Databases",
         "Create Failed",
         database.engine,
@@ -217,11 +227,15 @@ export const updateDatabase = function(database) {
       dispatch.action(UPDATE_DATABASE_STARTED, { database });
       const action = await dispatch(Databases.actions.update(database));
       const savedDatabase = Databases.HACK_getObjectFromAction(action);
-      MetabaseAnalytics.trackEvent("Databases", "Update", database.engine);
+      MetabaseAnalytics.trackStructEvent(
+        "Databases",
+        "Update",
+        database.engine,
+      );
 
       dispatch.action(UPDATE_DATABASE, { database: savedDatabase });
     } catch (error) {
-      MetabaseAnalytics.trackEvent(
+      MetabaseAnalytics.trackStructEvent(
         "Databases",
         "Update Failed",
         database.engine,
@@ -251,7 +265,7 @@ export const deleteDatabase = function(databaseId, isDetailView = true) {
       dispatch.action(DELETE_DATABASE_STARTED, { databaseId });
       dispatch(push("/admin/databases/"));
       await dispatch(Databases.actions.delete({ id: databaseId }));
-      MetabaseAnalytics.trackEvent(
+      MetabaseAnalytics.trackStructEvent(
         "Databases",
         "Delete",
         isDetailView ? "Using Detail" : "Using List",
@@ -271,7 +285,7 @@ export const syncDatabaseSchema = createThunkAction(
     return async function(dispatch, getState) {
       try {
         const call = await MetabaseApi.db_sync_schema({ dbId: databaseId });
-        MetabaseAnalytics.trackEvent("Databases", "Manual Sync");
+        MetabaseAnalytics.trackStructEvent("Databases", "Manual Sync");
         return call;
       } catch (error) {
         console.log("error syncing database", error);
@@ -287,7 +301,7 @@ export const rescanDatabaseFields = createThunkAction(
     return async function(dispatch, getState) {
       try {
         const call = await MetabaseApi.db_rescan_values({ dbId: databaseId });
-        MetabaseAnalytics.trackEvent("Databases", "Manual Sync");
+        MetabaseAnalytics.trackStructEvent("Databases", "Manual Sync");
         return call;
       } catch (error) {
         console.log("error syncing database", error);
@@ -303,7 +317,7 @@ export const discardSavedFieldValues = createThunkAction(
     return async function(dispatch, getState) {
       try {
         const call = await MetabaseApi.db_discard_values({ dbId: databaseId });
-        MetabaseAnalytics.trackEvent("Databases", "Manual Sync");
+        MetabaseAnalytics.trackStructEvent("Databases", "Manual Sync");
         return call;
       } catch (error) {
         console.log("error syncing database", error);

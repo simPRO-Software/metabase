@@ -10,10 +10,10 @@
   ex:
 
   ```
-  (-> (mb.viz/from-db-form (:visualization_settings my-card))
+  (-> (mb.viz/db->norm (:visualization_settings my-card))
       tweak-viz-settings
       tweak-more-viz-settings
-      mb.viz/db-form)
+      mb.viz/norm->db)
   ```
 
   In general, conversion functions in this namespace (i.e. those that convert various pieces from one form to the other)
@@ -27,8 +27,7 @@
                   [medley.core :as m]
                   [metabase.mbql.normalize :as mbql.normalize])]
        :cljs
-       [(:require [cljs.js :as js]
-                  [clojure.set :as set]
+       [(:require [clojure.set :as set]
                   [clojure.spec.alpha :as s]
                   [medley.core :as m]
                   [metabase.mbql.normalize :as mbql.normalize])]))
@@ -53,11 +52,15 @@
 (s/def ::click-behavior (s/keys))
 (s/def ::visualization-settings (s/keys :opt [::column-settings ::click-behavior]))
 
-(s/def ::field-id-vec (s/tuple (partial = "ref") (s/tuple (partial = "field")
+(s/def ::field-id-vec (s/tuple #{"ref"}
+                               (s/tuple #{"field"}
                                                    (s/or :field-id int? :field-str string?)
-                                                   (s/or :field-metadata map? :nil nil?))))
+                                        (s/or :field-metadata map? :nil nil?))))
+
+(s/def ::expression-vec (s/tuple #{"ref"} (s/tuple #{"expression"} string?)))
 
 (s/def ::db-column-ref-vec (s/or :field ::field-id-vec
+                                 :expression ::expression-vec
                                  :column-name (s/tuple (partial = "name") string?)))
 
 (s/def ::click-behavior-type keyword? #_(s/or :cross-filter ::cross-filter
@@ -77,7 +80,8 @@
 (s/def ::column-title string?)
 (s/def ::date-style #{"M/D/YYYY" "D/M/YYYY" "YYYY/M/D" "MMMM D, YYYY" "D MMMM, YYYY" "dddd, MMMM D, YYYY"})
 (s/def ::date-abbreviate boolean?)
-(s/def ::time-style #{"h:mm A" "k:mm" "h A"})
+(s/def ::date-separator #{"/" "-" "."})
+(s/def ::time-style #{"HH:mm" "h:mm A" "h A"})
 (s/def ::time-enabled #{nil "minutes" "seconds" "milliseconds"})
 (s/def ::decimals pos-int?)
 (s/def ::number-separators #(or nil? (and string? (= 2 (count %)))))
@@ -150,7 +154,7 @@
   Clojure vector, which itself can contain a fully qualified name for serialization"
   {:added "0.40.0"}
   [kw]
-  (str (if-let [kw-ns (namespace kw)] (str kw-ns "/")) (name kw)))
+  (str (when-let [kw-ns (namespace kw)] (str kw-ns "/")) (name kw)))
 
 (s/fdef keyname
   :args (s/cat :kw keyword?)
@@ -196,7 +200,10 @@
                       :field-str {::field-str v})
                     (some? field-md) (assoc ::field-metadata field-md)))
           :column-name
-          {::column-name (nth parts 1)})))))
+          {::column-name (nth parts 1)}
+          :expression
+          (let [[_expression [_ref [_expression column-name]]] parsed]
+           {::column-name column-name}))))))
 
 (s/fdef db->norm-column-ref
   :args (s/cat :column-ref ::db-column-ref-vec)
@@ -372,19 +379,25 @@
   (set/map-invert db->norm-click-behavior-keys))
 
 (def ^:private db->norm-column-settings-keys
-  {:column_title      ::column-title
-   :date_style        ::date-style
-   :date_abbreviate   ::date-abbreviate
-   :time_style        ::time-style
-   :time_enabled      ::time-enabled
-   :decimals          ::decimals
-   :number_separators ::number-separators
-   :number_style      ::number-style
-   :prefix            ::prefix
-   :suffix            ::suffix
-   :view_as           ::view-as
-   :link_text         ::link-text
-   :show_mini_bar     ::show-mini-barchart})
+  {:column_title       ::column-title
+   :date_style         ::date-style
+   :date_separator     ::date-separator
+   :date_abbreviate    ::date-abbreviate
+   :time_enabled       ::time-enabled
+   :time_style         ::time-style
+   :number_style       ::number-style
+   :currency           ::currency
+   :currency_style     ::currency-style
+   :currency_in_header ::currency-in-header
+   :number_separators  ::number-separators
+   :decimals           ::decimals
+   :scale              ::scale
+   :prefix             ::prefix
+   :suffix             ::suffix
+   :view_as            ::view-as
+   :link_text          ::link-text
+   :link_url           ::link-url
+   :show_mini_bar      ::show-mini-bar})
 
 (def ^:private norm->db-column-settings-keys
   (set/map-invert db->norm-column-settings-keys))
@@ -409,6 +422,7 @@
 (def ^:private db->norm-table-columns-keys
   {:name     ::table-column-name
    ; for now, do not translate the value of this key (the field vector)
+   :fieldref ::table-column-field-ref
    :fieldRef ::table-column-field-ref
    :enabled  ::table-column-enabled})
 
@@ -506,6 +520,13 @@
       (dissoc :parameterMapping)
       (set/rename-keys db->norm-click-behavior-keys)))
 
+(defn- db->norm-time-style
+  "Converts the deprecated k:mm format to HH:mm (#18112)"
+  [v]
+  (if (= v "k:mm")
+    "HH:mm"
+    v))
+
 (defn- db->norm-table-columns [v]
   (-> v
     (assoc ::table-columns (mapv (fn [tbl-col]
@@ -514,12 +535,35 @@
     (dissoc :table.columns)))
 
 (defn- db->norm-column-settings-entry
-  "Converts a :column_settings DB form to qualified form. Does the opposite of
+  "Converts the DB form of a :column_settings entry value to its normalized form. Does the opposite of
   `norm->db-column-settings-entry`."
   [m k v]
   (case k
-    :click_behavior (assoc m ::click-behavior (db->norm-click-behavior v))
+    :click_behavior
+    (assoc m ::click-behavior (db->norm-click-behavior v))
+
+    :time_style
+    (assoc m ::time-style (db->norm-time-style v))
+
     (assoc m (db->norm-column-settings-keys k) v)))
+
+(defn db->norm-column-settings-entries
+  "Converts the DB form of a map of :column_settings entries to its normalized form."
+  [entries]
+  (reduce-kv db->norm-column-settings-entry {} entries))
+
+(defn db->norm-column-settings
+  "Converts a :column_settings DB form to its normalized form. Drops any columns that fail to be parsed."
+  [settings]
+  (reduce-kv (fn [m k v]
+               (try
+                 (let [k1 (parse-db-column-ref k)
+                       v1 (db->norm-column-settings-entries v)]
+                   (assoc m k1 v1))
+                 (catch #?(:clj Throwable :cljs js/Error) e
+                   m)))
+             {}
+             settings))
 
 (defn db->norm
   "Converts a DB form of visualization settings (i.e. map with key `:visualization_settings`) into the equivalent
@@ -532,10 +576,7 @@
           ;; column_settings at top level; ex: table card
           (:column_settings vs)
           (assoc ::column-settings (->> (:column_settings vs)
-                                        (m/map-kv (fn [k v]
-                                                    (let [k1 (parse-db-column-ref k)
-                                                          v1 (reduce-kv db->norm-column-settings-entry {} v)]
-                                                      [k1 v1])))))
+                                        db->norm-column-settings))
 
           ;; click behavior key at top level; ex: non-table card
           (:click_behavior vs)

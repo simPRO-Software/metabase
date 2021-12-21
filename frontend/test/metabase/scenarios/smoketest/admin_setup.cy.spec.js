@@ -2,7 +2,8 @@ import {
   browse,
   popover,
   restore,
-  setupLocalHostEmail,
+  modal,
+  visualize,
 } from "__support__/e2e/cypress";
 import { USERS } from "__support__/e2e/cypress_data";
 
@@ -60,25 +61,27 @@ describe("smoketest > admin_setup", () => {
       // cy.findByText("Save").click();
     });
 
-    it.skip("should setup email", () => {
+    it("should set up email", () => {
       cy.findByText("Settings").click();
       cy.findByText("Email").click();
 
       cy.findByText("Email address you want to use as the sender of Metabase.");
       cy.findByText("Sample Database").should("not.exist");
 
-      setupLocalHostEmail();
+      // Email info
+      cy.findByLabelText("SMTP Host").type("localhost");
+      cy.findByLabelText("SMTP Port").type("25");
 
-      // *** Will fail if test works correctly:
-      cy.wait(2000)
-        .findByText("Sent!")
-        .should("not.exist");
+      cy.findByLabelText("SMTP Username").type("admin");
+      cy.findByLabelText("SMTP Password").type("admin");
 
-      // *** Uncomment when test works correctly:
-      // cy.findByText("Sent!");
-      // cy.findByText("Sorry, something went wrong.  Please try again").should(
-      //   "not.exist",
-      // );
+      cy.findByLabelText("From Address").type("mailer@metabase.test");
+
+      cy.button("Save changes").click();
+      cy.findByText("Changes saved!");
+
+      cy.findByText("Send test email").click();
+      cy.findByText("Sent!");
     });
 
     it.skip("should setup Slack", () => {
@@ -281,8 +284,8 @@ describe("smoketest > admin_setup", () => {
 
       cy.findByText("Settings");
 
-      cy.icon("pencil").click();
-      cy.findByText("Edit this question").click();
+      cy.findByTestId("saved-question-header-button").click();
+      cy.findByTestId("edit-details-button").click();
       cy.findByLabelText("Name")
         .clear()
         .type("Test Question");
@@ -475,7 +478,8 @@ describe("smoketest > admin_setup", () => {
         .last()
         .click();
       cy.findByText("Add filter").click();
-      cy.button("Visualize").click();
+
+      visualize();
 
       cy.findAllByText("Awesome Concrete Shoes");
       cy.findByText("Mediocre Wooden Bench").should("not.exist");
@@ -540,11 +544,13 @@ describe("smoketest > admin_setup", () => {
       );
 
       cy.findByText("Test Question").click();
-      cy.icon("pencil").click();
-      cy.findByText("Edit this question").click();
+      cy.findByTestId("saved-question-header-button").click();
+      cy.findByTestId("edit-details-button").click();
 
       cy.findByText("Edit question");
-      cy.findByText("Testing question description");
+      modal().within(() => {
+        cy.findByText("Testing question description");
+      });
 
       cy.findByText("Cancel").click();
 
@@ -622,26 +628,36 @@ describe("smoketest > admin_setup", () => {
 
       // Data access permissions (table)
 
-      cy.findByText("View tables").click();
+      cy.findByText("All Users").click();
+
+      cy.findByText("Sample Dataset").click();
 
       cy.findByText("Products");
-      cy.findByText("SQL Queries").should("not.exist");
 
       // Turn on data access for all users to Test Table
-      cy.icon("close")
-        .eq(6)
+      cy.icon("eye")
+        .eq(2)
         .click();
-      cy.findByText("Grant unrestricted access").click();
+
+      cy.findAllByRole("option")
+        .contains("Unrestricted")
+        .click();
 
       cy.findByText("Change access to this database to limited?");
 
       cy.findByText("Change").click();
 
+      cy.findByText("Marketing").click();
+
+      cy.findByText("Sample Dataset").click();
+
       // Turn on data access for Marketing users to Products
-      cy.icon("close")
-        .eq(2)
+      cy.icon("eye")
+        .eq(1)
         .click();
-      cy.findByText("Grant unrestricted access").click();
+      cy.findAllByRole("option")
+        .contains("Unrestricted")
+        .click();
 
       cy.findByText("Are you sure you want to do this?");
 
@@ -649,7 +665,7 @@ describe("smoketest > admin_setup", () => {
 
       cy.icon("warning");
 
-      cy.findByText("Save Changes").click();
+      cy.findByText("Save changes").click();
 
       cy.contains(
         "All Users will be given access to 1 table in Sample Dataset.",
@@ -662,12 +678,13 @@ describe("smoketest > admin_setup", () => {
 
       cy.findByText("Data permissions").click();
 
-      cy.icon("sql")
-        .last()
+      cy.findByText("data").click();
+      cy.icon("check")
+        .eq(1)
         .click();
-      cy.findByText("Revoke access").click();
+      cy.findByText("No").click();
 
-      cy.findByText("Save Changes").click();
+      cy.findByText("Save changes").click();
 
       cy.contains(
         "data will no longer be able to read or write native queries for Sample Dataset.",
@@ -742,7 +759,7 @@ describe("smoketest > admin_setup", () => {
         .eq(1)
         .click();
       cy.findByText("View collection").click();
-      cy.findByText("Save Changes").click();
+      cy.findByText("Save changes").click();
 
       cy.findByText("Save permissions?");
 
@@ -763,7 +780,7 @@ describe("smoketest > admin_setup", () => {
       // Revoke data access to sub-collection
       cy.icon("eye").click();
       cy.findByText("Revoke access").click();
-      cy.findByText("Save Changes").click();
+      cy.findByText("Save changes").click();
 
       cy.findByText("Save permissions?");
 
@@ -786,7 +803,6 @@ describe("smoketest > admin_setup", () => {
       cy.findByText("Ask a question").click();
 
       cy.findByText("Simple question");
-      cy.findByText("Native query").should("not.exist");
 
       cy.signOut();
       cy.signIn("nocollection");

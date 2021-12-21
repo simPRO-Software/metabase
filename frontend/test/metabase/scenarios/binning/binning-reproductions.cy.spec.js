@@ -1,6 +1,7 @@
 import {
   restore,
   popover,
+  visualize,
   openOrdersTable,
   visitQuestionAdhoc,
 } from "__support__/e2e/cypress";
@@ -99,7 +100,7 @@ describe("binning related reproductions", () => {
     cy.findByText("Month");
   });
 
-  it.skip("should be able to update the bucket size / granularity on a field that has sorting applied to it (metabase#16770)", () => {
+  it("should be able to update the bucket size / granularity on a field that has sorting applied to it (metabase#16770)", () => {
     cy.intercept("POST", "/api/dataset").as("dataset");
 
     visitQuestionAdhoc({
@@ -139,6 +140,84 @@ describe("binning related reproductions", () => {
     cy.findByText("2018");
   });
 
+  it("should not remove order-by (sort) when changing the breakout field on an SQL saved question (metabase#17975)", () => {
+    cy.createNativeQuestion(
+      {
+        name: "17975",
+        native: {
+          query: "SELECT * FROM ORDERS",
+        },
+      },
+      { loadMetadata: true },
+    );
+
+    cy.visit("/question/new");
+    cy.findByText("Custom question").click();
+    cy.findByText("Saved Questions").click();
+    cy.findByText("17975").click();
+
+    cy.findByText("Pick the metric you want to see").click();
+    cy.findByText("Count of rows").click();
+    cy.findByText("Pick a column to group by").click();
+    cy.findByText("CREATED_AT").click();
+
+    cy.findByText("Sort").click();
+    cy.findByText("CREATED_AT").click();
+
+    // Change the binning of the breakout field
+    cy.findByText("CREATED_AT: Month").click();
+    cy.findByText("by month").click();
+    cy.findByText("Quarter").click();
+
+    cy.findByText("CREATED_AT");
+  });
+
+  it.skip("should render binning options when joining on the saved native question (metabase#18646)", () => {
+    cy.createNativeQuestion(
+      {
+        name: "18646",
+        native: { query: "select * from products" },
+      },
+      { loadMetadata: true },
+    );
+
+    cy.visit("/question/new");
+    cy.findByText("Custom question").click();
+    cy.findByText("Sample Dataset").click();
+    cy.findByText("Orders").click();
+
+    cy.icon("join_left_outer").click();
+
+    popover().within(() => {
+      cy.findByText("Sample Dataset").click();
+      cy.findByText("Saved Questions").click();
+      cy.findByText("18646").click();
+    });
+
+    popover()
+      .findByText("Product ID")
+      .click();
+
+    popover().within(() => {
+      cy.findByText("CREATED_AT")
+        .closest(".List-item")
+        .findByText("by month")
+        .click();
+    });
+
+    cy.findByText("Pick the metric you want to see").click();
+    cy.findByText("Count of rows").click();
+
+    cy.findByText("Pick a column to group by").click();
+    cy.findByText(/Question \d/).click();
+
+    popover().within(() => {
+      cy.findByText("CREATED_AT")
+        .closest(".List-item")
+        .findByText("by month");
+    });
+  });
+
   describe("binning should work on nested question based on question that has aggregation (metabase#16379)", () => {
     beforeEach(() => {
       cy.createQuestion({
@@ -148,6 +227,12 @@ describe("binning related reproductions", () => {
           aggregation: [["avg", ["field", ORDERS.SUBTOTAL, null]]],
           breakout: [["field", ORDERS.USER_ID, null]],
         },
+      }).then(({ body }) => {
+        cy.intercept("POST", `/api/card/${body.id}/query`).as("cardQuery");
+        cy.visit(`/question/${body.id}`);
+
+        // Wait for `result_metadata` to load
+        cy.wait("@cardQuery");
       });
     });
 
@@ -161,7 +246,7 @@ describe("binning related reproductions", () => {
       });
 
       popover().within(() => {
-        cy.findByText("50 bins").click();
+        cy.findByText("10 bins").click();
       });
 
       cy.get(".bar");
@@ -184,10 +269,10 @@ describe("binning related reproductions", () => {
       popover()
         .last()
         .within(() => {
-          cy.findByText("50 bins").click();
+          cy.findByText("10 bins").click();
         });
 
-      cy.button("Visualize").click();
+      visualize();
       cy.get(".bar");
     });
   });

@@ -119,6 +119,11 @@
 
 (declare col-info-for-field-clause)
 
+(def type-info-columns
+  "Columns to select from a field to get its type information without getting information that is specific to that
+  column."
+  [:base_type :effective_type :coercion_strategy :semantic_type])
+
 (defn infer-expression-type
   "Infer base-type/semantic-type information about an `expression` clause."
   [expression]
@@ -133,7 +138,7 @@
     (col-info-for-field-clause {} expression)
 
     (mbql.u/is-clause? :coalesce expression)
-    (infer-expression-type (second expression))
+    (select-keys (infer-expression-type (second expression)) type-info-columns)
 
     (mbql.u/is-clause? :length expression)
     {:base_type :type/BigInteger}
@@ -147,7 +152,7 @@
                     (or (not (mbql.u/is-clause? :value expression))
                         (let [[_ value] expression]
                           (not= value nil))))
-           (infer-expression-type expression)))
+           (select-keys (infer-expression-type expression) type-info-columns)))
        clauses))
 
     (mbql.u/datetime-arithmetics? expression)
@@ -549,11 +554,18 @@
   (let [non-nil-driver-col-metadata (m/filter-vals some? driver-col-metadata)
         our-base-type               (when (= (:base_type driver-col-metadata) :type/*)
                                       (u/select-non-nil-keys our-col-metadata [:base_type]))
+        ;; whatever type comes back from the query is by definition the effective type, fallback to our effective
+        ;; type, fallback to the base_type
+        effective-type              (when-let [db-base (or (:base_type driver-col-metadata)
+                                                           (:effective_type our-col-metadata)
+                                                           (:base_type our-col-metadata))]
+                                      {:effective_type db-base})
         our-name                    (u/select-non-nil-keys our-col-metadata [:name])]
     (merge our-col-metadata
            non-nil-driver-col-metadata
            our-base-type
-           our-name)))
+           our-name
+           effective-type)))
 
 (defn- merge-cols-returned-by-driver
   "Merge our column metadata (`:cols`) derived from logic above with the column metadata returned by the driver. We'll
