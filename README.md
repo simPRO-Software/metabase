@@ -2,7 +2,7 @@
 
 Clone this repo, then:
 ```bash
-docker run --rm -it -v `pwd`:/app -w /app metabase/ci:java-11-lein-2.9.6-clj-1.10.3.822-04-22-2021 ./bin/build
+docker run --rm -it -u root:root -v `pwd`:/app -w /app metabase/ci:java-11-lein-2.9.6-clj-1.10.3.822-04-22-2021 ./bin/build
 ```
 **Note**: Get the image name from the `STAGE 1.4: main builder` section of the [Dockerfile](Dockerfile) in this repo.
 
