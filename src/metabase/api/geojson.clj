@@ -8,7 +8,7 @@
             [ring.util.codec :as rc]
             [ring.util.response :as rr]
             [schema.core :as s])
-  (:import java.net.URL
+  (:import [java.net InetAddress URL]
            org.apache.commons.io.input.ReaderInputStream))
 
 (def ^:private CustomGeoJSON
@@ -36,13 +36,16 @@
        (tru "URLs referring to hosts that supply internal hosting metadata are prohibited.")))
 
 (def ^:private invalid-hosts
-  #{"169.254.169.254" ; internal metadata for AWS, OpenStack, and Azure
-    "metadata.google.internal" ; internal metadata for GCP
-    })
+  #{"metadata.google.internal"}) ; internal metadata for GCP
 
 (defn- valid-host?
   [^URL url]
-  (not (invalid-hosts (.getHost url))))
+  (let [host (.getHost url)
+        host->url (fn [host] (URL. (str "http://" host)))
+        base-url  (host->url (.getHost url))]
+    (and (not-any? (fn [invalid-url] (.equals ^URL base-url invalid-url))
+                   (map host->url invalid-hosts))
+         (not (.isLinkLocalAddress (InetAddress/getByName host))))))
 
 (defn- valid-protocol?
   [^URL url]
@@ -52,17 +55,19 @@
   [url-string]
   (try
     (let [url (URL. url-string)]
-      (and (valid-host? url)
-           (valid-protocol? url)))
+      (and (valid-protocol? url)
+           (valid-host? url)))
     (catch Throwable e
       (throw (ex-info (invalid-location-msg) {:status-code 400, :url url-string} e)))))
 
 (defn- valid-geojson-url?
+  [url]
+  (or (io/resource url)
+      (valid-url? url)))
+
+(defn- valid-geojson-urls?
   [geojson]
-  (every? (fn [[_ {:keys [url]}]]
-            (or
-             (io/resource url)
-             (valid-url? url)))
+  (every? (fn [[_ {:keys [url]}]] (valid-geojson-url? url))
           geojson))
 
 (defn- validate-geojson
@@ -72,7 +77,7 @@
     (s/validate CustomGeoJSON geojson)
     (catch Throwable e
       (throw (ex-info (tru "Invalid custom GeoJSON") {:status-code 400} e))))
-  (or (valid-geojson-url? geojson)
+  (or (valid-geojson-urls? geojson)
       (throw (ex-info (invalid-location-msg) {:status-code 400}))))
 
 (defsetting custom-geojson
@@ -107,9 +112,10 @@
   This behaves similarly to /api/geojson/:key but doesn't require the custom map to be saved to the DB first."
   [{{:keys [url]} :params} respond raise]
   {url su/NonBlankString}
+  (api/check-superuser)
   (let [decoded-url (rc/url-decode url)]
-    (or (io/resource decoded-url)
-        (valid-url? decoded-url))
+    (when-not (valid-geojson-url? decoded-url)
+      (raise (ex-info (invalid-location-msg) {:status-code 400})))
     (try
       (with-open [reader (io/reader (or (io/resource decoded-url)
                                         decoded-url))

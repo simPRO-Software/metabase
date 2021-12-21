@@ -35,19 +35,35 @@
 
 (deftest validate-geojson-test
   (testing "It validates URLs and files appropriately"
-    (let [examples {;; Prohibited hosts (see explanation in source file)
+    (let [examples {;; Internal metadata for GCP
                     "metadata.google.internal"                 false
                     "https://metadata.google.internal"         false
                     "//metadata.google.internal"               false
+                    ;; Link-local addresses (internal metadata for AWS, OpenStack, and Azure)
+                    "http://169.254.0.0"                       false
+                    "http://fe80::"                            false
                     "169.254.169.254"                          false
                     "http://169.254.169.254/secret-stuff.json" false
+                    ;; alternate IPv4 encodings (hex, octal, integer)
+                    "http://0xa9fea9fe"                        false
+                    "https://0xa9fea9fe"                       false
+                    "http://0xA9FEA9FE"                        false
+                    "http://0xa9.0xfe.0xa9.0xfe"               false
+                    "http://0XA9.0XFE.0xA9.0XFE"               false
+                    "http://0xa9fea9fe/secret-stuff.json"      false
+                    "http://025177524776"                      false
+                    "http://0251.0376.0251.0376"               false
+                    "http://2852039166"                        false
                     ;; Prohibited protocols
                     "ftp://example.com/rivendell.json"         false
                     "example.com/rivendell.json"               false
+                    "jar:file:test.jar!/test.json"             false
                     ;; Acceptable URLs
                     "http://example.com/"                      true
                     "https://example.com/"                     true
                     "http://example.com/rivendell.json"        true
+                    "http://192.0.2.0"                         true
+                    "http://0xc0000200"                        true
                     ;; Resources (files on classpath) are valid
                     "c3p0.properties"                          true
                     ;; Other files are not
@@ -100,10 +116,18 @@
     (testing "test the endpoint that fetches JSON files given a URL"
       (is (= {:type        "Point"
               :coordinates [37.77986 -122.429]}
-             ((mt/user->client :rasta) :get 200 "geojson" :url test-geojson-url))))
+             ((mt/user->client :crowberto) :get 200 "geojson" :url test-geojson-url))))
     (testing "error is returned if URL connection fails"
       (is (= "GeoJSON URL failed to load"
-             ((mt/user->client :rasta) :get 400 "geojson" :url test-broken-geojson-url))))))
+             ((mt/user->client :crowberto) :get 400 "geojson" :url test-broken-geojson-url))))
+    (testing "error is returned if URL is invalid"
+      (is (= (str "Invalid GeoJSON file location: must either start with http:// or https:// or be a relative path to "
+                  "a file on the classpath. URLs referring to hosts that supply internal hosting metadata are "
+                  "prohibited.")
+             ((mt/user->client :crowberto) :get 400 "geojson" :url "file://tmp"))))
+    (testing "cannot be called by non-admins"
+      (is (= "You don't have permissions to do that."
+             ((mt/user->client :rasta) :get 403 "geojson" :url test-geojson-url))))))
 
 (deftest key-proxy-endpoint-test
   (testing "GET /api/geojson/:key"
@@ -120,9 +144,9 @@
         (is (= {:type        "Point"
                 :coordinates [37.77986 -122.429]}
                (client/client :get 200 "geojson/middle-earth"))))
-        (testing "try fetching an invalid key; should fail"
-          (is (= "Invalid custom GeoJSON key: invalid-key"
-                 ((mt/user->client :rasta) :get 400 "geojson/invalid-key")))))
+      (testing "try fetching an invalid key; should fail"
+        (is (= "Invalid custom GeoJSON key: invalid-key"
+               ((mt/user->client :rasta) :get 400 "geojson/invalid-key")))))
     (mt/with-temporary-setting-values [custom-geojson test-broken-custom-geojson]
       (testing "fetching a broken URL should fail"
         (is (= "GeoJSON URL failed to load"
