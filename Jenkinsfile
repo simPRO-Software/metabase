@@ -5,8 +5,8 @@ pipeline {
     stage('Clean workspace') {
       steps {
         script {
-          sh(script: 'sudo git reset --hard')
-          sh(script: 'sudo git clean -fdx')
+          sh(script: 'git reset --hard')
+          sh(script: 'git clean -fdx')
         }
       }
     }
