@@ -40,15 +40,20 @@ export const getDashboardActions = (
   const isLoaded = !!dashboard;
   const hasCards = isLoaded && dashboard.ordered_cards.length > 0;
 
+  const hasSQLPermission = db => db.native_permissions === "write" && db.is_sample === false;
+  console.log(self.props.databases);
+  const databases = Array.isArray(self.props.databases) ? self.props.databases : Object.values(self.props.databases);
+  const showSQLOption =  databases && databases.filter(hasSQLPermission).length > 0;
+
   // dashcardData only contains question cards, text ones don't appear here
   const hasDataCards =
     hasCards &&
     dashboard.ordered_cards.some(dashCard => dashCard.card.display !== "text");
 
-  const canShareDashboard = hasCards;
+  const canShareDashboard = hasCards && showSQLOption;
 
   // Getting notifications with static text-only cards doesn't make a lot of sense
-  const canSubscribeToDashboard = hasDataCards;
+  const canSubscribeToDashboard = hasDataCards && showSQLOption;
 
   if (!isEditing && !isEmpty && !isPublic) {
     const extraButtonClassNames =

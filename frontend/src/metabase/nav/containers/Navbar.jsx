@@ -188,6 +188,11 @@ export default class Navbar extends Component {
 
   renderMainNav() {
     const { hasDataAccess } = this.props;
+    const hasSQLPermission = db => db.native_permissions === "write" && db.is_sample === false;
+    const showSQLOption =  this.props.databases && this.props.databases.filter(hasSQLPermission).length > 0;
+
+    console.log(this.props);
+    console.log(showSQLOption);
 
     return (
       <Flex
@@ -253,12 +258,12 @@ export default class Navbar extends Component {
                 action: () => this.setModal(MODAL_NEW_DASHBOARD),
                 event: `NavBar;New Dashboard Click;`,
               },
-              {
+              (showSQLOption && {
                 title: t`New pulse`,
                 icon: `pulse`,
                 link: Urls.newPulse(),
                 event: `NavBar;New Pulse Click;`,
-              },
+              }),
             ]}
           />
           <ProfileLink {...this.props} />
