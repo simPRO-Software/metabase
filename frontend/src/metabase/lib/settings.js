@@ -202,7 +202,8 @@ class Settings {
   }
 
   currentVersion() {
-    return this.get("version", {}).tag;
+    let branch = this.get("version", {}).branch;
+    return branch.slice(branch.length - 6);
   }
 
   latestVersion() {
