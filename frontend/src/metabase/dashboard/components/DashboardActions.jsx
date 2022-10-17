@@ -50,10 +50,10 @@ export const getDashboardActions = (
     hasCards &&
     dashboard.ordered_cards.some(dashCard => dashCard.card.display !== "text");
 
-  const canShareDashboard = hasCards && showSQLOption;
+  const canShareDashboard = hasCards;
 
   // Getting notifications with static text-only cards doesn't make a lot of sense
-  const canSubscribeToDashboard = hasDataCards && showSQLOption;
+  const canSubscribeToDashboard = hasDataCards;
 
   if (!isEditing && !isEmpty && !isPublic) {
     const extraButtonClassNames =
