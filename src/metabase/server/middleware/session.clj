@@ -32,7 +32,7 @@
 ;; Finally we'll check for the presence of a `X-Metabase-Session` header. If that isn't present, you don't have a
 ;; Session ID and thus are definitely not authenticated
 
-(def ^:private ^String metabase-session-cookie          "metabase.SESSION")
+(def ^:private ^String metabase-session-cookie          "metabase.SESSION_ID")
 (def ^:private ^String metabase-embedded-session-cookie "metabase.EMBEDDED_SESSION")
 (def ^:private ^String anti-csrf-token-header           "x-metabase-anti-csrf-token")
 

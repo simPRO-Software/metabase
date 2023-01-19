@@ -39,12 +39,6 @@ export default class ProfileLink extends Component {
     const admin = this.props.user.is_superuser;
     const adminContext = this.props.context === "admin";
     return [
-      {
-        title: t`Account settings`,
-        icon: null,
-        link: Urls.accountSettings(),
-        event: `Navbar;Profile Dropdown;Edit Profile`,
-      },
       ...(MetabaseSettings.isHosted() &&
         admin && [
           {
@@ -64,31 +58,45 @@ export default class ProfileLink extends Component {
           }`,
         },
       ]),
-      {
-        title: t`Activity`,
-        icon: null,
-        link: "/activity",
-        event: `Navbar;Profile Dropdown;Activity ${tag}`,
-      },
+      ...(admin && [
+        {
+          title: t`Account settings`,
+          icon: null,
+          link: Urls.accountSettings(),
+          event: `Navbar;Profile Dropdown;Edit Profile`,
+        },
+      ]),
+      ...(admin && [
+        {
+          title: t`Activity`,
+          icon: null,
+          link: "/activity",
+          event: `Navbar;Profile Dropdown;Activity ${tag}`,
+        },
+      ]),
       {
         title: t`Help`,
         icon: null,
-        link: MetabaseSettings.docsUrl(),
+        link: MetabaseSettings.helpUrl(),
         externalLink: true,
         event: `Navbar;Profile Dropdown;About ${tag}`,
       },
-      {
-        title: t`About Metabase`,
-        icon: null,
-        action: () => this.openModal("about"),
-        event: `Navbar;Profile Dropdown;About ${tag}`,
-      },
-      {
-        title: t`Sign out`,
-        icon: null,
-        link: "auth/logout",
-        event: `Navbar;Profile Dropdown;Logout`,
-      },
+      ...(admin && [
+        {
+          title: t`About Metabase`,
+          icon: null,
+          action: () => this.openModal("about"),
+          event: `Navbar;Profile Dropdown;About ${tag}`,
+        },
+      ]),
+      ...(admin && [
+        {
+          title: t`Sign out`,
+          icon: null,
+          link: "auth/logout",
+          event: `Navbar;Profile Dropdown;Logout`,
+        },
+      ]),
     ];
   };
 
@@ -97,7 +105,7 @@ export default class ProfileLink extends Component {
     const adminContext = this.props.context === "admin";
     const { tag, date, ...versionExtra } = MetabaseSettings.get("version");
     // don't show trademark if application name is whitelabeled
-    const showTrademark = t`Metabase` === "Metabase";
+    //const showTrademark = t`Metabase` === "Metabase";
     return (
       <Box>
         <EntityMenu
@@ -122,7 +130,7 @@ export default class ProfileLink extends Component {
               <h2
                 style={{ fontSize: "1.75em" }}
                 className="text-dark"
-              >{t`Thanks for using Metabase!`}</h2>
+              >{t`Thanks for using BI Reporting!`}</h2>
               <div className="pt2">
                 <h3 className="text-dark mb1">
                   {t`You're on version`} {tag}
@@ -141,18 +149,6 @@ export default class ProfileLink extends Component {
                 )}
               </div>
             </div>
-            {showTrademark && (
-              <div
-                style={{ borderWidth: "2px" }}
-                className="p2 h5 text-centered text-medium border-top"
-              >
-                <span className="block">
-                  <span className="text-bold">Metabase</span>{" "}
-                  {t`is a Trademark of`} Metabase, Inc
-                </span>
-                <span>{t`and is built with care in San Francisco, CA`}</span>
-              </div>
-            )}
           </Modal>
         ) : null}
       </Box>

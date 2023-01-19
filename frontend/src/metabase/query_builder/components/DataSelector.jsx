@@ -1034,10 +1034,7 @@ const TablePicker = ({
           <div className="bg-light p2 text-centered border-top">
             {t`Is a question missing?`}
             <ExternalLink
-              href={MetabaseSettings.docsUrl(
-                "users-guide/custom-questions",
-                "picking-your-starting-data",
-              )}
+              href={MetabaseSettings.helpUrl()}
               target="_blank"
               className="block link"
             >

@@ -25,6 +25,7 @@ import MetabaseSettings from "metabase/lib/settings";
 import { conjunct } from "metabase/lib/formatting";
 
 import { PLUGIN_DASHBOARD_SUBSCRIPTION_PARAMETERS_SECTION_OVERRIDE } from "metabase/plugins";
+import { getUser } from "metabase/selectors/user";
 
 import {
   getDefaultParametersById,
@@ -35,6 +36,7 @@ const mapStateToProps = (state, props) => {
   return {
     parameters: getParameters(state, props),
     defaultParametersById: getDefaultParametersById(state, props),
+    user: getUser(state)
   };
 };
 
@@ -59,6 +61,7 @@ function _AddEditEmailSidebar({
   channel,
   channelSpec,
   users,
+  user,
   parameters,
   defaultParametersById,
   dashboard,
@@ -95,6 +98,7 @@ function _AddEditEmailSidebar({
             recipients={channel.recipients}
             recipientTypes={channelSpec.recipients}
             users={users}
+            currentUser={user}
             onRecipientsChange={recipients =>
               onChannelPropertyChange("recipients", recipients)
             }
@@ -187,6 +191,7 @@ _AddEditEmailSidebar.propTypes = {
   channel: PropTypes.object.isRequired,
   channelSpec: PropTypes.object.isRequired,
   users: PropTypes.array,
+  user: PropTypes.object.isRequired,
   parameters: PropTypes.array.isRequired,
   defaultParametersById: PropTypes.object.isRequired,
   dashboard: PropTypes.object.isRequired,

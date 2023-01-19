@@ -54,7 +54,7 @@
 
 (defsetting site-name
   (deferred-tru "The name used for this instance of Metabase.")
-  :default "Metabase")
+  :default "BI Reporting")
 
 (defsetting site-uuid
   ;; Don't i18n this docstring because it's not user-facing! :)
@@ -216,7 +216,7 @@
   (deferred-tru "This will replace the word \"Metabase\" wherever it appears.")
   :visibility :public
   :type       :string
-  :default    "Metabase")
+  :default    "BI Reporting")
 
 (defsetting application-colors
   (deferred-tru "These are the primary colors used in charts and throughout Metabase. You might need to refresh your browser to see your changes take effect.")
@@ -227,7 +227,7 @@
 (defn application-color
   "The primary color, a.k.a. brand color"
   []
-  (or (:brand (setting/get-json :application-colors)) "#509EE3"))
+  (or (:brand (setting/get-json :application-colors)) "#004b8d"))
 
 (defn secondary-chart-color
   "The first 'Additional chart color'"

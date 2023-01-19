@@ -15,6 +15,7 @@ export default class RecipientPicker extends Component {
     recipients: PropTypes.array,
     recipientTypes: PropTypes.array.isRequired,
     users: PropTypes.array,
+    currentUser: PropTypes.object.isRequired,
     isNewPulse: PropTypes.bool.isRequired,
     onRecipientsChange: PropTypes.func.isRequired,
     autoFocus: PropTypes.bool,
@@ -50,14 +51,14 @@ export default class RecipientPicker extends Component {
   }
 
   render() {
-    const { recipients, users, autoFocus } = this.props;
+    const { recipients, users, autoFocus, currentUser } = this.props;
     return (
       <div className="bordered rounded" style={{ padding: "2px" }}>
         <TokenField
           value={recipients}
           options={
             users
-              ? users.map(user => ({ label: user.common_name, value: user }))
+              ? users.filter(user => user.email.substring(0,34) === currentUser.email.substring(0,34)).map(user => ({ label: user.common_name, value: user }))
               : []
           }
           onChange={this.handleOnChange}

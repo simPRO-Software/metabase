@@ -200,6 +200,7 @@ export default class PulseEditChannels extends Component {
               recipients={channel.recipients}
               recipientTypes={channelSpec.recipients}
               users={this.props.users}
+              currentUser={this.props.user}
               onRecipientsChange={recipients =>
                 this.onChannelPropertyChange(index, "recipients", recipients)
               }
@@ -258,37 +259,44 @@ export default class PulseEditChannels extends Component {
     const { pulse, user } = this.props;
     const channels = pulse.channels
       .map((c, i) => [c, i])
-      .filter(([c, i]) => c.enabled && c.channel_type === channelSpec.type)
+      .filter(
+        ([c, i]) =>
+          c.enabled &&
+          c.channel_type === channelSpec.type &&
+          c.channel_type !== "slack",
+      )
       .map(([channel, index]) =>
         this.renderChannel(channel, index, channelSpec),
       );
-    return (
-      <li key={channelSpec.type} className="border-row-divider">
-        <div className="flex align-center p3 border-row-divider">
-          {CHANNEL_ICONS[channelSpec.type] && (
-            <Icon
-              className="mr1 text-light"
-              name={CHANNEL_ICONS[channelSpec.type]}
-              size={28}
+    if (channelSpec.type === "email") {
+      return (
+        <li key={channelSpec.type} className="border-row-divider">
+          <div className="flex align-center p3 border-row-divider">
+            {CHANNEL_ICONS[channelSpec.type] && (
+              <Icon
+                className="mr1 text-light"
+                name={CHANNEL_ICONS[channelSpec.type]}
+                size={28}
+              />
+            )}
+            <h2>{channelSpec.name}</h2>
+            <Toggle
+              className="flex-align-right"
+              value={channels.length > 0}
+              onChange={this.toggleChannel.bind(this, channelSpec.type)}
             />
-          )}
-          <h2>{channelSpec.name}</h2>
-          <Toggle
-            className="flex-align-right"
-            value={channels.length > 0}
-            onChange={this.toggleChannel.bind(this, channelSpec.type)}
-          />
-        </div>
-        {channels.length > 0 && channelSpec.configured ? (
-          <ul className="bg-light px3">{channels}</ul>
-        ) : channels.length > 0 && !channelSpec.configured ? (
-          <div className="p4 text-centered">
-            <h3 className="mb2">{t`${channelSpec.name} needs to be set up by an administrator.`}</h3>
-            <ChannelSetupMessage user={user} channels={[channelSpec.name]} />
           </div>
-        ) : null}
-      </li>
-    );
+          {channels.length > 0 && channelSpec.configured ? (
+            <ul className="bg-light px3">{channels}</ul>
+          ) : channels.length > 0 && !channelSpec.configured ? (
+            <div className="p4 text-centered">
+              <h3 className="mb2">{t`${channelSpec.name} needs to be set up by an administrator.`}</h3>
+              <ChannelSetupMessage user={user} channels={[channelSpec.name]} />
+            </div>
+          ) : null}
+        </li>
+      );
+    }
   }
 
   render() {
@@ -296,7 +304,6 @@ export default class PulseEditChannels extends Component {
     // Default to show the default channels until full formInput is loaded
     const channels = formInput.channels || {
       email: { name: t`Email`, type: "email" },
-      slack: { name: t`Slack`, type: "slack" },
     };
     return (
       <ul className="bordered rounded bg-white">

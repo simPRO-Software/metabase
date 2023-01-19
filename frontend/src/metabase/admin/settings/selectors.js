@@ -213,7 +213,7 @@ const SECTIONS = updateSectionsWithPlugins({
       {
         key: "map-tile-server-url",
         display_name: t`Map tile server URL`,
-        note: t`Metabase uses OpenStreetMaps by default.`,
+        note: t`BI Reporting uses OpenStreetMaps by default.`,
         type: "string",
       },
       {
@@ -331,7 +331,7 @@ const SECTIONS = updateSectionsWithPlugins({
       },
       {
         key: "enable-embedding",
-        display_name: t`Enable Embedding Metabase in other Applications`,
+        display_name: t`Enable Embedding BI Reporting in other Applications`,
         type: "boolean",
         getHidden: settings => !settings["enable-embedding"],
       },

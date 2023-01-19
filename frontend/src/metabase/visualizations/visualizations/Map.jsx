@@ -228,12 +228,13 @@ export default class Map extends Component {
       title: t`Region map`,
       widget: "select",
       getDefault: ([{ card, data }]) => {
-        if (card.display === "state" || _.any(data.cols, isState)) {
-          return "us_states";
-        } else if (card.display === "country" || _.any(data.cols, isCountry)) {
-          return "world_countries";
-        }
-        return null;
+        //if (card.display === "state" || _.any(data.cols, isState)) {
+        //  return "us_states";
+        //} else if (card.display === "country" || _.any(data.cols, isCountry)) {
+        //  return "world_countries";
+        //}
+        //return null;
+        return "world_countries";
       },
       getProps: () => ({
         options: _.chain(MetabaseSettings.get("custom-geojson", {}))
@@ -242,7 +243,8 @@ export default class Map extends Component {
           .sortBy(x => x.name.toLowerCase())
           .value(),
       }),
-      getHidden: (series, vizSettings) => vizSettings["map.type"] !== "region",
+      //getHidden: (series, vizSettings) => vizSettings["map.type"] !== "region",
+      getHidden: (series, vizSettings) => true,
     },
     ...metricSetting("map.metric", {
       title: t`Metric field`,

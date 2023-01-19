@@ -75,8 +75,6 @@ export default class SettingsUpdatesForm extends Component {
                 <Version key={index} version={version} />
               ))}
           </div>
-
-          {!MetabaseSettings.isHosted() && <HostingCTA />}
         </div>
       );
     } else {

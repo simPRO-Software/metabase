@@ -112,7 +112,7 @@
    :running_on           (environment-type)
    :application_database (config/config-str :mb-db-type)
    :check_for_updates    (public-settings/check-for-updates)
-   :site_name            (not= (public-settings/site-name) "Metabase")
+   :site_name            (not= (public-settings/site-name) "BI Reporting")
    :report_timezone      (driver/report-timezone)
    ; We deprecated advanced humanization but have this here anyways
    :friendly_names       (= (humanization/humanization-strategy) "advanced")

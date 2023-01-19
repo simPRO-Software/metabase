@@ -14,7 +14,7 @@ import { Flex, Box } from "grid-styled";
 import * as Urls from "metabase/lib/urls";
 import { color, darken } from "metabase/lib/colors";
 
-import Icon, { IconWrapper } from "metabase/components/Icon";
+import Icon from "metabase/components/Icon";
 import EntityMenu from "metabase/components/EntityMenu";
 import Link from "metabase/components/Link";
 import LogoIcon from "metabase/components/LogoIcon";
@@ -32,6 +32,7 @@ import {
   getPlainNativeQuery,
 } from "metabase/new_query/selectors";
 import Database from "metabase/entities/databases";
+import { getMetadata } from "metabase/selectors/metadata";
 
 const mapStateToProps = (state, props) => ({
   path: getPath(state, props),
@@ -40,6 +41,7 @@ const mapStateToProps = (state, props) => ({
   plainNativeQuery: getPlainNativeQuery(state),
   hasDataAccess: getHasDataAccess(state),
   hasNativeWrite: getHasNativeWrite(state),
+  metadata: getMetadata(state),
 });
 
 import { DefaultSearchColor } from "metabase/nav/constants";
@@ -106,7 +108,7 @@ export default class Navbar extends Component {
         <div className="sm-pl4 flex align-center pr1">
           <div className="NavTitle flex align-center">
             <Icon name={"gear"} className="AdminGear" size={22} />
-            <span className="NavItem-text ml1 hide sm-show text-bold">{t`Metabase Admin`}</span>
+            <span className="NavItem-text ml1 hide sm-show text-bold">{t`BI Reporting Admin`}</span>
           </div>
 
           <ul className="sm-ml4 flex flex-full">
@@ -185,7 +187,12 @@ export default class Navbar extends Component {
   }
 
   renderMainNav() {
-    const { hasDataAccess, hasNativeWrite } = this.props;
+    const { hasDataAccess } = this.props;
+    const hasSQLPermission = db => db.native_permissions === "write" && db.is_sample === false;
+    const showSQLOption =  this.props.databases && this.props.databases.filter(hasSQLPermission).length > 0;
+
+    console.log(this.props);
+    console.log(showSQLOption);
 
     return (
       <Flex
@@ -217,10 +224,10 @@ export default class Navbar extends Component {
         </Flex>
         <Flex className="flex-full z1" pr={2} align="center">
           <Box w={1} style={{ maxWidth: 500 }}>
-            <SearchBar
+            {/*<SearchBar
               location={this.props.location}
               onChangeLocation={this.props.onChangeLocation}
-            />
+            />*/}
           </Box>
         </Flex>
         <Flex ml="auto" align="center" pl={[1, 2]} className="relative z2">
@@ -239,25 +246,6 @@ export default class Navbar extends Component {
               <h4 className="hide sm-show ml1 text-nowrap">{t`Ask a question`}</h4>
             </Link>
           )}
-          {hasDataAccess && (
-            <IconWrapper
-              className="relative hide sm-show mr1 overflow-hidden"
-              hover={NavHover}
-            >
-              <Link
-                to="browse"
-                className="flex align-center rounded transition-background"
-                data-metabase-event={`NavBar;Data Browse`}
-              >
-                <Icon
-                  name="table_spaced"
-                  size={14}
-                  p={"11px"}
-                  tooltip={t`Browse data`}
-                />
-              </Link>
-            </IconWrapper>
-          )}
           <EntityMenu
             tooltip={t`Create`}
             className="hide sm-show mr1"
@@ -270,28 +258,14 @@ export default class Navbar extends Component {
                 action: () => this.setModal(MODAL_NEW_DASHBOARD),
                 event: `NavBar;New Dashboard Click;`,
               },
-              {
+              (showSQLOption && {
                 title: t`New pulse`,
                 icon: `pulse`,
                 link: Urls.newPulse(),
                 event: `NavBar;New Pulse Click;`,
-              },
+              }),
             ]}
           />
-          {hasNativeWrite && (
-            <IconWrapper
-              className="relative hide sm-show mr1 overflow-hidden"
-              hover={NavHover}
-            >
-              <Link
-                to={this.props.plainNativeQuery.question().getUrl()}
-                className="flex align-center"
-                data-metabase-event={`NavBar;SQL`}
-              >
-                <Icon size={18} p={"11px"} name="sql" tooltip={t`Write SQL`} />
-              </Link>
-            </IconWrapper>
-          )}
           <ProfileLink {...this.props} />
         </Flex>
         {this.renderModal()}

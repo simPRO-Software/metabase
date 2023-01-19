@@ -1,3 +1,11 @@
+# Building metabase.jar locally
+
+Clone this repo, then:
+```bash
+docker run --rm -it -v `pwd`:/app -w /app metabase/ci:java-11-lein-2.9.6-clj-1.10.3.822-04-22-2021 ./bin/build
+```
+**Note**: Get the image name from the `STAGE 1.4: main builder` section of the [Dockerfile](Dockerfile) in this repo.
+
 # Metabase
 
 Metabase is the easy, open source way for everyone in your company to ask questions and learn from data.
@@ -87,7 +95,7 @@ Metabase also allows you to hit our Query API directly from Javascript to integr
 
 # License
 
-This repository contains the source code for both the Open Source edition of Metabase, released under the AGPL, as well as the commercial edition of Metabase Enterprise, released under the Metabase Commercial Software License. 
+This repository contains the source code for both the Open Source edition of Metabase, released under the AGPL, as well as the commercial edition of Metabase Enterprise, released under the Metabase Commercial Software License.
 
 See [LICENSE.txt](./LICENSE.txt) for details.
 

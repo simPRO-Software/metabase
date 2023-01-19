@@ -2,7 +2,7 @@
  * NOTE: KEEP SYNCRONIZED WITH COLORS.JS
  */
 :root {
-  --color-brand: #509ee3;
+  --color-brand: #1976d2;
   --color-brand-light: #ddecfa;
   --color-accent1: #88bf4d;
   --color-accent2: #a989c5;
@@ -24,7 +24,7 @@
   --color-bg-black: #2e353b;
   --color-bg-dark: #93a1ab;
   --color-bg-medium: #edf2f5;
-  --color-bg-light: #f9fbfc;
+  --color-bg-light: #fdfdfd;
   --color-bg-white: #ffffff;
   --color-bg-yellow: #fffcf2;
   --color-shadow: rgba(0, 0, 0, 0.13);
