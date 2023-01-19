@@ -224,10 +224,10 @@ export default class Navbar extends Component {
         </Flex>
         <Flex className="flex-full z1" pr={2} align="center">
           <Box w={1} style={{ maxWidth: 500 }}>
-            <SearchBar
+            {/*<SearchBar
               location={this.props.location}
               onChangeLocation={this.props.onChangeLocation}
-            />
+            />*/}
           </Box>
         </Flex>
         <Flex ml="auto" align="center" pl={[1, 2]} className="relative z2">
