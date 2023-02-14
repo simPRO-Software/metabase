@@ -14,7 +14,7 @@ const LogoBadge = ({ dark }) => (
     <span className="text-small">
       <span className="ml1 md-ml2 text-medium">{jt`Powered by ${(
         <span className={dark ? "text-white" : "text-brand"}>
-          {t`Metabase`}
+          {t`BI Reporting`}
         </span>
       )}`}</span>
     </span>

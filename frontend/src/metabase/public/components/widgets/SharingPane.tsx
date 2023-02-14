@@ -113,7 +113,7 @@ export default function SharingPane({
         }
       >
         <PublicLinkHeader>{t`Public link`}</PublicLinkHeader>
-        <Description className="mb1">{t`Share this ${resourceType} with people who don't have a Metabase account using the URL below:`}</Description>
+        <Description className="mb1">{t`Share this ${resourceType} with people who don't have a BI Reporting account using the URL below:`}</Description>
         <CopyWidget value={publicLink} />
         {extensions && extensions.length > 0 && (
           <div className="mt1">

@@ -33,7 +33,7 @@ describe("AppBar", () => {
       const props = getProps({
         isNavBarVisible: true,
         isCollectionPathVisible: true,
-        isSearchVisible: true,
+        isSearchVisible: false,
         isNewButtonVisible: true,
       });
 
@@ -78,7 +78,7 @@ describe("AppBar", () => {
       const props = getProps({
         isNavBarVisible: true,
         isCollectionPathVisible: true,
-        isSearchVisible: true,
+        isSearchVisible: false,
         isNewButtonVisible: true,
       });
 

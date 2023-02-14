@@ -254,7 +254,7 @@ class SettingsSlackForm extends Component {
           <div className="py2">
             {jt`Once you're there, give it a name and click ${(
               <strong>&quot;{t`Add bot integration`}&quot;</strong>
-            )}. Then copy and paste the Bot API Token into the field below. Once you are done, create a "metabase_files" channel in Slack. Metabase needs this to upload graphs.`}
+            )}. Then copy and paste the Bot API Token into the field below. Once you are done, create a "metabase_files" channel in Slack. BI Reporting needs this to upload graphs.`}
           </div>
         </div>
         <ul>

@@ -44,6 +44,11 @@ export const getDashboardActions = (
   const isLoaded = !!dashboard;
   const hasCards = isLoaded && dashboard.ordered_cards.length > 0;
 
+  const hasSQLPermission = db => db.native_permissions === "write" && db.is_sample === false;
+  //console.log(self.props.databases);
+  const databases = Array.isArray(self.props.databases) ? self.props.databases : Object.values(self.props.databases);
+  const showSQLOption =  databases && databases.filter(hasSQLPermission).length > 0;
+
   // dashcardData only contains question cards, text ones don't appear here
   const hasDataCards =
     hasCards &&

@@ -8,15 +8,11 @@ import ActionButton from "metabase/components/ActionButton";
 
 import Button from "metabase/core/components/Button";
 import DeleteModalWithConfirm from "metabase/components/DeleteModalWithConfirm";
-import Icon from "metabase/components/Icon";
+
 import * as MetabaseAnalytics from "metabase/lib/analytics";
 import ModalWithTrigger from "metabase/components/ModalWithTrigger";
 import ModalContent from "metabase/components/ModalContent";
-import Subhead from "metabase/components/type/Subhead";
-import Text from "metabase/components/type/Text";
 
-import { color } from "metabase/lib/colors";
-import MetabaseSettings from "metabase/lib/settings";
 import { pulseIsValid, cleanPulse, emailIsEnabled } from "metabase/lib/pulse";
 import * as Urls from "metabase/lib/urls";
 
@@ -169,14 +165,6 @@ class PulseEdit extends Component {
           </ModalWithTrigger>
         </div>
         <div className="PulseEdit-content pt2 pb4">
-          <PulseHeader className="hover-parent hover--visibility">
-            <Icon name="warning" color={color("warning")} size={24} mr={1} />
-            <PulseHeaderContent>
-              <Subhead>{t`Pulses are being phased out`}</Subhead>
-              <Text>{jt`You can now set up ${link} instead. We'll remove Pulses in a future release, and help you migrate any that you still have.`}</Text>
-            </PulseHeaderContent>
-          </PulseHeader>
-
           <PulseEditName {...this.props} setPulse={this.setPulse} />
           <PulseEditCollection {...this.props} setPulse={this.setPulse} />
           <PulseEditCards

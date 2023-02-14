@@ -57,10 +57,10 @@ const SettingsGoogleForm = ({
       />
       <FormHeader>{t`Sign in with Google`}</FormHeader>
       <FormCaption>
-        {t`Allows users with existing Metabase accounts to login with a Google account that matches their email address in addition to their Metabase username and password.`}
+        {t`Allows users with existing Report Builder accounts to login with a Google account that matches their email address in addition to their Metabase username and password.`}
       </FormCaption>
       <FormCaption>
-        {jt`To allow users to sign in with Google you'll need to give Metabase a Google Developers console application client ID. It only takes a few steps and instructions on how to create a key can be found ${(
+        {jt`To allow users to sign in with Google you'll need to give Report Builder a Google Developers console application client ID. It only takes a few steps and instructions on how to create a key can be found ${(
           <ExternalLink key="link" href={getDocsLink()}>{t`here`}</ExternalLink>
         )}.`}
       </FormCaption>

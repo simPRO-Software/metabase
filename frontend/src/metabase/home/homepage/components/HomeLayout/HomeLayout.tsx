@@ -18,7 +18,6 @@ const HomeLayout = ({
   return (
     <LayoutRoot>
       {showIllustration && <LayoutIllustration />}
-      <GreetingSection />
       <LayoutBody>{children}</LayoutBody>
     </LayoutRoot>
   );
