@@ -236,7 +236,7 @@ const SECTIONS = updateSectionsWithPlugins({
       {
         key: "map-tile-server-url",
         display_name: t`Map tile server URL`,
-        note: t`Metabase uses OpenStreetMaps by default.`,
+        note: t`BI Reporting uses OpenStreetMaps by default.`,
         type: "string",
       },
       {

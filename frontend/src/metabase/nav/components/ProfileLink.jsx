@@ -45,7 +45,7 @@ function ProfileLink({ user, adminItems, onLogout }) {
     );
 
     return [
-      {
+      showAdminSettingsItem && {
         title: t`Account settings`,
         icon: null,
         link: Urls.accountSettings(),
@@ -57,7 +57,7 @@ function ProfileLink({ user, adminItems, onLogout }) {
         link: "/admin",
         event: `Navbar;Profile Dropdown;Enter Admin`,
       },
-      {
+      showAdminSettingsItem && {
         title: t`Activity`,
         icon: null,
         link: "/activity",
@@ -66,21 +66,17 @@ function ProfileLink({ user, adminItems, onLogout }) {
       {
         title: t`Help`,
         icon: null,
-        link:
-          isAdmin && MetabaseSettings.isPaidPlan()
-            ? `https://www.metabase.com/help-premium?utm_source=in-product&utm_medium=menu&utm_campaign=help&instance_version=${tag}&diag=${compactBugReportDetailsForUrl}`
-            : `https://www.metabase.com/help?utm_source=in-product&utm_medium=menu&utm_campaign=help&instance_version=${tag}`,
-
+        link: `https://helpguide.simprogroup.com/Content/Service-and-Enterprise/Report-builder.htm`,
         externalLink: true,
         event: `Navbar;Profile Dropdown;About ${tag}`,
       },
-      {
+      showAdminSettingsItem && {
         title: t`About Metabase`,
         icon: null,
         action: () => openModal("about"),
         event: `Navbar;Profile Dropdown;About ${tag}`,
       },
-      {
+      showAdminSettingsItem && {
         title: t`Sign out`,
         icon: null,
         action: () => onLogout(),
@@ -98,7 +94,7 @@ function ProfileLink({ user, adminItems, onLogout }) {
 
   const { tag, date, ...versionExtra } = MetabaseSettings.get("version");
   // don't show trademark if application name is whitelabeled
-  const showTrademark = t`Metabase` === "Metabase";
+  //const showTrademark = t`Metabase` === "Metabase";
   return (
     <div>
       <EntityMenu
@@ -122,7 +118,7 @@ function ProfileLink({ user, adminItems, onLogout }) {
             <h2
               style={{ fontSize: "1.75em" }}
               className="text-dark"
-            >{t`Thanks for using Metabase!`}</h2>
+            >{t`Thanks for using BI Reporting!`}</h2>
             <div className="pt2">
               <h3 className="text-dark mb1">
                 {t`You're on version`} {tag}
@@ -141,18 +137,6 @@ function ProfileLink({ user, adminItems, onLogout }) {
               )}
             </div>
           </div>
-          {showTrademark && (
-            <div
-              style={{ borderWidth: "2px" }}
-              className="p2 h5 text-centered text-medium border-top"
-            >
-              <span className="block">
-                <span className="text-bold">Metabase</span>{" "}
-                {t`is a Trademark of`} Metabase, Inc
-              </span>
-              <span>{t`and is built with care by a team from all across this pale blue dot.`}</span>
-            </div>
-          )}
         </Modal>
       ) : null}
     </div>

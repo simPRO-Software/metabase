@@ -24,10 +24,7 @@ const emptyStateData = {
   message: t`Segments will appear here once your admins have created some`,
   image: "app/assets/img/segments-list",
   adminAction: t`Learn how to create segments`,
-  adminLink: MetabaseSettings.docsUrl(
-    "data-modeling/segments-and-metrics",
-    "creating-a-segment",
-  ),
+  adminLink: `https://helpguide.simprogroup.com/Content/Service-and-Enterprise/Report-builder.htm`,
 };
 
 const mapStateToProps = (state, props) => ({

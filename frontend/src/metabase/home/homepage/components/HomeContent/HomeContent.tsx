@@ -54,23 +54,26 @@ const isPopularSection = ({
   recentItems = [],
   popularItems = [],
 }: HomeContentProps): boolean => {
-  return (
+  /*return (
     !user.is_installer &&
     user.has_question_and_dashboard &&
     popularItems.length > 0 &&
     (isWithinWeeks(user.first_login, 1) || !recentItems.length)
-  );
+  );*/
+  return false;
 };
 
 const isRecentSection = ({
   user,
   recentItems = [],
 }: HomeContentProps): boolean => {
-  return user.has_question_and_dashboard && recentItems.length > 0;
+  //return user.has_question_and_dashboard && recentItems.length > 0;
+  return false;
 };
 
 const isXraySection = ({ databases = [] }: HomeContentProps): boolean => {
-  return databases.some(isSyncCompleted);
+  //return databases.some(isSyncCompleted);
+  return false;
 };
 
 export default HomeContent;

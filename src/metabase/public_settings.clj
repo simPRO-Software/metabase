@@ -295,7 +295,7 @@
   :visibility :public
   :type       :string
   :enabled?   premium-features/enable-whitelabeling?
-  :default    "Metabase")
+  :default    "BI Reporting")
 
 (defsetting loading-message
   (deferred-tru "Message to show while a query is running.")
@@ -334,7 +334,7 @@
 (defn application-color
   "The primary color, a.k.a. brand color"
   []
-  (or (:brand (application-colors)) "#509EE3"))
+  (or (:brand (application-colors)) "#004b8d"))
 
 (defn secondary-chart-color
   "The first 'Additional chart color'"

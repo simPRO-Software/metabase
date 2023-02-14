@@ -34,7 +34,7 @@ export const AdminNavbar = ({
       <AdminLogoLink to="/admin" data-metabase-event="Navbar;Logo">
         <AdminLogoContainer>
           <LogoIcon className="text-brand my2" dark />
-          <AdminLogoText>{t`Metabase Admin`}</AdminLogoText>
+          <AdminLogoText>{t`BI Reporting Admin`}</AdminLogoText>
         </AdminLogoContainer>
       </AdminLogoLink>
 
@@ -52,7 +52,6 @@ export const AdminNavbar = ({
           ))}
         </AdminNavbarItems>
 
-        {!MetabaseSettings.isPaidPlan() && <StoreLink />}
         <AdminExitLink
           to="/"
           data-metabase-event="Navbar;Exit Admin"

@@ -3,8 +3,6 @@ import React from "react";
 import { t, jt } from "ttag";
 import Code from "metabase/components/Code";
 import Button from "metabase/core/components/Button";
-import ExternalLink from "metabase/core/components/ExternalLink";
-import MetabaseSettings from "metabase/lib/settings";
 import Utils from "metabase/lib/utils";
 
 const SQL_EXAMPLES = {
@@ -295,15 +293,7 @@ const TagEditorHelp = ({
         setDatasetQuery={setQueryWithDatasetId}
       />
 
-      <p className="pt2 link">
-        <ExternalLink
-          href={MetabaseSettings.docsUrl(
-            "questions/native-editor/sql-parameters",
-          )}
-          target="_blank"
-          data-metabase-event="QueryBuilder;Template Tag Documentation Click"
-        >{t`Read the full documentation`}</ExternalLink>
-      </p>
+
     </div>
   );
 };
