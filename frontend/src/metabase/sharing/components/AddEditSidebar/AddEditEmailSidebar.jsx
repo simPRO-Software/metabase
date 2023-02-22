@@ -25,6 +25,7 @@ function _AddEditEmailSidebar({
   channel,
   channelSpec,
   users,
+  user,
   parameters,
   defaultParametersById,
   dashboard,
@@ -62,6 +63,7 @@ function _AddEditEmailSidebar({
             recipients={channel.recipients}
             recipientTypes={channelSpec.recipients}
             users={users}
+            currentUser={user}
             onRecipientsChange={recipients =>
               onChannelPropertyChange("recipients", recipients)
             }
@@ -154,6 +156,7 @@ _AddEditEmailSidebar.propTypes = {
   channel: PropTypes.object.isRequired,
   channelSpec: PropTypes.object.isRequired,
   users: PropTypes.array,
+  user: PropTypes.object.isRequired,
   parameters: PropTypes.array.isRequired,
   defaultParametersById: PropTypes.object.isRequired,
   dashboard: PropTypes.object.isRequired,
