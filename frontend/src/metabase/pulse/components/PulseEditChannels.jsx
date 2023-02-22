@@ -177,6 +177,7 @@ export default class PulseEditChannels extends Component {
               recipients={channel.recipients}
               recipientTypes={channelSpec.recipients}
               users={this.props.users}
+              currentUser={this.props.user}
               onRecipientsChange={recipients =>
                 this.onChannelPropertyChange(index, "recipients", recipients)
               }
