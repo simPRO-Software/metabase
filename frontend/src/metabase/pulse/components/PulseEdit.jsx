@@ -134,12 +134,6 @@ class PulseEdit extends Component {
     const { pulse, formInput } = this.props;
     const isValid = pulseIsValid(pulse, formInput.channels);
     const attachmentsEnabled = emailIsEnabled(pulse);
-    const link = (
-      <a
-        className="link"
-        href={MetabaseSettings.docsUrl("dashboards/subscriptions")}
-      >{t`dashboard subscriptions`}</a>
-    );
     return (
       <div className="PulseEdit">
         <div className="PulseEdit-header flex align-center border-bottom py3">
