@@ -210,6 +210,7 @@ export default class PulseEditChannels extends Component {
               t`Messages`
             } will be sent at`}
             onScheduleChange={this.onChannelScheduleChange.bind(this, index)}
+            currentUser={this.props.user}
           />
         )}
         {this.props.testPulse && (

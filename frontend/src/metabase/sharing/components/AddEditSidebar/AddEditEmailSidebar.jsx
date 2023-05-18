@@ -88,6 +88,7 @@ function _AddEditEmailSidebar({
           onScheduleChange={(newSchedule, changedProp) =>
             onChannelScheduleChange(newSchedule, changedProp)
           }
+          currentUser={user}
         />
         <div className="pt2 pb1">
           <SendTestPulse
