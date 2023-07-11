@@ -77,8 +77,8 @@
    ;; interest of minimizing memory consumption
    "acquireIncrement"             1
    ;; [From dox] Seconds a Connection can remain pooled but unused before being discarded.
-   "maxIdleTime"                  (* 3 60 60) ; 3 hours
-   "minPoolSize"                  1
+   "maxIdleTime"                  (* 45) ; 45 sec
+   "minPoolSize"                  0
    "initialPoolSize"              1
    "maxPoolSize"                  (or (config/config-int :mb-jdbc-data-warehouse-max-connection-pool-size)
                                       15)
@@ -104,8 +104,8 @@
    ;; Connections acquired are no longer needed. If maxIdleTime is set, maxIdleTimeExcessConnections should be smaller
    ;; if the parameter is to have any effect.
    ;;
-   ;; Kill idle connections above the minPoolSize after 5 minutes.
-   "maxIdleTimeExcessConnections" (* 5 60)
+   ;; Kill idle connections above the minPoolSize after 30 sec.
+   "maxIdleTimeExcessConnections" (* 30)
    ;; Set the data source name so that the c3p0 JMX bean has a useful identifier, which incorporates the DB ID, driver,
    ;; and name from the details
    "dataSourceName"               (format "db-%d-%s-%s"
