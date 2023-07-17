@@ -239,7 +239,11 @@ class AddSeriesModal extends Component {
 }
 
 export default _.compose(
-  Questions.loadList({ query: { f: "all" } }),
+  Questions.loadList({
+    query: (state, ownProps) => {
+      return { f: "database", model_id: ownProps.dashcard.card.database_id };
+    },
+  }),
   connect(
     (state, ownProps) => ({
       questions: getQuestions(state, ownProps),
