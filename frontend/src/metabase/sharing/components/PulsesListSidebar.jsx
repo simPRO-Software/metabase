@@ -237,7 +237,7 @@ function friendlySchedule(channel, user) {
   const timezone = settings.timezone
     ? settings.timezone
     : Settings.get("report-timezone-short");
-  const offset = moment.tz(timezone).utcOffset() / 60;
+  const offset = Math.floor(moment.tz(timezone).utcOffset() / 60);
 
   let scheduleString = "";
 

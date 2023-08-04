@@ -226,11 +226,14 @@ export default class SchedulePicker extends Component {
     const timezone = settings.timezone
       ? settings.timezone
       : Settings.get("report-timezone-short");
-    const offset = moment.tz(timezone).utcOffset() / 60;
+    const offset = Math.floor(moment.tz(timezone).utcOffset() / 60);
     const hourOfDay = isNaN(schedule.schedule_hour)
       ? 8
       : schedule.schedule_hour;
-    const hourOfDayLocal = (hourOfDay + offset) % 24;
+    const hourOfDayLocal =
+      hourOfDay + offset >= 0
+        ? (hourOfDay + offset) % 24
+        : (hourOfDay + offset + 24) % 24;
     //const hour = hourOfDay % 12;
     const hourLocal = hourOfDayLocal % 12;
     //const amPm = hourOfDay >= 12 ? 1 : 0;
@@ -249,7 +252,9 @@ export default class SchedulePicker extends Component {
             onChange={({ target: { value } }) =>
               this.handleChangeProperty(
                 "schedule_hour",
-                value + amPmLocal * 12 - offset,
+                value + amPmLocal * 12 - offset >= 0
+                  ? value + amPmLocal * 12 - offset
+                  : value + amPmLocal * 12 - offset + 24,
               )
             }
           />
@@ -258,7 +263,9 @@ export default class SchedulePicker extends Component {
             onChange={value =>
               this.handleChangeProperty(
                 "schedule_hour",
-                hourLocal + value * 12 - offset,
+                hourLocal + value * 12 - offset >= 0
+                  ? hourLocal + value * 12 - offset
+                  : hourLocal + value * 12 - offset + 24,
               )
             }
             options={AM_PM_OPTIONS}
