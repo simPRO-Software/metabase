@@ -48,6 +48,9 @@ function Navbar({ isOpen, user, location, params, adminPaths }: NavbarProps) {
 
 export default _.compose(
   Database.loadList({
+    query: (state: State) => {
+      return { id: getUser(state).settings.db_id };
+    },
     loadingAndErrorWrapper: false,
   }),
   withRouter,

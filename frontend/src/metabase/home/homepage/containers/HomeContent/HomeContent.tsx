@@ -12,7 +12,12 @@ const mapStateToProps = (state: State) => ({
 });
 
 export default _.compose(
-  Databases.loadList({ loadingAndErrorWrapper: false }),
+  Databases.loadList({
+    query: (state: State) => {
+      return { id: getUser(state).settings.db_id };
+    },
+    loadingAndErrorWrapper: false,
+  }),
   RecentItems.loadList({ reload: true, loadingAndErrorWrapper: false }),
   PopularItems.loadList({ reload: true, loadingAndErrorWrapper: false }),
   connect(mapStateToProps),
