@@ -14,7 +14,8 @@ const mapStateToProps = (state: State) => ({
 export default _.compose(
   Databases.loadList({
     query: (state: State) => {
-      return { id: getUser(state).settings.db_id };
+      const user = getUser(state);
+      return user.is_superuser ? {} : { id: user.settings.db_id };
     },
     loadingAndErrorWrapper: false,
   }),
