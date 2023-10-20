@@ -13,7 +13,9 @@ const databasesProps = {
   loadingAndErrorWrapper: false,
   query: (state: State) => {
     const user = getUser(state);
-    return user.is_superuser ? {} : { id: user.settings.db_id };
+    return user.is_superuser || !user.settings || !user.settings.db_id
+      ? {}
+      : { id: user.settings.db_id };
   },
   reloadInterval: (state: State, props: unknown, databases: Database[] = []) =>
     databases.some(isSyncInProgress) ? RELOAD_INTERVAL : 0,

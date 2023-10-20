@@ -47,7 +47,9 @@ export default _.compose(
   Databases.loadList({
     query: (state, ownProps) => {
       const user = getUser(state);
-      return user.is_superuser ? {} : { id: user.settings.db_id };
+      return user.is_superuser || !user.settings || !user.settings.db_id
+        ? {}
+        : { id: user.settings.db_id };
     },
   }),
   connect((state, ownProps) => ({
