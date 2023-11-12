@@ -21,7 +21,5 @@ export default _.compose(
     },
     loadingAndErrorWrapper: false,
   }),
-  RecentItems.loadList({ reload: true, loadingAndErrorWrapper: false }),
-  PopularItems.loadList({ reload: true, loadingAndErrorWrapper: false }),
   connect(mapStateToProps),
 )(HomeContent);

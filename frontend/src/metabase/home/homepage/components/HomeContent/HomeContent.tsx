@@ -43,9 +43,9 @@ const isLoading = ({
   if (!user.has_question_and_dashboard) {
     return databases == null;
   } else if (user.is_installer || !isWithinWeeks(user.first_login, 1)) {
-    return databases == null || recentItems == null;
+    return databases == null;
   } else {
-    return databases == null || recentItems == null || popularItems == null;
+    return databases == null;
   }
 };
 
