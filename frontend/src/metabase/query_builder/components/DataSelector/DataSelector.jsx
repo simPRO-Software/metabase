@@ -186,10 +186,19 @@ const DataSelector = _.compose(
     // If there is at least one dataset,
     // we want to display a slightly different data picker view
     // (see DATA_BUCKET step)
-    query: {
-      models: "dataset",
-      limit: 1,
-    },
+    query: state =>
+      getUser(state).is_superuser ||
+      !getUser(state).settings ||
+      !getUser(state).settings.db_id
+        ? {
+            models: "dataset",
+            limit: 1,
+          }
+        : {
+            models: "dataset",
+            limit: 1,
+            table_db_id: getUser(state).settings.db_id,
+          },
     loadingAndErrorWrapper: false,
   }),
   connect(
