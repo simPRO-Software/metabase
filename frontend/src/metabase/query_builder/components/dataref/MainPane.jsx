@@ -1,8 +1,10 @@
 /* eslint "react/prop-types": "warn" */
 import React from "react";
+import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { t } from "ttag";
-
+import _ from "underscore";
+import { getUser } from "metabase/selectors/user";
 import Databases from "metabase/entities/databases";
 import SidebarContent from "metabase/query_builder/components/SidebarContent";
 import {
@@ -41,4 +43,16 @@ MainPane.propTypes = {
   onItemClick: PropTypes.func.isRequired,
 };
 
-export default Databases.loadList()(MainPane);
+export default _.compose(
+  Databases.loadList({
+    query: (state, ownProps) => {
+      const user = getUser(state);
+      return user.is_superuser || !user.settings || !user.settings.db_id
+        ? {}
+        : { id: user.settings.db_id };
+    },
+  }),
+  connect((state, ownProps) => ({
+    user: getUser(state),
+  })),
+)(MainPane);

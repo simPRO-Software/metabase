@@ -48,6 +48,12 @@ function Navbar({ isOpen, user, location, params, adminPaths }: NavbarProps) {
 
 export default _.compose(
   Database.loadList({
+    query: (state: State) => {
+      const user = getUser(state);
+      return user.is_superuser || !user.settings || !user.settings.db_id
+        ? {}
+        : { id: user.settings.db_id };
+    },
     loadingAndErrorWrapper: false,
   }),
   withRouter,

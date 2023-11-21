@@ -88,6 +88,7 @@ function _AddEditEmailSidebar({
           onScheduleChange={(newSchedule, changedProp) =>
             onChannelScheduleChange(newSchedule, changedProp)
           }
+          currentUser={user}
         />
         <div className="pt2 pb1">
           <SendTestPulse
@@ -130,7 +131,7 @@ function _AddEditEmailSidebar({
               name="info"
               className="text-medium ml1"
               size={12}
-              tooltip={t`Attachments can contain up to 2,000 rows of data.`}
+              tooltip={t`Attachments can contain up to 10,000 rows of data.`}
             />
           </div>
         </div>

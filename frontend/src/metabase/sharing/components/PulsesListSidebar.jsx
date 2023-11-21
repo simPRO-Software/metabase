@@ -6,7 +6,7 @@ import cx from "classnames";
 import { connect } from "react-redux";
 import _ from "underscore";
 import { t, ngettext, msgid } from "ttag";
-
+import moment from "moment-timezone";
 import Icon from "metabase/components/Icon";
 import Label from "metabase/components/type/Label";
 import Subhead from "metabase/components/type/Subhead";
@@ -19,6 +19,8 @@ import {
 } from "metabase/lib/formatting";
 import { formatFrame } from "metabase/lib/time";
 import { getActivePulseParameters } from "metabase/lib/pulse";
+import { getUser } from "metabase/home/selectors";
+import Settings from "metabase/lib/settings";
 
 import { getParameters } from "metabase/dashboard/selectors";
 import { PulseCard, SidebarActions } from "./PulsesListSidebar.styled";
@@ -26,6 +28,7 @@ import { PulseCard, SidebarActions } from "./PulsesListSidebar.styled";
 const mapStateToProps = (state, props) => {
   return {
     parameters: getParameters(state, props),
+    user: getUser(state),
   };
 };
 
@@ -38,6 +41,7 @@ function _PulsesListSidebar({
   onCancel,
   editPulse,
   parameters,
+  user,
 }) {
   return (
     <Sidebar>
@@ -93,7 +97,7 @@ function _PulsesListSidebar({
                     size={16}
                   />
                   <Label className="hover-child hover--inherit">
-                    {friendlySchedule(pulse.channels[0])}
+                    {friendlySchedule(pulse.channels[0], user)}
                   </Label>
                 </div>
                 <PulseDetails pulse={pulse} parameters={parameters} />
@@ -113,6 +117,7 @@ _PulsesListSidebar.propTypes = {
   onCancel: PropTypes.func.isRequired,
   editPulse: PropTypes.func.isRequired,
   parameters: PropTypes.array.isRequired,
+  user: PropTypes.object.isRequired,
 };
 
 function canEditPulse(pulse, formInput) {
@@ -218,7 +223,7 @@ PulseDetails.propTypes = {
   parameters: PropTypes.array.isRequired,
 };
 
-function friendlySchedule(channel) {
+function friendlySchedule(channel, user) {
   const {
     channel_type,
     details,
@@ -227,6 +232,12 @@ function friendlySchedule(channel) {
     schedule_hour,
     schedule_type,
   } = channel;
+
+  const settings = user.settings;
+  const timezone = settings.timezone
+    ? settings.timezone
+    : Settings.get("report-timezone-short");
+  const offset = Math.floor(moment.tz(timezone).utcOffset() / 60);
 
   let scheduleString = "";
 
@@ -243,18 +254,27 @@ function friendlySchedule(channel) {
       scheduleString += t`hourly`;
       break;
     case "daily": {
-      const hour = formatTimeWithUnit(schedule_hour, "hour-of-day");
+      const hour = formatTimeWithUnit(
+        (schedule_hour + offset) % 24,
+        "hour-of-day",
+      );
       scheduleString += t`daily at ${hour}`;
       break;
     }
     case "weekly": {
-      const hour = formatTimeWithUnit(schedule_hour, "hour-of-day");
+      const hour = formatTimeWithUnit(
+        (schedule_hour + offset) % 24,
+        "hour-of-day",
+      );
       const day = formatDateTimeWithUnit(schedule_day, "day-of-week");
       scheduleString += t`${day} at ${hour}`;
       break;
     }
     case "monthly": {
-      const hour = formatTimeWithUnit(schedule_hour, "hour-of-day");
+      const hour = formatTimeWithUnit(
+        (schedule_hour + offset) % 24,
+        "hour-of-day",
+      );
       const day = schedule_day
         ? formatDateTimeWithUnit(schedule_day, "day-of-week")
         : "calendar day";

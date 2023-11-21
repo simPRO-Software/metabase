@@ -1,9 +1,8 @@
 /* eslint-disable react/prop-types */
 import React from "react";
 import { t } from "ttag";
-
-import Database from "metabase/entities/databases";
-
+import { connect } from "react-redux";
+import _ from "underscore";
 import { color } from "metabase/lib/colors";
 import * as Urls from "metabase/lib/urls";
 
@@ -11,10 +10,11 @@ import Card from "metabase/components/Card";
 import { Grid } from "metabase/components/Grid";
 import Icon from "metabase/components/Icon";
 import Link from "metabase/core/components/Link";
-
 import BrowseHeader from "metabase/browse/components/BrowseHeader";
-
 import { ANALYTICS_CONTEXT } from "metabase/browse/constants";
+import Databases from "metabase/entities/databases";
+import { getUser } from "metabase/selectors/user";
+
 import { DatabaseGridItem } from "./DatabaseBrowser.styled";
 
 function DatabaseBrowser({ databases }) {
@@ -48,4 +48,16 @@ function DatabaseBrowser({ databases }) {
   );
 }
 
-export default Database.loadList()(DatabaseBrowser);
+export default _.compose(
+  Databases.loadList({
+    query: (state, ownProps) => {
+      const user = getUser(state);
+      return user.is_superuser || !user.settings || !user.settings.db_id
+        ? {}
+        : { id: user.settings.db_id };
+    },
+  }),
+  connect((state, ownProps) => ({
+    user: getUser(state),
+  })),
+)(DatabaseBrowser);

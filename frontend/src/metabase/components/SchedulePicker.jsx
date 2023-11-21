@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 
 import { t } from "ttag";
 import _ from "underscore";
+import moment from "moment-timezone";
 import { SegmentedControl } from "metabase/components/SegmentedControl";
 import Select from "metabase/core/components/Select";
 
@@ -68,6 +69,7 @@ export default class SchedulePicker extends Component {
     textBeforeSendTime: PropTypes.string,
     onScheduleChange: PropTypes.func.isRequired,
     minutesOnHourPicker: PropTypes.bool,
+    currentUser: PropTypes.object.isRequired,
   };
 
   DEFAULT_DAY = "mon";
@@ -219,14 +221,23 @@ export default class SchedulePicker extends Component {
   }
 
   renderHourPicker() {
-    const { schedule, textBeforeSendTime } = this.props;
-
+    const { schedule, textBeforeSendTime, currentUser } = this.props;
+    const settings = currentUser.settings;
+    const timezone = settings.timezone
+      ? settings.timezone
+      : Settings.get("report-timezone-short");
+    const offset = Math.floor(moment.tz(timezone).utcOffset() / 60);
     const hourOfDay = isNaN(schedule.schedule_hour)
       ? 8
       : schedule.schedule_hour;
-    const hour = hourOfDay % 12;
-    const amPm = hourOfDay >= 12 ? 1 : 0;
-    const timezone = Settings.get("report-timezone-short");
+    const hourOfDayLocal =
+      hourOfDay + offset >= 0
+        ? (hourOfDay + offset) % 24
+        : (hourOfDay + offset + 24) % 24;
+    //const hour = hourOfDay % 12;
+    const hourLocal = hourOfDayLocal % 12;
+    //const amPm = hourOfDay >= 12 ? 1 : 0;
+    const amPmLocal = hourOfDayLocal >= 12 ? 1 : 0;
     return (
       <div className="mt1">
         <div className="flex align-center">
@@ -236,16 +247,26 @@ export default class SchedulePicker extends Component {
           >{t`at`}</span>
           <Select
             className="mr1"
-            value={hour}
+            value={hourLocal}
             options={HOUR_OPTIONS}
             onChange={({ target: { value } }) =>
-              this.handleChangeProperty("schedule_hour", value + amPm * 12)
+              this.handleChangeProperty(
+                "schedule_hour",
+                value + amPmLocal * 12 - offset >= 0
+                  ? value + amPmLocal * 12 - offset
+                  : value + amPmLocal * 12 - offset + 24,
+              )
             }
           />
           <SegmentedControl
-            value={amPm}
+            value={amPmLocal}
             onChange={value =>
-              this.handleChangeProperty("schedule_hour", hour + value * 12)
+              this.handleChangeProperty(
+                "schedule_hour",
+                hourLocal + value * 12 - offset >= 0
+                  ? hourLocal + value * 12 - offset
+                  : hourLocal + value * 12 - offset + 24,
+              )
             }
             options={AM_PM_OPTIONS}
             fullWidth
@@ -253,8 +274,9 @@ export default class SchedulePicker extends Component {
         </div>
         {textBeforeSendTime && (
           <div className="mt1 text-medium pt2">
-            {textBeforeSendTime} {hour === 0 ? 12 : hour}:00{" "}
-            {amPm ? "PM" : "AM"} {timezone}, {t`your Metabase timezone`}.
+            {textBeforeSendTime} {hourLocal === 0 ? 12 : hourLocal}:00{" "}
+            {amPmLocal ? "PM" : "AM"} {timezone},{" "}
+            {t`your BI Reporting timezone`}.
           </div>
         )}
       </div>

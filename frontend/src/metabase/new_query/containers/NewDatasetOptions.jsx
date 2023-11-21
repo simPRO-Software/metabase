@@ -36,7 +36,7 @@ class NewDatasetOptions extends Component {
     // We need to check if any databases exist otherwise show an empty state.
     // Be aware that the embedded version does not have the Navbar, which also
     // loads databases, so we should not remove it.
-    this.props.prefetchDatabases();
+    //this.props.prefetchDatabases();
 
     const { location, push } = this.props;
     if (Object.keys(location.query).length > 0) {

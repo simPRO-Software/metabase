@@ -222,8 +222,14 @@
              include-saved-questions-db?
              include-saved-questions-tables?
              include-editable-data-model?
+             id
              exclude-uneditable-details?]}]
-  (let [dbs (db/select Database {:order-by [:%lower.name :%lower.engine]})
+  (let [dbs (db/select Database {
+                                  :where
+                                  (if (pos-int? id)
+                                    [:= :id id]
+                                      [:= 1 1])
+                                  :order-by [:%lower.name :%lower.engine]})
         filter-by-data-access? (not (or include-editable-data-model? exclude-uneditable-details?))]
     (cond-> (add-native-perms-info dbs)
       include-tables?              add-tables
@@ -258,12 +264,13 @@
 
   * `exclude_uneditable_details` will only include DBs for which the current user can edit the DB details. Has no
     effect unless Enterprise Edition code is available and the advanced-permissions feature is enabled."
-  [include_tables include_cards include saved include_editable_data_model exclude_uneditable_details]
+  [id include_tables include_cards include saved include_editable_data_model exclude_uneditable_details]
   {include_tables                (s/maybe su/BooleanString)
    include_cards                 (s/maybe su/BooleanString)
    include                       FetchAllIncludeValues
    saved                         (s/maybe su/BooleanString)
    include_editable_data_model   (s/maybe su/BooleanString)
+   id                            (s/maybe su/IntGreaterThanZero)
    exclude_uneditable_details    (s/maybe su/BooleanString)}
   (when (and config/is-dev?
              (or include_tables include_cards))
@@ -284,7 +291,8 @@
                                                       :include-saved-questions-db?     include-saved-questions-db?
                                                       :include-saved-questions-tables? include-saved-questions-tables?
                                                       :include-editable-data-model?    (Boolean/parseBoolean include_editable_data_model)
-                                                      :exclude-uneditable-details?     (Boolean/parseBoolean exclude_uneditable_details))
+                                                      :exclude-uneditable-details?     (Boolean/parseBoolean exclude_uneditable_details)
+                                                      :id                               id)
                                             [])]
     {:data  db-list-res
      :total (count db-list-res)}))
