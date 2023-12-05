@@ -1,0 +1,11 @@
+- changeSet:
+    id: 9999
+    author: dsanders
+    comment: Added 0.42.0
+    changes:
+      - createIndex:
+          tableName: metabase_field
+          indexName: idx_semantic_type
+          columns:
+            - column:
+                name: semantic_type
