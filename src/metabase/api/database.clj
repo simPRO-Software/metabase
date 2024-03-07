@@ -229,7 +229,7 @@
                                   :where
                                   (cond
                                     (pos-int? id) [:= :id id]
-                                    (seq? name) [:= :name name]
+                                    (not (str/blank? name)) [:= :name name]
                                     :else [:= 1 1]
                                     )
                                   :order-by [:%lower.name :%lower.engine]})
