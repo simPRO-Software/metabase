@@ -64,9 +64,7 @@ export default class RecipientPicker extends Component {
             options={[]}
             onChange={this.handleOnChange}
             placeholder={
-              recipients.length === 0
-                ? t`Enter user names or email addresses`
-                : null
+              recipients.length === 0 ? t`Enter email addresses` : null
             }
             autoFocus={autoFocus && recipients.length === 0}
             multi
