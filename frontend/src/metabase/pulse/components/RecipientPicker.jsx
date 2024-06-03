@@ -52,7 +52,7 @@ export default class RecipientPicker extends Component {
   }
 
   render() {
-    const { recipients, users, autoFocus, invalidRecipientText, currentUser} = this.props;
+    const { recipients, autoFocus, invalidRecipientText } = this.props;
     const isValid = recipients.every(r => recipientIsValid(r));
     const domains = MetabaseSettings.subscriptionAllowedDomains().join(", ");
 
@@ -61,13 +61,10 @@ export default class RecipientPicker extends Component {
         <div className="bordered rounded" style={{ padding: "2px" }}>
           <TokenField
             value={recipients}
-            options={users
-              ? users.filter(user => user.email.substring(0,34) === currentUser.email.substring(0,34)).map(user => ({ label: user.common_name, value: user })) : []}
+            options={[]}
             onChange={this.handleOnChange}
             placeholder={
-              recipients.length === 0
-                ? t`Enter user names or email addresses`
-                : null
+              recipients.length === 0 ? t`Enter email addresses` : null
             }
             autoFocus={autoFocus && recipients.length === 0}
             multi
