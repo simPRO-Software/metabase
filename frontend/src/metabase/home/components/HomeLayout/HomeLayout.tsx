@@ -40,7 +40,7 @@ export const HomeLayout = ({
           isDefault={landingPageIllustration.isDefault}
         />
       )}
-      {hasMetabot ? <MetabotWidget /> : <HomeGreeting />}
+
       {isAdmin && (
         <Tooltip tooltip={t`Pick a dashboard to serve as the homepage`}>
           <LayoutEditButton

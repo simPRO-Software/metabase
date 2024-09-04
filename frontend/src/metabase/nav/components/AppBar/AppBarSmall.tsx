@@ -79,17 +79,6 @@ const AppBarSmall = ({
               />
             </AppBarToggleContainer>
             <AppBarSearchContainer>
-              {isSearchVisible &&
-                (isEmbedded ? (
-                  <SearchBar
-                    onSearchActive={handleSearchActive}
-                    onSearchInactive={handleSearchInactive}
-                  />
-                ) : (
-                  <Flex justify="end">
-                    <SearchButton />
-                  </Flex>
-                ))}
             </AppBarSearchContainer>
             {isProfileLinkVisible && (
               <AppBarProfileLinkContainer>

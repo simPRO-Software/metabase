@@ -49,7 +49,7 @@ function ProfileLink({ adminItems, onLogout }) {
     const showAdminSettingsItem = adminItems?.length > 0;
 
     return [
-      {
+      showAdminSettingsItem && {
         title: t`Account settings`,
         icon: null,
         link: Urls.accountSettings(),
@@ -68,13 +68,13 @@ function ProfileLink({ adminItems, onLogout }) {
         externalLink: true,
         event: `Navbar;Profile Dropdown;About ${tag}`,
       },
-      {
+      showAdminSettingsItem && {
         title: t`About ${applicationName}`,
         icon: null,
         action: () => openModal("about"),
         event: `Navbar;Profile Dropdown;About ${tag}`,
       },
-      {
+      showAdminSettingsItem && {
         title: t`Sign out`,
         icon: null,
         action: () => onLogout(),
@@ -85,7 +85,7 @@ function ProfileLink({ adminItems, onLogout }) {
 
   // show trademark if application name is not whitelabeled
   const isWhiteLabeling = useSelector(getIsWhiteLabeling);
-  const showTrademark = !isWhiteLabeling;
+  //const showTrademark = !isWhiteLabeling;
   return (
     <div>
       <EntityMenu
@@ -135,26 +135,7 @@ function ProfileLink({ adminItems, onLogout }) {
               )}
             </div>
           </div>
-          {showTrademark && (
-            <div
-              style={{ borderWidth: "2px" }}
-              className={cx(
-                CS.p2,
-                CS.h5,
-                CS.textCentered,
-                CS.textMedium,
-                CS.borderTop,
-              )}
-            >
-              <span className={CS.block}>
-                {/* eslint-disable-next-line no-literal-metabase-strings -- This only shows on OSS instance */}
-                <span className={CS.textBold}>Metabase</span>{" "}
-                {/* eslint-disable-next-line no-literal-metabase-strings -- This only shows on OSS instance */}
-                {t`is a Trademark of`} Metabase, Inc
-              </span>
-              <span>{t`and is built with care by a team from all across this pale blue dot.`}</span>
-            </div>
-          )}
+
         </Modal>
       ) : null}
     </div>

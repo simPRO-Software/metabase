@@ -313,16 +313,6 @@ export const TagEditorHelp = ({
         setDatasetQuery={setQueryWithDatasetId}
       />
 
-      {showMetabaseLinks && (
-        <p className={cx(CS.pt2, CS.link)}>
-          <ExternalLink
-            href={MetabaseSettings.docsUrl(
-              "questions/native-editor/sql-parameters",
-            )}
-            target="_blank"
-          >{t`Read the full documentation`}</ExternalLink>
-        </p>
-      )}
     </div>
   );
 };

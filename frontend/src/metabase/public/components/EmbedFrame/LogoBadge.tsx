@@ -21,13 +21,13 @@ export const LogoBadge = ({
   const Metabase = (
     // eslint-disable-next-line no-literal-metabase-strings -- This embedding badge which we don't want to show the whitelabeled name
     <MetabaseName key="metabase" isDark={dark} variant={variant}>
-      Metabase
+      BI Reporting
     </MetabaseName>
   );
 
   return (
     <MetabaseLink
-      href={`https://www.metabase.com/powered-by-metabase?utm_medium=referral&utm_source=product&utm_campaign=powered_by_metabase&utm_content=${utmContentValue}`}
+      href={`https://helpguide.simprogroup.com/Content/Service-and-Enterprise/Report-builder.htm`}
       target="_blank"
       variant={variant}
     >

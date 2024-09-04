@@ -205,7 +205,7 @@ export const PulseEditChannels = ({
   // Default to show the default channels until full formInput is loaded
   const channels = formInput.channels || {
     email: { name: t`Email`, type: "email" },
-    slack: { name: t`Slack`, type: "slack" },
+    //slack: { name: t`Slack`, type: "slack" },
   };
   return (
     <ul className={cx(CS.bordered, CS.rounded, CS.bgWhite)}>

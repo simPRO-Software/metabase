@@ -38,7 +38,7 @@ describe("AppBar", () => {
       const props = getProps({
         isNavBarEnabled: true,
         isCollectionPathVisible: true,
-        isSearchVisible: true,
+        isSearchVisible: false,
         isNewButtonVisible: true,
         isLogoVisible: true,
       });

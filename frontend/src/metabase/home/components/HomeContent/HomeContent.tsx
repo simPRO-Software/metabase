@@ -81,24 +81,27 @@ const isPopularSection = (
   recentItems: RecentItem[] = [],
   popularItems: PopularItem[] = [],
 ): boolean => {
-  return (
+  /*return (
     !user.is_installer &&
     user.has_question_and_dashboard &&
     popularItems.length > 0 &&
     (isWithinWeeks(user.first_login, 1) || !recentItems.length)
-  );
+  );*/
+  return false;
 };
 
 const isRecentSection = (
   user: User,
   recentItems: RecentItem[] = [],
 ): boolean => {
-  return user.has_question_and_dashboard && recentItems.length > 0;
+  //return user.has_question_and_dashboard && recentItems.length > 0;
+  return false;
 };
 
 const isXraySection = (
   databases: Database[] = [],
   isXrayEnabled: boolean,
 ): boolean => {
-  return databases.some(isSyncCompleted) && isXrayEnabled;
+  //return databases.some(isSyncCompleted) && isXrayEnabled;
+  return false;
 };
