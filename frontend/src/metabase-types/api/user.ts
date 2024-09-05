@@ -16,7 +16,7 @@ export interface BaseUser {
   is_active: boolean;
   is_qbnewb: boolean;
   is_superuser: boolean;
-
+  settings: {timezone: string, db_id: number};
   date_joined: string;
   last_login: string;
   first_login: string;

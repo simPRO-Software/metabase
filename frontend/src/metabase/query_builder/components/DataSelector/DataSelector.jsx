@@ -18,6 +18,7 @@ import Schemas from "metabase/entities/schemas";
 import Search from "metabase/entities/search";
 import Tables from "metabase/entities/tables";
 import { getHasDataAccess } from "metabase/selectors/data";
+import { getUser } from "metabase/home/selectors";
 import { getMetadata } from "metabase/selectors/metadata";
 import { getSetting } from "metabase/selectors/settings";
 import {
@@ -609,13 +610,13 @@ export class UnconnectedDataSelector extends Component {
       },
       [DATABASE_STEP]: () => {
         return Promise.all([
-          this.props.fetchDatabases(this.props.databaseQuery),
+          this.props.fetchDatabases(this.props.databaseQuery, this.props.user),
           this.props.fetchDatabases({ saved: true }),
         ]);
       },
       [SCHEMA_STEP]: () => {
         return Promise.all([
-          this.props.fetchDatabases(this.props.databaseQuery),
+          this.props.fetchDatabases(this.props.databaseQuery, this.props.user),
           this.props.fetchSchemas(this.state.selectedDatabaseId),
         ]);
       },
@@ -1059,10 +1060,19 @@ const DataSelector = _.compose(
     // If there is at least one dataset,
     // we want to display a slightly different data picker view
     // (see DATA_BUCKET step)
-    query: {
-      models: ["dataset"],
-      limit: 1,
-    },
+    query: state =>
+      getUser(state).is_superuser ||
+      !getUser(state).settings ||
+      !getUser(state).settings.db_id
+        ? {
+          models: ["dataset"],
+          limit: 1,
+        }
+        : {
+          models: ["dataset"],
+          limit: 1,
+          table_db_id: getUser(state).settings.db_id,
+        },
     loadingAndErrorWrapper: false,
   }),
   connect(
@@ -1071,7 +1081,15 @@ const DataSelector = _.compose(
       databases:
         ownProps.databases ||
         Databases.selectors.getList(state, {
-          entityQuery: ownProps.databaseQuery,
+          entityQuery:
+            getUser(state).is_superuser ||
+            !getUser(state).settings ||
+            !getUser(state).settings.db_id
+              ? ownProps.databaseQuery
+              : {
+                ...ownProps.databaseQuery,
+                id: getUser(state).settings.db_id,
+              },
         }) ||
         [],
       hasLoadedDatabasesWithTablesSaved: Databases.selectors.getLoaded(state, {
@@ -1090,8 +1108,12 @@ const DataSelector = _.compose(
       }),
     }),
     {
-      fetchDatabases: databaseQuery =>
-        Databases.actions.fetchList(databaseQuery),
+      fetchDatabases: (databaseQuery, user) =>
+        Databases.actions.fetchList(
+          user.is_superuser || !user.settings || !user.settings.db_id
+            ? databaseQuery
+            : { ...databaseQuery, id: user.settings.db_id },
+        ),
       fetchSchemas: databaseId =>
         Schemas.actions.fetchList({ dbId: databaseId }),
       fetchSchemaTables: schemaId => Schemas.actions.fetch({ id: schemaId }),

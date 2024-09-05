@@ -23,7 +23,7 @@ interface RecipientPickerProps {
 
 export const RecipientPicker = ({
   recipients = [],
-  users,
+
   onRecipientsChange,
   autoFocus = true,
   invalidRecipientText,
@@ -40,11 +40,11 @@ export const RecipientPicker = ({
       <div style={{ padding: "2px" }}>
         <TokenField
           value={recipients}
-          options={users ? users.map(user => ({ value: user })) : []}
+          options={[]}
           onChange={handleOnChange}
           placeholder={
             recipients.length === 0
-              ? t`Enter user names or email addresses`
+              ? t`Enter email addresses`
               : undefined
           }
           autoFocus={autoFocus && recipients.length === 0}
