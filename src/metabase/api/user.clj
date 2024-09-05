@@ -518,7 +518,9 @@
       (let [{session-uuid :id, :as session} (api.session/create-session! :password user (req.util/device-info request))
             response                        {:success    true
                                              :session_id (str session-uuid)}]
-        (mw.session/set-session-cookies request response session (t/zoned-date-time (t/zone-id "GMT")))))))
+        (mw.session/set-session-cookies request response session (t/zoned-date-time (t/zone-id "GMT")))))
+               (fetch-user :id (u/the-id user))
+               ))
 
 ;;; +----------------------------------------------------------------------------------------------------------------+
 ;;; |                             Deleting (Deactivating) a User -- DELETE /api/user/:id                             |
