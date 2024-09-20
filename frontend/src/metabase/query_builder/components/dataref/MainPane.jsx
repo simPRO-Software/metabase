@@ -47,7 +47,7 @@ MainPane.propTypes = {
 
 export default _.compose(
   Databases.loadList({
-    query: (state, ownProps) => {
+    query: (state) => {
       const user = getUser(state);
       return user.is_superuser || !user.settings || !user.settings.db_id
         ? {}

@@ -11,6 +11,8 @@ import type { DataPickerProps, DataPickerSelectedItem } from "../types";
 import useSelectedTables from "../useSelectedTables";
 
 import RawDataPickerView from "./RawDataPickerView";
+import type {State} from "metabase-types/store";
+import {getUser} from "metabase/selectors/user";
 
 interface DatabaseListLoaderProps {
   databases: Database[];
@@ -202,5 +204,10 @@ export default Databases.loadList({
   loadingAndErrorWrapper: false,
   // We don't actually need the saved questions database here,
   // but that'd let us reuse DataPickerContainer's DB list loader result
-  query: { saved: true },
+  query: (state: State) => {
+    const user = getUser(state);
+    return !user || user.is_superuser || !user.settings || !user.settings.db_id
+      ? { saved: true }
+      : { saved: true, id: user.settings.db_id };
+  },
 })(RawDataPicker);

@@ -37,7 +37,7 @@ export function MetricList({ style }: MetricListProps) {
       anchor: "creating-a-metric",
     }),
   );*/
-  const adminLink = `https://helpguide.simprogroup.com/Content/Service-and-Enterprise/Report-builder.htm`;
+  const adminLink = `https://helpguide.simprogroup.com/Content/Service-and-Enterprise/BI-Reporting.htm`;
   const showMetabaseLinks = useSelector(getShowMetabaseLinks);
   return (
     <div style={style} className={CS.full}>

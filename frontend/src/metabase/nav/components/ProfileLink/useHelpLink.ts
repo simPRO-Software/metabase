@@ -32,7 +32,7 @@ export const useHelpLink = (): { visible: boolean; href: string } => {
   const href =
     helpLinkSetting === "custom"
       ? helpLinkCustomDestinationSetting
-      : `https://helpguide.simprogroup.com/Content/Service-and-Enterprise/Report-builder.htm`;
+      : `https://helpguide.simprogroup.com/Content/Service-and-Enterprise/BI-Reporting.htm`;
 
   return { visible, href };
 };

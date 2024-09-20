@@ -18,7 +18,7 @@ import Schemas from "metabase/entities/schemas";
 import Search from "metabase/entities/search";
 import Tables from "metabase/entities/tables";
 import { getHasDataAccess } from "metabase/selectors/data";
-import { getUser } from "metabase/home/selectors";
+import { getUser } from "metabase/selectors/user";
 import { getMetadata } from "metabase/selectors/metadata";
 import { getSetting } from "metabase/selectors/settings";
 import {
@@ -1052,15 +1052,11 @@ export class UnconnectedDataSelector extends Component {
 }
 
 const DataSelector = _.compose(
-  Databases.loadList({
-    loadingAndErrorWrapper: false,
-    listName: "allDatabases",
-  }),
   Search.loadList({
     // If there is at least one dataset,
     // we want to display a slightly different data picker view
     // (see DATA_BUCKET step)
-    query: state =>
+    query: (state) =>
       getUser(state).is_superuser ||
       !getUser(state).settings ||
       !getUser(state).settings.db_id
@@ -1102,6 +1098,7 @@ const DataSelector = _.compose(
         entityQuery: { include: "tables" },
       }),
       hasDataAccess: getHasDataAccess(ownProps.allDatabases ?? []),
+      user: getUser(state),
       hasNestedQueriesEnabled: getSetting(state, "enable-nested-queries"),
       selectedQuestion: Questions.selectors.getObject(state, {
         entityId: getQuestionIdFromVirtualTableId(ownProps.selectedTableId),

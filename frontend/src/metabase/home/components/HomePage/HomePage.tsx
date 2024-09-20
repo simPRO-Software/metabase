@@ -17,7 +17,6 @@ import type Database from "metabase-lib/v1/metadata/Database";
 import type { CollectionItem } from "metabase-types/api";
 
 import { getIsMetabotEnabled } from "../../selectors";
-import { HomeContent } from "../HomeContent";
 import { HomeLayout } from "../HomeLayout";
 
 const SEARCH_QUERY = { models: ["dataset" as const], limit: 1 };
@@ -42,7 +41,7 @@ export const HomePage = (): JSX.Element => {
 
   return (
     <HomeLayout hasMetabot={getHasMetabot(databases, models, isMetabotEnabled)}>
-      <HomeContent />
+
     </HomeLayout>
   );
 };

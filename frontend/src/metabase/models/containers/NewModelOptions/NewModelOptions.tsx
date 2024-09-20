@@ -22,6 +22,7 @@ import {
   OptionsGridItem,
   OptionsRoot,
 } from "./NewModelOptions.styled";
+import {getUser} from "metabase/selectors/user";
 
 const EDUCATIONAL_LINK = MetabaseSettings.learnUrl("data-modeling/models");
 
@@ -30,8 +31,10 @@ interface NewModelOptionsProps {
 }
 
 const NewModelOptions = ({ location }: NewModelOptionsProps) => {
-  const { data, isFetching } = useListDatabasesQuery();
+  const user = useSelector(getUser);
+  const { data, isFetching } = useListDatabasesQuery(!user?.is_superuser ? { id: user?.settings.db_id } : {});
   const databases = data?.data ?? [];
+  console.log('databases', databases);
   const hasDataAccess = getHasDataAccess(databases);
   const hasNativeWrite = getHasNativeWrite(databases);
 
@@ -101,21 +104,8 @@ const NewModelOptions = ({ location }: NewModelOptionsProps) => {
         )}
       </Grid>
 
-      {showMetabaseLinks && (
-        <EducationalButton
-          target="_blank"
-          href={EDUCATIONAL_LINK}
-          className={CS.mt4}
-        >
-          {t`What's a model?`}
-        </EducationalButton>
-      )}
     </OptionsRoot>
   );
 };
 // eslint-disable-next-line import/no-default-export -- deprecated usage
-export default _.compose(
-  Databases.loadList({
-    loadingAndErrorWrapper: false,
-  }),
-)(NewModelOptions);
+export default NewModelOptions;

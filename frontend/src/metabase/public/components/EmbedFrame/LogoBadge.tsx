@@ -27,7 +27,7 @@ export const LogoBadge = ({
 
   return (
     <MetabaseLink
-      href={`https://helpguide.simprogroup.com/Content/Service-and-Enterprise/Report-builder.htm`}
+      href={`https://helpguide.simprogroup.com/Content/Service-and-Enterprise/BI-Reporting.htm`}
       target="_blank"
       variant={variant}
     >

@@ -262,15 +262,14 @@
              name
              exclude-uneditable-details?
              include-only-uploadable?]}]
-  (let [dbs (t2/select Database (merge {:where
+  (let [dbs (t2/select Database {:where
                                         (cond
                                          (pos-int? id) [:= :id id]
                                          (not (str/blank? name)) [:= :name name]
                                          :else [:= 1 1]
                                          )
                                         :order-by [:%lower.name :%lower.engine]}
-                                       (when-not include-analytics?
-                                         {:where [:= :is_audit false]})))
+                                      )
         filter-by-data-access? (not (or include-editable-data-model? exclude-uneditable-details?))]
     (cond-> (add-native-perms-info dbs)
       include-tables?              add-tables
@@ -304,8 +303,8 @@
    include_analytics             [:maybe :boolean]
    saved                         [:maybe :boolean]
    include_editable_data_model   [:maybe :boolean]
-   id                            [:maybe :int]
-   name                          [:maybe :string]
+   id                            [:maybe ms/PositiveInt]
+   name                          [:maybe ms/NonBlankString]
    exclude_uneditable_details    [:maybe :boolean]
    include_only_uploadable       [:maybe :boolean]}
   (let [include-tables?                 (= include "tables")

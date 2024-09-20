@@ -63,8 +63,10 @@
     (for [[k vs] {:default-src  ["'none'"]
                   :script-src   (concat
                                  ["'self'"
+                                  "'unsafe-inline'"
                                   "https://maps.google.com"
                                   "https://accounts.google.com"
+                                  "https://www.googletagmanager.com"
                                   (when (public-settings/anon-tracking-enabled)
                                     "https://www.google-analytics.com"
                                   "https://cdn.walkme.com"
@@ -117,6 +119,7 @@
                                  "https://d3b3ehuo35wzeh.cloudfront.net"
                                  "https://accounts.google.com"]
                   :style-src    ["'self'"
+                                 "'unsafe-inline'"
                                  ;; See [[generate-nonce]]
                                  (when nonce
                                    (format "'nonce-%s'" nonce))
