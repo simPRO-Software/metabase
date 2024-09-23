@@ -18,9 +18,9 @@ import Schemas from "metabase/entities/schemas";
 import Search from "metabase/entities/search";
 import Tables from "metabase/entities/tables";
 import { getHasDataAccess } from "metabase/selectors/data";
-import { getUser } from "metabase/selectors/user";
 import { getMetadata } from "metabase/selectors/metadata";
 import { getSetting } from "metabase/selectors/settings";
+import { getUser } from "metabase/selectors/user";
 import {
   SAVED_QUESTIONS_VIRTUAL_DB_ID,
   getQuestionIdFromVirtualTableId,
@@ -604,14 +604,14 @@ export class UnconnectedDataSelector extends Component {
       // NOTE: make sure to return the action's resulting promise
       [DATA_BUCKET_STEP]: () => {
         return Promise.all([
-          this.props.fetchDatabases(this.props.databaseQuery),
-          this.props.fetchDatabases({ saved: true }),
+          this.props.fetchDatabases(this.props.databaseQuery, this.props.user),
+          this.props.fetchDatabases({ saved: true }, this.props.user),
         ]);
       },
       [DATABASE_STEP]: () => {
         return Promise.all([
           this.props.fetchDatabases(this.props.databaseQuery, this.props.user),
-          this.props.fetchDatabases({ saved: true }),
+          this.props.fetchDatabases({ saved: true }, this.props.user),
         ]);
       },
       [SCHEMA_STEP]: () => {
@@ -1056,19 +1056,19 @@ const DataSelector = _.compose(
     // If there is at least one dataset,
     // we want to display a slightly different data picker view
     // (see DATA_BUCKET step)
-    query: (state) =>
+    query: state =>
       getUser(state).is_superuser ||
       !getUser(state).settings ||
       !getUser(state).settings.db_id
         ? {
-          models: ["dataset"],
-          limit: 1,
-        }
+            models: ["dataset"],
+            limit: 1,
+          }
         : {
-          models: ["dataset"],
-          limit: 1,
-          table_db_id: getUser(state).settings.db_id,
-        },
+            models: ["dataset"],
+            limit: 1,
+            table_db_id: getUser(state).settings.db_id,
+          },
     loadingAndErrorWrapper: false,
   }),
   connect(
@@ -1083,9 +1083,9 @@ const DataSelector = _.compose(
             !getUser(state).settings.db_id
               ? ownProps.databaseQuery
               : {
-                ...ownProps.databaseQuery,
-                id: getUser(state).settings.db_id,
-              },
+                  ...ownProps.databaseQuery,
+                  id: getUser(state).settings.db_id,
+                },
         }) ||
         [],
       hasLoadedDatabasesWithTablesSaved: Databases.selectors.getLoaded(state, {
