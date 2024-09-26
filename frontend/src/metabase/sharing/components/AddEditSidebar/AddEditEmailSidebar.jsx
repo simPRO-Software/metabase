@@ -28,7 +28,7 @@ function _AddEditEmailSidebar({
   users,
   parameters,
   dashboard,
-
+  user,
   // form callbacks
   handleSave,
   onCancel,
@@ -186,6 +186,7 @@ _AddEditEmailSidebar.propTypes = {
   setPulse: PropTypes.func.isRequired,
   handleArchive: PropTypes.func.isRequired,
   setPulseParameters: PropTypes.func.isRequired,
+  user: PropTypes.object,
 };
 
 export default _AddEditEmailSidebar;
