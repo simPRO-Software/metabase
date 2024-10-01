@@ -1052,6 +1052,17 @@ export class UnconnectedDataSelector extends Component {
 }
 
 const DataSelector = _.compose(
+  Databases.loadList({
+    query: (state) => {
+      const user = getUser(state);
+      console.log('user', user);
+      return !user || user.is_superuser || !user.settings || !user.settings.db_id
+        ? {}
+        : { id: user.settings.db_id };
+    },
+    loadingAndErrorWrapper: false,
+    listName: "allDatabases",
+  }),
   Search.loadList({
     // If there is at least one dataset,
     // we want to display a slightly different data picker view
