@@ -109,8 +109,8 @@ For setting the maximum, see [MB_APPLICATION_DB_MAX_CONNECTION_POOL_SIZE](#mb_ap
    ;; interest of minimizing memory consumption
    "acquireIncrement"             1
    ;; [From dox] Seconds a Connection can remain pooled but unused before being discarded.
-   "maxIdleTime"                  (* 3 60 60) ; 3 hours
-   "minPoolSize"                  1
+   "maxIdleTime"                  (* 45) ; 45 sec
+   "minPoolSize"                  0
    "initialPoolSize"              1
    "maxPoolSize"                  (jdbc-data-warehouse-max-connection-pool-size)
    ;; [From dox] If true, an operation will be performed at every connection checkout to verify that the connection is
@@ -135,8 +135,8 @@ For setting the maximum, see [MB_APPLICATION_DB_MAX_CONNECTION_POOL_SIZE](#mb_ap
    ;; Connections acquired are no longer needed. If maxIdleTime is set, maxIdleTimeExcessConnections should be smaller
    ;; if the parameter is to have any effect.
    ;;
-   ;; Kill idle connections above the minPoolSize after 5 minutes.
-   "maxIdleTimeExcessConnections" (* 5 60)
+   ;; Kill idle connections above the minPoolSize after 30 sec.
+   "maxIdleTimeExcessConnections" (* 30)
    ;; kill connections after this amount of time if they haven't been returned -- this should be the same as the query
    ;; timeout. This theoretically shouldn't happen since the QP should kill things after a certain timeout but it's
    ;; better to be safe than sorry -- it seems like in practice some connections disappear into the ether

@@ -30,7 +30,7 @@
   :type       :string
   :audit      :getter
   :feature    :whitelabel
-  :default    "Metabase")
+  :default    "BI Reporting")
 
 (defn application-name-for-setting-descriptions
   "Returns the value of the [[application-name]] setting so setting docstrings can be generated during the compilation stage.
@@ -39,7 +39,7 @@
    not allowed during compilation."
   []
   (if *compile-files*
-    "Metabase"
+    "BI Reporting"
     (binding [config/*disable-setting-cache* true]
       (application-name))))
 
@@ -95,7 +95,7 @@
 (defsetting site-name
   (deferred-tru "The name used for this instance of {0}."
                 (application-name-for-setting-descriptions))
-  :default    "Metabase"
+  :default    "BI Reporting"
   :audit      :getter
   :visibility :settings-manager
   :export?    true)
@@ -416,7 +416,7 @@ See [fonts](../configuring-metabase/fonts.md).")
 (defn application-color
   "The primary color, a.k.a. brand color"
   []
-  (or (:brand (application-colors)) "#509EE3"))
+  (or (:brand (application-colors)) "#004b8d"))
 
 (defn secondary-chart-color
   "The first 'Additional chart color'"

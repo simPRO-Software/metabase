@@ -3,7 +3,7 @@
 }
 
 .overflowHidden {
-  overflow: hidden;
+  overflow: hidden !important;
 }
 
 .overflowYScroll {

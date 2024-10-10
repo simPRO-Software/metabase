@@ -20,6 +20,7 @@ import Tables from "metabase/entities/tables";
 import { getHasDataAccess } from "metabase/selectors/data";
 import { getMetadata } from "metabase/selectors/metadata";
 import { getSetting } from "metabase/selectors/settings";
+import { getUser } from "metabase/selectors/user";
 import {
   SAVED_QUESTIONS_VIRTUAL_DB_ID,
   getQuestionIdFromVirtualTableId,
@@ -603,19 +604,19 @@ export class UnconnectedDataSelector extends Component {
       // NOTE: make sure to return the action's resulting promise
       [DATA_BUCKET_STEP]: () => {
         return Promise.all([
-          this.props.fetchDatabases(this.props.databaseQuery),
-          this.props.fetchDatabases({ saved: true }),
+          this.props.fetchDatabases(this.props.databaseQuery, this.props.user),
+          this.props.fetchDatabases({ saved: true }, this.props.user),
         ]);
       },
       [DATABASE_STEP]: () => {
         return Promise.all([
-          this.props.fetchDatabases(this.props.databaseQuery),
-          this.props.fetchDatabases({ saved: true }),
+          this.props.fetchDatabases(this.props.databaseQuery, this.props.user),
+          this.props.fetchDatabases({ saved: true }, this.props.user),
         ]);
       },
       [SCHEMA_STEP]: () => {
         return Promise.all([
-          this.props.fetchDatabases(this.props.databaseQuery),
+          this.props.fetchDatabases(this.props.databaseQuery, this.props.user),
           this.props.fetchSchemas(this.state.selectedDatabaseId),
         ]);
       },
@@ -1052,6 +1053,13 @@ export class UnconnectedDataSelector extends Component {
 
 const DataSelector = _.compose(
   Databases.loadList({
+    query: (state) => {
+      const user = getUser(state);
+      console.log('user', user);
+      return !user || user.is_superuser || !user.settings || !user.settings.db_id
+        ? {}
+        : { id: user.settings.db_id };
+    },
     loadingAndErrorWrapper: false,
     listName: "allDatabases",
   }),
@@ -1059,10 +1067,19 @@ const DataSelector = _.compose(
     // If there is at least one dataset,
     // we want to display a slightly different data picker view
     // (see DATA_BUCKET step)
-    query: {
-      models: ["dataset"],
-      limit: 1,
-    },
+    query: state =>
+      getUser(state).is_superuser ||
+      !getUser(state).settings ||
+      !getUser(state).settings.db_id
+        ? {
+            models: ["dataset"],
+            limit: 1,
+          }
+        : {
+            models: ["dataset"],
+            limit: 1,
+            table_db_id: getUser(state).settings.db_id,
+          },
     loadingAndErrorWrapper: false,
   }),
   connect(
@@ -1071,7 +1088,15 @@ const DataSelector = _.compose(
       databases:
         ownProps.databases ||
         Databases.selectors.getList(state, {
-          entityQuery: ownProps.databaseQuery,
+          entityQuery:
+            getUser(state).is_superuser ||
+            !getUser(state).settings ||
+            !getUser(state).settings.db_id
+              ? ownProps.databaseQuery
+              : {
+                  ...ownProps.databaseQuery,
+                  id: getUser(state).settings.db_id,
+                },
         }) ||
         [],
       hasLoadedDatabasesWithTablesSaved: Databases.selectors.getLoaded(state, {
@@ -1084,14 +1109,19 @@ const DataSelector = _.compose(
         entityQuery: { include: "tables" },
       }),
       hasDataAccess: getHasDataAccess(ownProps.allDatabases ?? []),
+      user: getUser(state),
       hasNestedQueriesEnabled: getSetting(state, "enable-nested-queries"),
       selectedQuestion: Questions.selectors.getObject(state, {
         entityId: getQuestionIdFromVirtualTableId(ownProps.selectedTableId),
       }),
     }),
     {
-      fetchDatabases: databaseQuery =>
-        Databases.actions.fetchList(databaseQuery),
+      fetchDatabases: (databaseQuery, user) =>
+        Databases.actions.fetchList(
+          user.is_superuser || !user.settings || !user.settings.db_id
+            ? databaseQuery
+            : { ...databaseQuery, id: user.settings.db_id },
+        ),
       fetchSchemas: databaseId =>
         Schemas.actions.fetchList({ dbId: databaseId }),
       fetchSchemaTables: schemaId => Schemas.actions.fetch({ id: schemaId }),

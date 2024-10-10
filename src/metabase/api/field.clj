@@ -275,6 +275,7 @@
   [id]
   {id ms/PositiveInt}
   (let [field (api/read-check (t2/select-one Field :id id))]
+    (field-values/create-or-update-full-field-values! field)
     (field->values field)))
 
 ;; match things like GET /field%2Ccreated_at%2options

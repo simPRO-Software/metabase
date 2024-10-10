@@ -31,12 +31,13 @@ export function SegmentList({ style }: SegmentListProps) {
   const entities = useSelector(getSegments);
   const loading = useSelector(getLoading);
   const loadingError = useSelector(getError);
-  const adminLink = useSelector(state =>
+  /*const adminLink = useSelector(state =>
     getDocsUrl(state, {
       page: "data-modeling/segments-and-metrics",
       anchor: "creating-a-segment",
     }),
-  );
+  );*/
+  const adminLink = `https://helpguide.simprogroup.com/Content/Service-and-Enterprise/BI-Reporting.htm`;
   const showMetabaseLinks = useSelector(getShowMetabaseLinks);
   return (
     <div style={style} className={CS.full}>

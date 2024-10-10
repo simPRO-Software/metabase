@@ -1,7 +1,7 @@
 import cx from "classnames";
 import { Component } from "react";
 import { t } from "ttag";
-
+import moment from "moment-timezone";
 import { SegmentedControl } from "metabase/components/SegmentedControl";
 import type { SelectChangeEvent } from "metabase/core/components/Select";
 import Select from "metabase/core/components/Select";
@@ -21,6 +21,7 @@ import type {
   ScheduleFrameType,
   ScheduleSettings,
   ScheduleType,
+  User
 } from "metabase-types/api";
 
 import {
@@ -30,6 +31,7 @@ import {
   PickerText,
   ScheduleDescriptionContainer,
 } from "./SchedulePicker.styled";
+import Settings from "metabase/lib/settings";
 
 const optionNameTranslations = {
   hourly: t`Hourly`,
@@ -48,6 +50,7 @@ export interface SchedulePickerProps {
   textBeforeInterval?: string;
   textBeforeSendTime?: string;
   minutesOnHourPicker?: boolean;
+  currentUser: User;
   onScheduleChange: (
     nextSchedule: ScheduleSettings,
     change: ScheduleChangeProp,
@@ -200,14 +203,24 @@ class SchedulePicker extends Component<SchedulePickerProps> {
   }
 
   renderHourPicker() {
-    const { schedule, timezone, textBeforeSendTime } = this.props;
-
+    const { schedule, currentUser, textBeforeSendTime } = this.props;
+    const settings = currentUser.settings;
+    const timezone = settings.timezone
+      ? settings.timezone
+      : Settings.get("report-timezone-short");
+    const offset = timezone ? Math.floor(moment.tz(timezone).utcOffset() / 60) : 0;
     const hourOfDay = isNaN(schedule.schedule_hour as number)
       ? 8
       : schedule.schedule_hour || 0;
 
-    const hour = hourOfDay % 12;
-    const amPm = hourOfDay >= 12 ? 1 : 0;
+    const hourOfDayLocal =
+      hourOfDay + offset >= 0
+        ? (hourOfDay + offset) % 24
+        : (hourOfDay + offset + 24) % 24;
+    //const hour = hourOfDay % 12;
+    const hourLocal = hourOfDayLocal % 12;
+    //const amPm = hourOfDay >= 12 ? 1 : 0;
+    const amPmLocal = hourOfDayLocal >= 12 ? 1 : 0;
 
     return (
       <>
@@ -215,19 +228,24 @@ class SchedulePicker extends Component<SchedulePickerProps> {
           <PickerText>{t`at`}</PickerText>
           <Select
             className={CS.mr1}
-            value={hour}
+            value={hourLocal}
             options={HOUR_OPTIONS}
             onChange={(e: SelectChangeEvent<number>) =>
               this.handleChangeProperty(
                 "schedule_hour",
-                e.target.value + amPm * 12,
+                e.target.value + amPmLocal * 12 - offset >= 0
+                  ? e.target.value + amPmLocal * 12 - offset
+                  : e.target.value + amPmLocal * 12 - offset + 24,
               )
             }
           />
           <SegmentedControl
-            value={amPm}
+            value={amPmLocal}
             onChange={value =>
-              this.handleChangeProperty("schedule_hour", hour + value * 12)
+              this.handleChangeProperty("schedule_hour",
+                hourLocal + value * 12 - offset >= 0
+                  ? hourLocal + value * 12 - offset
+                  : hourLocal + value * 12 - offset + 24,)
             }
             options={AM_PM_OPTIONS}
             fullWidth
@@ -235,8 +253,8 @@ class SchedulePicker extends Component<SchedulePickerProps> {
         </PickerSpacedRow>
         {textBeforeSendTime && (
           <ScheduleDescriptionContainer>
-            {textBeforeSendTime} {hour === 0 ? 12 : hour}:00{" "}
-            {amPm ? "PM" : "AM"} {timezone}, <MetabaseTimeZone />.
+            {textBeforeSendTime} {hourLocal === 0 ? 12 : hourLocal}:00{" "}
+            {amPmLocal ? "PM" : "AM"} {timezone},{" "} <MetabaseTimeZone />.
           </ScheduleDescriptionContainer>
         )}
       </>

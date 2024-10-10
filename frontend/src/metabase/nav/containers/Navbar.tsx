@@ -49,6 +49,12 @@ function Navbar({ isOpen, user, location, params, adminPaths }: NavbarProps) {
 // eslint-disable-next-line import/no-default-export -- deprecated usage
 export default _.compose(
   Database.loadList({
+    query: (state: State) => {
+      const user = getUser(state);
+      return !user || user.is_superuser || !user.settings || !user.settings.db_id
+        ? {}
+        : { id: user.settings.db_id };
+    },
     loadingAndErrorWrapper: false,
   }),
   withRouter,

@@ -7,12 +7,13 @@ import Databases from "metabase/entities/databases";
 import Search from "metabase/entities/search";
 import { getHasDataAccess } from "metabase/selectors/data";
 import { getSetting } from "metabase/selectors/settings";
+import { getUser } from "metabase/selectors/user";
 import type Database from "metabase-lib/v1/metadata/Database";
 import {
   SAVED_QUESTIONS_VIRTUAL_DB_ID,
   getRootCollectionVirtualSchemaId,
 } from "metabase-lib/v1/metadata/utils/saved-questions";
-import type { DatabaseId } from "metabase-types/api";
+import type { DatabaseId, User } from "metabase-types/api";
 import type { State } from "metabase-types/store";
 
 import { DataPickerContextProvider, useDataPicker } from "./DataPickerContext";
@@ -27,6 +28,7 @@ import { getDataTypes } from "./utils";
 interface DataPickerStateProps {
   hasNestedQueriesEnabled: boolean;
   hasDataAccess: boolean;
+  currentUser: User;
 }
 
 interface DatabaseListLoaderProps {
@@ -46,6 +48,7 @@ function mapStateToProps(state: State, { databases }: DatabaseListLoaderProps) {
   return {
     hasNestedQueriesEnabled: getSetting(state, "enable-nested-queries"),
     hasDataAccess: getHasDataAccess(databases),
+    currentUser: getUser(state),
   };
 }
 
@@ -151,7 +154,16 @@ function DataPicker({
 const DataPickerContainer = _.compose(
   // Required for `hasDataAccess` check
   Databases.loadList({
-    query: { saved: true },
+    query: (props: DataPickerProps) => {
+      const user = props.currentUser;
+      //console.log('user', user);
+      return !user ||
+        user.is_superuser ||
+        !user.settings ||
+        !user.settings.db_id
+        ? { saved: true }
+        : { saved: true, id: user.settings.db_id };
+    },
   }),
 
   // Lets the picker check there is

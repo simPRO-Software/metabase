@@ -11,7 +11,7 @@ import { useDispatch, useSelector } from "metabase/lib/redux";
 import type { UploadFileProps } from "metabase/redux/uploads";
 import { uploadFile as uploadFileAction } from "metabase/redux/uploads";
 import { getSetting } from "metabase/selectors/settings";
-import { getUserIsAdmin } from "metabase/selectors/user";
+import {getUser, getUserIsAdmin} from "metabase/selectors/user";
 import type {
   BookmarkId,
   BookmarkType,
@@ -25,8 +25,9 @@ export function CollectionContent({
 }: {
   collectionId: CollectionId;
 }) {
+  const user = useSelector(state => getUser(state));
   const { data: bookmarks, error: bookmarksError } = useBookmarkListQuery();
-  const { data: databases, error: databasesError } = useDatabaseListQuery();
+  const { data: databases, error: databasesError } = useDatabaseListQuery({query: {id: user?.settings.db_id}});
 
   const { data: collections, error: collectionsError } =
     useListCollectionsTreeQuery({

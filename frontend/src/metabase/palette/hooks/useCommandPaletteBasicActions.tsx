@@ -17,6 +17,7 @@ import {
   getHasDatabaseWithActionsEnabled,
   getHasNativeWrite,
 } from "metabase/selectors/data";
+import {getUser} from "metabase/selectors/user";
 
 export const useCommandPaletteBasicActions = ({
   isLoggedIn,
@@ -26,9 +27,9 @@ export const useCommandPaletteBasicActions = ({
   const collectionId = useSelector(state =>
     Collections.selectors.getInitialCollectionId(state, props),
   );
-
-  const { data: databases = [] } = useDatabaseListQuery({
-    enabled: isLoggedIn,
+  const user = useSelector(state => getUser(state));
+  const { data: databases = [] } =  useDatabaseListQuery({
+    enabled: isLoggedIn, query: {id: user?.settings.db_id}
   });
   const { data: models = [] } = useSearchListQuery({
     query: { models: ["dataset"], limit: 1 },

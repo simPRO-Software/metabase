@@ -9,7 +9,7 @@ export const ACCENT_COUNT = 8;
 // NOTE: DO NOT ADD COLORS WITHOUT EXTREMELY GOOD REASON AND DESIGN REVIEW
 // NOTE: KEEP SYNCRONIZED WITH COLORS.CSS
 export const colors = {
-  brand: "#509EE3",
+  brand: "#1976d2",
   summarize: "#88BF4D",
   filter: "#7172AD",
   accent0: "#509EE3",
@@ -34,7 +34,7 @@ export const colors = {
   "bg-black": "#2E353B",
   "bg-dark": "#93A1AB",
   "bg-medium": "#EDF2F5",
-  "bg-light": "#F9FBFC",
+  "bg-light": "#fdfdfd",
   "bg-white": "#FFFFFF",
   "bg-yellow": "#FFFCF2",
   "bg-night": "#42484E",

@@ -258,11 +258,18 @@
              include-saved-questions-tables?
              include-editable-data-model?
              include-analytics?
+             id
+             name
              exclude-uneditable-details?
              include-only-uploadable?]}]
-  (let [dbs (t2/select Database (merge {:order-by [:%lower.name :%lower.engine]}
-                                       (when-not include-analytics?
-                                         {:where [:= :is_audit false]})))
+  (let [dbs (t2/select Database {:where
+                                        (cond
+                                         (pos-int? id) [:= :id id]
+                                         (not (str/blank? name)) [:= :name name]
+                                         :else [:= 1 1]
+                                         )
+                                        :order-by [:%lower.name :%lower.engine]}
+                                      )
         filter-by-data-access? (not (or include-editable-data-model? exclude-uneditable-details?))]
     (cond-> (add-native-perms-info dbs)
       include-tables?              add-tables
@@ -289,13 +296,15 @@
     effect unless Enterprise Edition code is available and the advanced-permissions feature is enabled.
 
   * `include_only_uploadable` will only include DBs into which Metabase can insert new data."
-  [include saved include_editable_data_model exclude_uneditable_details include_only_uploadable include_analytics]
+  [id name include saved include_editable_data_model exclude_uneditable_details include_only_uploadable include_analytics]
   {include                       (mu/with-api-error-message
                                   [:maybe [:= "tables"]]
                                   (deferred-tru "include must be either empty or the value 'tables'"))
    include_analytics             [:maybe :boolean]
    saved                         [:maybe :boolean]
    include_editable_data_model   [:maybe :boolean]
+   id                            [:maybe ms/PositiveInt]
+   name                          [:maybe ms/NonBlankString]
    exclude_uneditable_details    [:maybe :boolean]
    include_only_uploadable       [:maybe :boolean]}
   (let [include-tables?                 (= include "tables")
@@ -307,7 +316,9 @@
                                                       :include-editable-data-model?    include_editable_data_model
                                                       :exclude-uneditable-details?     only-editable?
                                                       :include-analytics?              include_analytics
-                                                      :include-only-uploadable?        include_only_uploadable)
+                                                      :include-only-uploadable?        include_only_uploadable
+                                                      :id                              id
+                                                      :name                            name)
                                             [])]
     {:data  db-list-res
      :total (count db-list-res)}))

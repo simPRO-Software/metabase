@@ -23,6 +23,7 @@ import type Question from "metabase-lib/v1/Question";
 import type Table from "metabase-lib/v1/metadata/Table";
 import type { Card, CollectionId, WritebackAction } from "metabase-types/api";
 import type { State } from "metabase-types/store";
+import {getUser} from "metabase/selectors/user";
 
 type OwnProps = {
   location: Location;
@@ -213,7 +214,15 @@ function getPageTitle({ model }: Props) {
 // eslint-disable-next-line import/no-default-export -- deprecated usage
 export default _.compose(
   Questions.load({ id: getModelId, entityAlias: "model" }),
-  Databases.loadList(),
+  Databases.loadList({
+    query: (state: State) => {
+    const user = getUser(state);
+    return !user || user.is_superuser || !user.settings || !user.settings.db_id
+    ? {}
+    : { id: user.settings.db_id };
+    },
+  }),
+
   Actions.loadList({
     query: (state: State, props: OwnProps) => ({
       "model-id": getModelId(state, props),

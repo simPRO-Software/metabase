@@ -11,7 +11,7 @@ import {
 import { NotFound } from "metabase/components/ErrorPages";
 import LoadingSpinner from "metabase/components/LoadingSpinner";
 import Modal from "metabase/components/Modal";
-import { useDispatch } from "metabase/lib/redux";
+import {useDispatch, useSelector} from "metabase/lib/redux";
 import { runQuestionQuery } from "metabase/query_builder/actions";
 import { ActionsApi, MetabaseApi } from "metabase/services";
 import * as Lib from "metabase-lib";
@@ -40,6 +40,7 @@ import {
   getObjectName,
   getSinglePKIndex,
 } from "./utils";
+import {getUser} from "metabase/selectors/user";
 
 function filterByPk(
   query: Lib.Query,
@@ -255,8 +256,11 @@ export function ObjectDetailView({
     query: { "model-id": question?.id() },
   });
 
+  const user = useSelector(state => getUser(state));
+
   const { data: databases = [] } = useDatabaseListQuery({
     enabled: areImplicitActionsEnabled,
+    query: {id: user?.settings.db_id}
   });
 
   const actionItems = areImplicitActionsEnabled

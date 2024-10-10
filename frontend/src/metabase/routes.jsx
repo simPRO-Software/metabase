@@ -57,7 +57,7 @@ import SearchApp from "metabase/search/containers/SearchApp";
 import { Setup } from "metabase/setup/components/Setup";
 import getCollectionTimelineRoutes from "metabase/timelines/collections/routes";
 
-import { BrowseDatabases } from "./browse/components/BrowseDatabases";
+import BrowseDatabases  from "./browse/components/BrowseDatabases";
 import { BrowseModels } from "./browse/components/BrowseModels";
 import BrowseSchemas from "./browse/components/BrowseSchemas";
 import { BrowseTables } from "./browse/components/BrowseTables";

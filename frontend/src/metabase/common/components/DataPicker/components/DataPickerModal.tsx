@@ -29,7 +29,7 @@ import {
   isValidValueItem,
 } from "../utils";
 
-import { TablePicker } from "./TablePicker";
+import TablePicker from "./TablePicker";
 
 interface Props {
   /**

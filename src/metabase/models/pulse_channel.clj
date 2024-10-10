@@ -84,16 +84,7 @@
            :name              "Email"
            :allows_recipients true
            :recipients        ["user" "email"]
-           :schedules         [:hourly :daily :weekly :monthly]}
-   :slack {:type              "slack"
-           :name              "Slack"
-           :allows_recipients false
-           :schedules         [:hourly :daily :weekly :monthly]
-           :fields            [{:name        "channel"
-                                :type        "select"
-                                :displayName "Post to"
-                                :options     []
-                                :required    true}]}})
+           :schedules         [:hourly :daily :weekly :monthly]}})
 
 (defn channel-type?
   "Is `channel-type` a valid value as a channel type? :tv:"

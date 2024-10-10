@@ -6,9 +6,9 @@ import {
   useListDatabaseSchemasQuery,
   useListDatabasesQuery,
 } from "metabase/api";
-import { isNotNull } from "metabase/lib/types";
+import {checkNotNull, isNotNull} from "metabase/lib/types";
 import { Flex } from "metabase/ui";
-import type { DatabaseId, SchemaName, TableId } from "metabase-types/api";
+import type {DatabaseId, SchemaName, TableId, User} from "metabase-types/api";
 
 import { AutoScrollBox } from "../../EntityPicker";
 import type {
@@ -21,6 +21,9 @@ import { generateKey, getDbItem, getSchemaItem, getTableItem } from "../utils";
 import { DatabaseList } from "./DatabaseList";
 import { SchemaList } from "./SchemaList";
 import { TableList } from "./TableList";
+import {connect} from "react-redux";
+import type {State} from "metabase-types/store";
+import {getUser} from "metabase/selectors/user";
 
 interface Props {
   /**
@@ -29,9 +32,14 @@ interface Props {
   databaseId?: DatabaseId;
   value: TablePickerValue | undefined;
   onChange: (value: NotebookDataPickerValueItem) => void;
+  user: User | null
 }
 
-export const TablePicker = ({ databaseId, value, onChange }: Props) => {
+const mapStateToProps = (state: State) => ({
+  user: getUser(state),
+});
+
+function TablePicker ({ databaseId, value, onChange, user }: Props) {
   const [dbId, setDbId] = useState<DatabaseId | undefined>(
     databaseId ?? value?.db_id,
   );
@@ -44,7 +52,7 @@ export const TablePicker = ({ databaseId, value, onChange }: Props) => {
     data: databases,
     error: errorDatabases,
     isFetching: isLoadingDatabases,
-  } = useListDatabasesQuery({ saved: false });
+  } = useListDatabasesQuery(!user?.is_superuser ? { id: user?.settings.db_id, saved: false } : { saved: false });
 
   const {
     data: schemas,
@@ -151,3 +159,5 @@ export const TablePicker = ({ databaseId, value, onChange }: Props) => {
     </AutoScrollBox>
   );
 };
+
+export default connect(mapStateToProps)(TablePicker);

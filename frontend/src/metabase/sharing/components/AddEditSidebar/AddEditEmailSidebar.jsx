@@ -28,7 +28,7 @@ function _AddEditEmailSidebar({
   users,
   parameters,
   dashboard,
-
+  user,
   // form callbacks
   handleSave,
   onCancel,
@@ -87,6 +87,7 @@ function _AddEditEmailSidebar({
           onScheduleChange={(newSchedule, changedProp) =>
             onChannelScheduleChange(newSchedule, changedProp)
           }
+          currentUser={user}
         />
         <div className={cx(CS.pt2, CS.pb1)}>
           <SendTestPulse
@@ -145,7 +146,7 @@ function _AddEditEmailSidebar({
               name="info"
               className={cx(CS.textMedium, CS.ml1)}
               size={12}
-              tooltip={t`Attachments can contain up to 2,000 rows of data.`}
+              tooltip={t`Attachments can contain up to 10,000 rows of data.`}
             />
           </div>
         </div>
@@ -185,6 +186,7 @@ _AddEditEmailSidebar.propTypes = {
   setPulse: PropTypes.func.isRequired,
   handleArchive: PropTypes.func.isRequired,
   setPulseParameters: PropTypes.func.isRequired,
+  user: PropTypes.object,
 };
 
 export default _AddEditEmailSidebar;

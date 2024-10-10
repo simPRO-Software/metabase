@@ -53,7 +53,7 @@ export function VisualizationError({
           className={className}
           type="timeout"
           title={t`Your question took too long`}
-          message={t`We didn't get an answer back from your database in time, so we had to stop. You can try again in a minute, or if the problem persists, you can email an admin to let them know.`}
+          message={t`We didn't get an answer back from your database in time, so we had to stop. You can try again in a minute, or if the problem persists, you can contact Support to let them know.`}
           action={<AdminEmail />}
         />
       );
@@ -63,7 +63,7 @@ export function VisualizationError({
           className={className}
           type="serverError"
           title={t`We're experiencing server issues`}
-          message={t`Try refreshing the page after waiting a minute or two. If the problem persists we'd recommend you contact an admin.`}
+          message={t`Try refreshing the page after waiting a minute or two. If the problem persists please contact Support.`}
           action={<AdminEmail />}
         />
       );

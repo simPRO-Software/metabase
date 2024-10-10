@@ -23,6 +23,40 @@
 
     <base href="{{{baseHref}}}" />
 
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-102747842-6"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-102747842-6', {
+        // Allow the user to be tracked when navigating from a simprosuite.com address to a simprocloud.com address.
+        // https://developers.google.com/analytics/devguides/collection/gtagjs/cross-domain
+        'linker': {
+          'domains': ['simprocloud.com']
+        }
+      });
+    </script>
+
+    <script type="text/javascript">
+      function initiliaseWalkme() {
+        if (typeof WalkMePlayerAPI !== 'undefined') {
+          WalkMePlayerAPI.removePlayer();
+        } else {
+          setTimeout(function () { initiliaseWalkme(); }, 50);
+        }
+      }
+      (function() {
+        var walkme = document.createElement('script');
+        walkme.type = 'text/javascript';
+        walkme.async = true;
+        walkme.src = 'https://cdn.walkme.com/users/085d27a9135e4a1997f381187ccb511a/walkme_085d27a9135e4a1997f381187ccb511a_https.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(walkme, s);
+        window._walkmeConfig = {smartLoad:true};
+        initiliaseWalkme();
+      })();
+    </script>
+
     <script type="application/json" id="_metabaseBootstrap">
       {{{bootstrapJSON}}}
     </script>

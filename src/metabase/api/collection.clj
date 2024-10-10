@@ -324,6 +324,7 @@
        :where           [:and
                          [:= :p.collection_id      (:id collection)]
                          [:= :p.archived           (boolean archived?)]
+                         [:= :p.simpro_removed false]
                          ;; exclude alerts
                          [:= :p.alert_condition    nil]
                          ;; exclude dashboard subscriptions

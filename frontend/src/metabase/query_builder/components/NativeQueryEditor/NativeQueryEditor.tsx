@@ -29,6 +29,7 @@ import { checkNotNull } from "metabase/lib/types";
 import { canGenerateQueriesForDatabase } from "metabase/metabot/utils";
 import SnippetFormModal from "metabase/query_builder/components/template_tags/SnippetFormModal";
 import { getSetting } from "metabase/selectors/settings";
+import { getUser } from "metabase/selectors/user";
 import { Flex } from "metabase/ui";
 import * as Lib from "metabase-lib";
 import type Question from "metabase-lib/v1/Question";
@@ -42,6 +43,7 @@ import type {
   NativeQuerySnippet,
   ParameterId,
   TableId,
+  User,
 } from "metabase-types/api";
 import type { Dispatch, State } from "metabase-types/store";
 
@@ -142,6 +144,7 @@ type OwnProps = typeof NativeQueryEditor.defaultProps & {
 
 interface StateProps {
   canUsePromptInput: boolean;
+  currentUser: User;
 }
 
 interface DispatchProps {
@@ -903,6 +906,7 @@ export class NativeQueryEditor extends Component<
 
 const mapStateToProps = (state: State) => ({
   canUsePromptInput: getSetting(state, "is-metabot-enabled"),
+  currentUser: getUser(state),
 });
 
 const mapDispatchToProps = (dispatch: Dispatch) => ({
@@ -920,7 +924,19 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
 // eslint-disable-next-line import/no-default-export -- deprecated usage
 export default _.compose(
   ExplicitSize(),
-  Databases.loadList({ loadingAndErrorWrapper: false }),
+  Databases.loadList({
+    query: (props: Props) => {
+      const user = props.currentUser;
+      //console.log('user', user);
+      return !user ||
+        user.is_superuser ||
+        !user.settings ||
+        !user.settings.db_id
+        ? {}
+        : { id: user.settings.db_id };
+    },
+    loadingAndErrorWrapper: false,
+  }),
   Snippets.loadList({ loadingAndErrorWrapper: false }),
   SnippetCollections.loadList({ loadingAndErrorWrapper: false }),
   connect(mapStateToProps, mapDispatchToProps),

@@ -1,6 +1,6 @@
 import type { LocationDescriptor } from "history";
 import { memo, useCallback, useMemo, useState } from "react";
-import { connect } from "react-redux";
+import {connect, useSelector} from "react-redux";
 import _ from "underscore";
 
 import { useListCollectionsTreeQuery } from "metabase/api";
@@ -189,15 +189,18 @@ function MainNavbarContainer({
 
 // eslint-disable-next-line import/no-default-export -- deprecated usage
 export default _.compose(
-  Bookmarks.loadList({
-    loadingAndErrorWrapper: false,
-  }),
   Collections.load({
     id: ROOT_COLLECTION.id,
     entityAlias: "rootCollection",
     loadingAndErrorWrapper: false,
   }),
   Databases.loadList({
+    query: (props: Props) => {
+      const user = props.currentUser;
+      return !user || user.is_superuser || !user.settings || !user.settings.db_id
+        ? {}
+        : { id: user.settings.db_id };
+    },
     loadingAndErrorWrapper: false,
   }),
   connect(mapStateToProps, mapDispatchToProps),

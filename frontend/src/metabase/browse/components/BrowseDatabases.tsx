@@ -20,11 +20,23 @@ import {
   DatabaseCardLink,
   DatabaseGrid,
 } from "./BrowseDatabases.styled";
+import {connect} from "react-redux";
+import type {DatabaseId, User} from "metabase-types/api";
+import type {NotebookDataPickerValueItem, TablePickerValue} from "metabase/common/components/DataPicker";
+import type {State} from "metabase-types/store";
+import {getUser} from "metabase/selectors/user";
 
-export const BrowseDatabases = () => {
-  const { data, isLoading, error } = useListDatabasesQuery();
+interface Props {
+  user: User | null
+}
+
+const mapStateToProps = (state: State) => ({
+  user: getUser(state),
+});
+
+function BrowseDatabases ({ user }: Props) {
+  const { data, isLoading, error } = useListDatabasesQuery(!user?.is_superuser ? { id: user?.settings.db_id } : {});
   const databases = data?.data;
-
   if (error) {
     return <LoadingAndErrorWrapper error />;
   }
@@ -75,3 +87,5 @@ export const BrowseDatabases = () => {
     </BrowseContainer>
   );
 };
+
+export default connect(mapStateToProps)(BrowseDatabases);

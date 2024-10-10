@@ -37,7 +37,7 @@
   {:mb-run-mode                     "prod"
    ;; DB Settings
    :mb-db-type                      "h2"
-   :mb-db-file                      "metabase.db"
+   :mb-db-file                      "tesasfdsa.db"
    :mb-db-automigrate               "true"
    :mb-db-logging                   "true"
    ;; Jetty Settings. Full list of options is available here: https://github.com/ring-clojure/ring/blob/master/ring-jetty-adapter/src/ring/adapter/jetty.clj
@@ -48,7 +48,7 @@
    :mb-version-info-url             "https://static.metabase.com/version-info.json"
    :mb-version-info-ee-url          "https://static.metabase.com/version-info-ee.json"
    :mb-ns-trace                     ""                      ; comma-separated namespaces to trace
-   :max-session-age                 "20160"                 ; session length in minutes (14 days)
+   :max-session-age                 "720"                 ; session length in minutes (12 hours)
    :mb-colorize-logs                (str (not is-windows?)) ; since PowerShell and cmd.exe don't support ANSI color escape codes or emoji,
    :mb-emoji-in-logs                (str (not is-windows?)) ; disable them by default when running on Windows. Otherwise they're enabled
    :mb-qp-cache-backend             "db"
