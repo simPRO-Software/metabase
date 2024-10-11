@@ -15,7 +15,7 @@
 (defn- set-statement-timeout!
   "Must be called within a transaction.
    Sets the current transaction `statement_timeout` to the minimum
-   of the current (non-zero) value and ten minutes.
+   of the current (non-zero) value and 30 minutes.
 
    This helps to address unexpectedly large/long running queries."
   [tx]
@@ -28,7 +28,7 @@
                               first
                               :setting
                               parse-long)
-        ten-minutes      (.toMillis (t/minutes 10))
+        ten-minutes      (.toMillis (t/minutes 30))
         new-timeout      (if (zero? existing-timeout)
                            ten-minutes
                            (min ten-minutes existing-timeout))]
