@@ -56,6 +56,7 @@ export const currentUser = createReducer<User | null>(null, builder => {
       const { dashboard } = payload;
       if (
         state != null &&
+        dashboard != null &&
         state.custom_homepage?.dashboard_id === dashboard.id &&
         dashboard.archived
       ) {
