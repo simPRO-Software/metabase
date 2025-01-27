@@ -513,6 +513,9 @@ export const tabsReducer = createReducer<DashboardState>(
     );
 
     builder.addCase(Dashboards.actionTypes.UPDATE, (state, { payload }) => {
+      if (!payload.dashboard) {
+        return;
+      }
       const { dashcards: newDashcards, tabs: newTabs } = payload.dashboard;
 
       const { prevDash, prevTabs } = getPrevDashAndTabs({
@@ -536,7 +539,7 @@ export const tabsReducer = createReducer<DashboardState>(
         const prevDashcardData = state.dashcardData[prevId];
 
         if (prevDashcardData) {
-          state.dashcardData[newDashcards[index].id] = prevDashcardData;
+          state.dashcardData[newDashcards[index]?.id] = prevDashcardData;
         }
       });
 

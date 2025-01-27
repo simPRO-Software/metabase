@@ -48,14 +48,6 @@ const CollectionHeader = ({
         onUpdateCollection={onUpdateCollection}
       />
       <HeaderActions data-testid="collection-menu">
-        {showUploadButton && (
-          <CollectionUpload
-            collection={collection}
-            uploadsEnabled={uploadsEnabled}
-            isAdmin={isAdmin}
-            saveFile={saveFile}
-          />
-        )}
         {!isInstanceAnalytics && <CollectionTimeline collection={collection} />}
         {isInstanceAnalytics && (
           <CollectionPermissions collection={collection} />

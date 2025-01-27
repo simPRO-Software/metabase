@@ -210,7 +210,9 @@
                                       [:collection :collection] [:= :collection.id :card.collection_id]]
                           :where     [:and
                                       [:in :dashcard.dashboard_id (map :id dashboards)]
-                                      [:= :card.simpro_removed false]
+                                      [:or
+                                       [:= :card.simpro_removed false]
+                                       [:= :card.simpro_removed nil]] ;handle virtual cards
                                       [:or
                                        [:= :card.archived false]
                                        [:= :card.archived nil]]] ; e.g. DashCards with no corresponding Card, e.g. text Cards

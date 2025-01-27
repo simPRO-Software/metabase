@@ -19,7 +19,7 @@ import {
 import { getActivePulseParameters } from "metabase/lib/pulse";
 import { formatFrame } from "metabase/lib/time";
 import { Icon } from "metabase/ui";
-import { getUser } from "metabase/home/selectors";
+import { getUser } from "metabase/selectors/user";
 import Settings from "metabase/lib/settings";
 
 import { PulseCard, SidebarActions } from "./PulsesListSidebar.styled";
