@@ -1,4 +1,4 @@
-INSERT INTO data_permissions (group_id, perm_type, db_id, perm_value)
+/*INSERT INTO data_permissions (group_id, perm_type, db_id, perm_value)
 SELECT pg.id AS group_id,
        'perms/create-queries' AS perm_type,
        md.id AS db_id,
@@ -63,4 +63,4 @@ AND NOT EXISTS
    FROM data_permissions dp2
    WHERE dp2.group_id = dp.group_id
      AND dp2.db_id = dp.db_id
-     AND dp2.perm_type = 'perms/create-queries' );
+     AND dp2.perm_type = 'perms/create-queries' );*/

@@ -2,7 +2,7 @@
 -- table-level data-access permissions, and some of the `no-self-service` rows
 -- cannot be automatically migrated to `unrestricted` due to conflicts with
 -- other groups
-INSERT INTO
+/*INSERT INTO
   data_permissions (
     group_id,
     perm_type,
@@ -252,4 +252,4 @@ WHERE
       AND perm_type = 'perms/view-data'
   )
 AND perm_type = 'perms/view-data'
-AND table_id IS NOT NULL;
+AND table_id IS NOT NULL;*/

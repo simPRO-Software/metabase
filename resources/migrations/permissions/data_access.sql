@@ -1,6 +1,6 @@
 -- Insert DB-level permissions for cases where no table-level perms are set
 
-INSERT INTO data_permissions (group_id, perm_type, db_id, schema_name, table_id, perm_value)
+/*INSERT INTO data_permissions (group_id, perm_type, db_id, schema_name, table_id, perm_value)
 SELECT pg.id AS group_id,
        'perms/data-access' AS perm_type,
        md.id AS db_id,
@@ -112,4 +112,4 @@ WHERE NOT EXISTS (
            OR dp.table_id IS NULL)
       AND dp.perm_type = 'perms/data-access'
 )
-AND pg.name != 'Administrators';
+AND pg.name != 'Administrators';*/
