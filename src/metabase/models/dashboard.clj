@@ -43,7 +43,9 @@
                            [Collection :collection] [:= :collection.id :card.collection_id]]
                :where     [:and
                            [:= :dashcard.dashboard_id (u/the-id dashboard-or-id)]
-                           [:= :card.simpro_removed false]
+                           [:or
+                            [:= :card.simpro_removed false]
+                            [:= :card.simpro_removed nil]] ;handle virtual cards
                            [:or
                             [:= :card.archived false]
                             [:= :card.archived nil]]] ; e.g. DashCards with no corresponding Card, e.g. text Cards
