@@ -218,6 +218,7 @@
   [field-id]
   (let [field (api/check-404 (db/select-one Field :id field-id))]
     (api/check-403 (params.field-values/current-user-can-fetch-field-values? field))
+    (field-values/create-or-update-full-field-values! field)
     (field->values field)))
 
 ;; TODO -- not sure `has_field_values` actually has to be `:list` -- see code above.
