@@ -212,6 +212,32 @@
         (throw (ex-info (tru "A model made from a native SQL question cannot have a variable or field filter.")
                         {:status-code 400}))))))
 
+(def ^:private pivot-only-column-settings-keys
+  "Per-column :column_settings keys that are actually UI-only settings for an interactive feature (currently
+  just the Pivot Table's column sort order) and must never be persisted inside a column_settings entry --
+  doing so crashes the static/pulse renderer (see `metabase.pulse.render.datetime/format-temporal-str`). Add
+  newly discovered rogue keys here."
+  #{"pivot_table.column_sort_order"})
+
+(defn- strip-pivot-only-column-settings-keys
+  "Remove any `pivot-only-column-settings-keys` from every entry of :visualization_settings :column_settings,
+  if present. Handles both keyword and string entry keys, since the in-memory representation at
+  pre-insert/pre-update time depends on the caller (keywordized API request body vs. a map read back from the
+  DB). A no-op when there's nothing to strip."
+  [card]
+  (letfn [(key-name [k] (if (keyword? k) (name k) (str k)))
+          (strip-entry [entry]
+            (if (map? entry)
+              (into {} (remove (fn [[k _]] (contains? pivot-only-column-settings-keys (key-name k)))) entry)
+              entry))]
+    (cond-> card
+      (get-in card [:visualization_settings :column_settings])
+      (update-in [:visualization_settings :column_settings]
+                 (fn [column-settings]
+                   (if (map? column-settings)
+                     (into {} (map (fn [[k v]] [k (strip-entry v)])) column-settings)
+                     column-settings))))))
+
 ;; TODO -- consider whether we should validate the Card query when you save/update it??
 (defn- pre-insert [card]
   (let [defaults {:parameters         []
@@ -320,8 +346,8 @@
                                        :entity_id    true})
           ;; Make sure we normalize the query before calling `pre-update` or `pre-insert` because some of the
           ;; functions those fns call assume normalized queries
-          :pre-update     (comp populate-query-fields pre-update populate-result-metadata maybe-normalize-query)
-          :pre-insert     (comp populate-query-fields pre-insert populate-result-metadata maybe-normalize-query)
+          :pre-update     (comp strip-pivot-only-column-settings-keys populate-query-fields pre-update populate-result-metadata maybe-normalize-query)
+          :pre-insert     (comp strip-pivot-only-column-settings-keys populate-query-fields pre-insert populate-result-metadata maybe-normalize-query)
           :post-insert    post-insert
           :pre-delete     pre-delete
           :post-select    public-settings/remove-public-uuid-if-public-sharing-is-disabled}))

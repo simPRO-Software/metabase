@@ -537,7 +537,10 @@
 
 (defn- db->norm-column-settings-entry
   "Converts the DB form of a :column_settings entry value to its normalized form. Does the opposite of
-  `norm->db-column-settings-entry`."
+  `norm->db-column-settings-entry`. Silently drops any key not recognised by `db->norm-column-settings-keys`
+  instead of normalizing it to a nil key -- an unrecognised/renamed inner setting key previously produced a
+  nil-keyed map entry that crashed `metabase.pulse.render.datetime/format-temporal-str` with an NPE from
+  `(name nil)`."
   [m k v]
   (case k
     :click_behavior
@@ -546,7 +549,9 @@
     :time_style
     (assoc m ::time-style (db->norm-time-style v))
 
-    (assoc m (db->norm-column-settings-keys k) v)))
+    (if-let [norm-k (db->norm-column-settings-keys k)]
+      (assoc m norm-k v)
+      m)))
 
 (defn db->norm-column-settings-entries
   "Converts the DB form of a map of :column_settings entries to its normalized form."

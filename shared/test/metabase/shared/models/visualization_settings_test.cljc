@@ -112,7 +112,15 @@
     (t/is (= {::mb.viz/column-settings {}}
              (mb.viz/db->norm {:column_settings {"[\"ref\",null]" {:column_title "invalid"}}})))
     (t/is (= {::mb.viz/column-settings {}}
-             (mb.viz/db->norm {:column_settings {"bad-column-ref" {:column_title "invalid"}}})))))
+             (mb.viz/db->norm {:column_settings {"bad-column-ref" {:column_title "invalid"}}}))))
+
+  (t/testing "Unrecognized inner column_settings keys are dropped instead of becoming nil keys (BI-49)"
+    ;; a rogue UI-only key (e.g. :pivot_table.column_sort_order) used to normalize to a literal nil map key,
+    ;; which crashed the static/pulse renderer with an NPE from (name nil)
+    (t/is (= {::mb.viz/column-settings {{::mb.viz/column-name "Column Name"} {::mb.viz/date-style "YYYY/M/D"}}}
+             (mb.viz/db->norm {:column_settings {"[\"name\",\"Column Name\"]"
+                                                 {:date_style                    "YYYY/M/D"
+                                                  :pivot_table.column_sort_order "ascending"}}})))))
 
 (t/deftest virtual-card-test
   (t/testing "Virtual card in visualization settings is preserved through normalization roundtrip"

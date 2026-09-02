@@ -76,6 +76,10 @@
           date-separator :date-separator
           time-style     :time-style} (if (seq col-viz-settings)
                                         (-> col-viz-settings
+                                            ;; defensive: drop a stray `nil` key even if some other
+                                            ;; normalization path fails to (see db->norm-column-settings-entry
+                                            ;; for the primary fix) -- `(name nil)` throws an NPE
+                                            (dissoc nil)
                                             (update-keys (comp keyword name)))
                                         (-> (:type/Temporal (public-settings/custom-formatting))
                                             (update-keys (fn [k] (-> k name (str/replace #"_" "-") keyword)))))
