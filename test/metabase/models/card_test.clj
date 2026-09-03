@@ -395,3 +395,25 @@
               :pie.show_legend true
               :pie.percent_visibility "inside"}
              (:visualization_settings (db/simple-select-one Card {:where [:= :id card-id]})))))))
+
+(deftest strip-pivot-only-column-settings-keys-test
+  (testing "UI-only pivot keys are stripped from :column_settings entries before a Card is persisted (BI-49)"
+    ;; pivot_table.column_sort_order persisted inside a column_settings entry crashes the static/pulse
+    ;; renderer (NPE in metabase.pulse.render.datetime/format-temporal-str), breaking dashboard subscriptions
+    (let [rogue-settings {:column_settings {"[\"name\",\"NAME\"]"
+                                            {:date_style                    "YYYY/M/D"
+                                             :pivot_table.column_sort_order "ascending"}}}
+          entry-fn       (fn [card-id]
+                           (-> (db/select-one-field :visualization_settings Card :id card-id)
+                               :column_settings
+                               vals
+                               first))]
+      (testing "on insert"
+        (mt/with-temp Card [{card-id :id} {:visualization_settings rogue-settings}]
+          (is (= {:date_style "YYYY/M/D"}
+                 (entry-fn card-id)))))
+      (testing "on update"
+        (mt/with-temp Card [{card-id :id}]
+          (db/update! Card card-id :visualization_settings rogue-settings)
+          (is (= {:date_style "YYYY/M/D"}
+                 (entry-fn card-id))))))))

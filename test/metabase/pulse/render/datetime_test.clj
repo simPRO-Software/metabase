@@ -1,7 +1,8 @@
 (ns metabase.pulse.render.datetime-test
   (:require [clojure.test :refer :all]
             [java-time :as t]
-            [metabase.pulse.render.datetime :as datetime]))
+            [metabase.pulse.render.datetime :as datetime]
+            [metabase.shared.models.visualization-settings :as mb.viz]))
 
 (def ^:private now "2020-07-16T18:04:00Z[UTC]")
 
@@ -98,4 +99,21 @@
   (testing "Can render time types (#15146)"
     (is (= "08:05:06"
            (datetime/format-temporal-str "UTC" "08:05:06Z"
-                                         {:effective_type :type/Time})))))
+                                         {:effective_type :type/Time}))))
+  (testing "Column viz settings are applied"
+    (is (= "2020/7/16"
+           (datetime/format-temporal-str "UTC" now
+                                         {:unit :default :field_ref [:field 1 nil]}
+                                         {::mb.viz/column-settings
+                                          {{::mb.viz/field-id 1}
+                                           {::mb.viz/date-style "YYYY/M/D"}}}))))
+  (testing "A stray nil key in the column's viz settings does not blow up rendering (BI-49)"
+    ;; before the fix, an unrecognized inner column_settings key (e.g. pivot_table.column_sort_order)
+    ;; normalized to a literal nil map key and (update-keys (comp keyword name)) threw an NPE
+    (is (= "2020/7/16"
+           (datetime/format-temporal-str "UTC" now
+                                         {:unit :default :field_ref [:field 1 nil]}
+                                         {::mb.viz/column-settings
+                                          {{::mb.viz/field-id 1}
+                                           {::mb.viz/date-style "YYYY/M/D"
+                                            nil                 "ascending"}}})))))
