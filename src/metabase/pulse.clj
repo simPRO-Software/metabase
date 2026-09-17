@@ -49,29 +49,38 @@
 
 (defn- execute-dashboard-subscription-card
   [owner-id dashboard dashcard card-or-id parameters]
-  (try
-    (let [card-id (u/the-id card-or-id)
-          card    (db/select-one Card :id card-id)
-          _       (api/check-is-readonly card)
-          result  (mw.session/with-current-user owner-id
-                    (qp.dashboard/run-query-for-dashcard-async
-                     :dashboard-id  (u/the-id dashboard)
-                     :card-id       card-id
-                     :dashcard-id   (u/the-id dashcard)
-                     :context       :pulse ; TODO - we should support for `:dashboard-subscription` and use that to differentiate the two
-                     :export-format :api
-                     :parameters    parameters
-                     :middleware    {:process-viz-settings? true
-                                     :js-int-to-string?     false}
-                     :run           (fn [query info]
-                                      (qp/process-query-and-save-with-max-results-constraints!
-                                       (assoc query :async? false)
-                                       info))))]
-      {:card     card
-       :dashcard dashcard
-       :result   result})
-    (catch Throwable e
-      (log/warn e (trs "Error running query for Card {0}" card-or-id)))))
+  (let [card-id (u/the-id card-or-id)]
+    (try
+      (let [card    (db/select-one Card :id card-id)
+            _       (api/check-is-readonly card)
+            result  (mw.session/with-current-user owner-id
+                      (qp.dashboard/run-query-for-dashcard-async
+                       :dashboard-id  (u/the-id dashboard)
+                       :card-id       card-id
+                       :dashcard-id   (u/the-id dashcard)
+                       :context       :pulse ; TODO - we should support for `:dashboard-subscription` and use that to differentiate the two
+                       :export-format :api
+                       :parameters    parameters
+                       :middleware    {:process-viz-settings? true
+                                       :js-int-to-string?     false}
+                       :run           (fn [query info]
+                                        (qp/process-query-and-save-with-max-results-constraints!
+                                         (assoc query :async? false)
+                                         info))))]
+        {:card     card
+         :dashcard dashcard
+         :result   result})
+      (catch Throwable e
+        (log/warn e (trs "Error running query for Card {0}" card-id))
+        ;; Return a result carrying `:error` rather than `nil`. A `nil` here used to flow all the way into
+        ;; `metabase.email.messages/render-result-card`, which treats a result without a `:card` as a text card
+        ;; and calls `process-markdown` on its (nil) `:text` -- that NPEs inside flexmark and takes down the
+        ;; whole subscription, so one transient card failure meant no email at all (BI-118). With a `:error`
+        ;; result the renderer falls through to its existing `:card-error` body and the other cards still send.
+        (when-let [card (u/ignore-exceptions (db/select-one Card :id card-id))]
+          {:card     card
+           :dashcard dashcard
+           :result   {:error (or (ex-message e) (str (class e)))}})))))
 
 (defn- dashcard-comparator
   "Comparator that determines which of two dashcards comes first in the layout order used for pulses.
@@ -88,13 +97,16 @@
         dashcards         (db/select DashboardCard :dashboard_id dashboard-id)
         ordered-dashcards (sort dashcard-comparator dashcards)
         parameters        (merge-default-values (params/parameters pulse dashboard))]
-    (for [dashcard ordered-dashcards]
-      (if-let [card-id (:card_id dashcard)]
-        (execute-dashboard-subscription-card pulse-creator-id dashboard dashcard card-id parameters)
-        ;; For virtual cards, return just the viz settings map, with any parameter values substituted appropriately
-        (-> dashcard
-            (params/process-virtual-dashcard parameters)
-            :visualization_settings)))))
+    ;; `remove nil?` so that a dashcard we could not build any result for at all (e.g. its Card row has since been
+    ;; deleted) is dropped rather than rendered as a text card with no text -- see BI-118.
+    (remove nil?
+            (for [dashcard ordered-dashcards]
+              (if-let [card-id (:card_id dashcard)]
+                (execute-dashboard-subscription-card pulse-creator-id dashboard dashcard card-id parameters)
+                ;; For virtual cards, return just the viz settings map, with any parameter values substituted appropriately
+                (-> dashcard
+                    (params/process-virtual-dashcard parameters)
+                    :visualization_settings))))))
 
 (defn- database-id [card]
   (or (:database_id card)
@@ -225,10 +237,15 @@
   "Check if the card is empty"
   [card]
   (if-let [result (:result card)]
-    (or (zero? (-> result :row_count))
-        ;; Many aggregations result in [[nil]] if there are no rows to aggregate after filters
-        (= [[nil]]
-           (-> result :data :rows)))
+    (cond
+      ;; A card whose query failed is *not* empty -- we still want to send the subscription so the recipient sees
+      ;; that this card errored instead of silently getting nothing (BI-118). It also has no `:row_count`, so the
+      ;; `zero?` below would NPE on it.
+      (:error result) false
+      :else           (or (zero? (or (:row_count result) 0))
+                          ;; Many aggregations result in [[nil]] if there are no rows to aggregate after filters
+                          (= [[nil]]
+                             (-> result :data :rows))))
     ;; Text cards have no result; treat as empty
     true))
 

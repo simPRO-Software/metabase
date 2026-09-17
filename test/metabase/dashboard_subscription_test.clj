@@ -1,10 +1,12 @@
 (ns metabase.dashboard-subscription-test
   (:require [clojure.test :refer :all]
+            [metabase.email.messages :as messages]
             [metabase.models :refer [Card Dashboard DashboardCard Pulse PulseCard PulseChannel PulseChannelRecipient User]]
             [metabase.models.pulse :as pulse]
             metabase.pulse
             [metabase.pulse.render.body :as body]
             [metabase.pulse.test-util :as pulse.test-util]
+            [metabase.query-processor.dashboard :as qp.dashboard]
             [metabase.test :as mt]
             [metabase.util :as u]
             [schema.core :as s]))
@@ -166,6 +168,58 @@
                                       :visualization_settings {:virtual_card {}, :text "test"}}]
                     User [{user-id :id}]]
       (is (= [{:virtual_card {}, :text "test"}] (@#'metabase.pulse/execute-dashboard {:creator_id user-id} dashboard))))))
+
+(deftest execute-dashboard-failing-card-test
+  (testing "a card whose query throws yields an `:error` result instead of `nil` (BI-118)"
+    (mt/with-temp* [Card          [{card-id-1 :id}]
+                    Card          [{card-id-2 :id}]
+                    Dashboard     [{dashboard-id :id, :as dashboard} {:name "Birdfeed Usage"}]
+                    DashboardCard [_ {:dashboard_id dashboard-id :card_id card-id-1 :row 0 :col 0}]
+                    DashboardCard [_ {:dashboard_id dashboard-id :card_id card-id-2 :row 1 :col 0}]
+                    User          [{user-id :id}]]
+      (let [orig   qp.dashboard/run-query-for-dashcard-async
+            result (with-redefs [qp.dashboard/run-query-for-dashcard-async
+                                 (fn [& {:keys [card-id], :as options}]
+                                   (if (= card-id card-id-2)
+                                     (throw (ex-info "Card query failed" {}))
+                                     (apply orig (apply concat options))))]
+                     (@#'metabase.pulse/execute-dashboard {:creator_id user-id} dashboard))]
+        (testing "the failing card is still present, so the rest of the subscription can be rendered"
+          (is (= 2 (count result)))
+          (is (= [card-id-1 card-id-2]
+                 (map #(-> % :card :id) result))))
+        (testing "and it carries an :error, which the renderer turns into a card-error placeholder"
+          (is (nil? (-> result first :result :error)))
+          (is (= "Card query failed" (-> result second :result :error))))))))
+
+(deftest failing-card-still-sends-subscription-test
+  (testing "a dashcard whose query throws no longer kills the whole subscription (BI-118)"
+    (do-test
+     {:card    (pulse.test-util/checkins-query-card {})
+      ;; `skip_if_empty` is the harsher path: an errored card must not be treated as "empty"
+      :pulse   {:skip_if_empty true}
+      :fixture (fn [_ thunk]
+                 (with-redefs [qp.dashboard/run-query-for-dashcard-async
+                               (fn [& _] (throw (ex-info "Card query failed" {})))]
+                   (thunk)))
+      :assert  {:email
+                (fn [_ _]
+                  (testing "the email is still sent"
+                    (is (mt/received-email-subject? :rasta #"Aviary KPIs")))
+                  (testing "and the broken card is rendered as an error placeholder"
+                    (is (mt/received-email-body? :rasta #"There was a problem with this question"))))}})))
+
+(deftest virtual-card-without-text-test
+  (testing "a virtual dashcard with no :text (e.g. an action button) does not NPE the subscription (BI-118)"
+    (mt/with-temp* [Dashboard     [{dashboard-id :id, :as dashboard} {:name "Birdfeed Usage"}]
+                    DashboardCard [_ {:dashboard_id           dashboard-id
+                                      :visualization_settings {:virtual_card {:display "action"}}}]
+                    User          [{user-id :id}]]
+      (let [results (@#'metabase.pulse/execute-dashboard {:creator_id user-id} dashboard)]
+        (testing "`process-virtual-dashcard` leaves an explicit nil :text behind"
+          (is (= [{:virtual_card {:display "action"}, :text nil}] results)))
+        (testing "which the renderer must tolerate rather than NPE inside flexmark"
+          (is (string? (:content (@#'messages/render-result-card nil (first results))))))))))
 
 (deftest basic-table-test
   (tests {:pulse {:skip_if_empty false} :display :table}
