@@ -83,9 +83,16 @@
                                             (update-keys (comp keyword name)))
                                         (-> (:type/Temporal (public-settings/custom-formatting))
                                             (update-keys (fn [k] (-> k name (str/replace #"_" "-") keyword)))))
-         date-style (cond-> date-style
-                      date-separator (str/replace #"/" date-separator)
-                      abbreviate (-> (str/replace #"MMMM" "MMM") (str/replace #"DDD" "D")))]
+         ;; A column can carry `date_abbreviate` and/or `date_separator` *without* a `date_style` -- the UI writes
+         ;; exactly that when a user ticks "Abbreviate names of days and months" and leaves the style at its default.
+         ;; `date-style` is then nil, and `(str/replace nil ...)` throws a NullPointerException. Because table cells
+         ;; are rendered lazily, that NPE surfaces when the email HTML is realised, outside `render-pulse-card-body`'s
+         ;; try/catch, and used to kill the entire dashboard subscription (BI-118; same site as BI-49). A nil
+         ;; date-style is fine further down -- every consumer falls back to a default -- so just leave it alone.
+         date-style (some-> date-style
+                            (cond->
+                              date-separator (str/replace #"/" date-separator)
+                              abbreviate     (-> (str/replace #"MMMM" "MMM") (str/replace #"DDD" "D"))))]
      (cond (str/blank? s) ""
 
            (isa? (or (:effective_type col) (:base_type col)) :type/Time)

@@ -116,4 +116,36 @@
                                          {::mb.viz/column-settings
                                           {{::mb.viz/field-id 1}
                                            {::mb.viz/date-style "YYYY/M/D"
-                                            nil                 "ascending"}}})))))
+                                            nil                 "ascending"}}}))))
+  (testing "date_abbreviate / date_separator without a date_style must not NPE (BI-118)"
+    ;; The UI writes exactly this when "Abbreviate names of days and months" is ticked and the date style is
+    ;; left at its default. Before the fix `(str/replace nil ...)` threw, and because table cells render lazily
+    ;; the NPE escaped `render-pulse-card-body`'s try/catch and failed the whole subscription.
+    (testing "abbreviate only -- falls through to the default style"
+      (is (= "Jul 16, 2020"
+             (datetime/format-temporal-str "UTC" now
+                                           {:unit :default :field_ref [:field 1 nil]}
+                                           {::mb.viz/column-settings
+                                            {{::mb.viz/field-id 1}
+                                             {::mb.viz/date-abbreviate true}}}))))
+    (testing "abbreviate + time_style, as on the failing Andwis card"
+      (is (string? (datetime/format-temporal-str "UTC" now
+                                                 {:unit :default :field_ref [:field 1 nil]}
+                                                 {::mb.viz/column-settings
+                                                  {{::mb.viz/field-id 1}
+                                                   {::mb.viz/date-abbreviate true
+                                                    ::mb.viz/time-style      "HH:mm"}}}))))
+    (testing "separator only"
+      (is (string? (datetime/format-temporal-str "UTC" now
+                                                 {:unit :default :field_ref [:field 1 nil]}
+                                                 {::mb.viz/column-settings
+                                                  {{::mb.viz/field-id 1}
+                                                   {::mb.viz/date-separator "-"}}}))))
+    (testing "abbreviate still applies when a date_style is present"
+      (is (= "Jul 16, 2020"
+             (datetime/format-temporal-str "UTC" now
+                                           {:unit :default :field_ref [:field 1 nil]}
+                                           {::mb.viz/column-settings
+                                            {{::mb.viz/field-id 1}
+                                             {::mb.viz/date-style      "MMMM D, YYYY"
+                                              ::mb.viz/date-abbreviate true}}}))))))

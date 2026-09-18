@@ -1,5 +1,6 @@
 (ns metabase.pulse.render
   (:require [clojure.tools.logging :as log]
+            [clojure.walk :as walk]
             [hiccup.core :refer [h]]
             [metabase.models.dashboard-card :as dashboard-card]
             [metabase.pulse.render.body :as body]
@@ -125,7 +126,14 @@
                            :attached)
                          :unknown)]
       (log/debug (trs "Rendering pulse card with chart-type {0} and render-type {1}" chart-type render-type))
-      (body/render chart-type render-type timezone-id card dashcard data))
+      ;; `body/render` returns Hiccup whose table cells are *lazy* -- the per-cell formatting (e.g.
+      ;; `datetime/format-temporal-str`) only runs when the seq is realised. Left alone, that happens while the
+      ;; email HTML is being generated in `metabase.email.messages/render-message-body`, i.e. outside this
+      ;; try/catch, so a single bad cell turned into a 500 for the whole subscription instead of the
+      ;; "error displaying this card" placeholder below (BI-118, and BI-49 before it). Walk the content here to
+      ;; force every lazy seq inside the try.
+      (update (body/render chart-type render-type timezone-id card dashcard data)
+              :content #(walk/postwalk identity %)))
     (catch Throwable e
       (if (:card-error (ex-data e))
         (do
