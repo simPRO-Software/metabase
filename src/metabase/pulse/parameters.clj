@@ -35,12 +35,20 @@
   "Given a dashboard's ID and parameters, returns a URL for the dashboard with filters included"
   [dashboard-id parameters]
   (let [base-url   (urls/dashboard-url dashboard-id)
+        ;; `codec/url-encode` throws a NullPointerException on a nil argument, and this is reached from
+        ;; [[metabase.email.messages/pulse-context]], which is not wrapped in any try/catch. So a single parameter
+        ;; carrying no `:slug`, or a single nil among its values, used to fail the *entire* dashboard subscription
+        ;; with an opaque NPE -- a 500 on `POST /api/pulse/test` for a manual send, and a silently missing email for
+        ;; a scheduled one (BI-118). Skip anything we can't encode rather than taking the subscription down.
         url-params (flatten
-                    (for [param parameters]
-                      (for [value (u/one-or-many (or (:value param) (:default param)))]
-                        (str (codec/url-encode (:slug param))
-                             "="
-                             (codec/url-encode value)))))]
+                    (for [param parameters
+                          :let  [slug (:slug param)]
+                          :when (not (str/blank? slug))
+                          value (u/one-or-many (or (:value param) (:default param)))
+                          :when (some? value)]
+                      (str (codec/url-encode slug)
+                           "="
+                           (codec/url-encode value))))]
     (str base-url (when (seq url-params)
                     (str "?" (str/join "&" url-params))))))
 

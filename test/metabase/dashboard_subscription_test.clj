@@ -192,15 +192,33 @@
           (is (nil? (-> result first :result :error)))
           (is (= "Card query failed" (-> result second :result :error))))))))
 
-(deftest failing-card-still-sends-subscription-test
-  (testing "a dashcard whose query throws no longer kills the whole subscription (BI-118)"
+(deftest is-card-empty?-failed-result-test
+  (testing "a failed or interrupted query result has no :row_count, and `(zero? nil)` throws an NPE (BI-118)"
+    (let [is-card-empty? @#'metabase.pulse/is-card-empty?]
+      (testing "a failed card is not empty -- we still want the subscription sent so the error is visible"
+        (is (false? (is-card-empty? {:card {} :result {:status :failed, :error "Table does not exist"}}))))
+      (testing "same for an interrupted (e.g. cancelled/timed-out) card, which carries no :error either"
+        (is (false? (is-card-empty? {:card {} :result {:status :interrupted}}))))
+      (testing "ordinary results are unaffected"
+        (is (false? (is-card-empty? {:card {} :result {:status :completed, :row_count 3, :data {:rows [[1] [2] [3]]}}})))
+        (is (true? (is-card-empty? {:card {} :result {:status :completed, :row_count 0, :data {:rows []}}})))
+        (is (true? (is-card-empty? {:card {} :result {:status :completed, :row_count 1, :data {:rows [[nil]]}}}))))
+      (testing "text cards have no result at all"
+        (is (true? (is-card-empty? {:text "hi"})))))))
+
+(deftest failed-query-still-sends-subscription-test
+  (testing "a dashcard whose query FAILS (the real BI-118 path -- catch-exceptions returns a :failed result rather
+           than throwing) no longer kills the whole subscription, even with skip_if_empty set"
     (do-test
      {:card    (pulse.test-util/checkins-query-card {})
-      ;; `skip_if_empty` is the harsher path: an errored card must not be treated as "empty"
+      ;; `skip_if_empty` is what reaches `is-card-empty?` -- without it the NPE is never triggered, which is why a
+      ;; subscription with the toggle off sends fine even on an unfixed build
       :pulse   {:skip_if_empty true}
       :fixture (fn [_ thunk]
                  (with-redefs [qp.dashboard/run-query-for-dashcard-async
-                               (fn [& _] (throw (ex-info "Card query failed" {})))]
+                               (fn [& _] {:status :failed
+                                          :class  "class java.lang.Exception"
+                                          :error  "Table does not exist"})]
                    (thunk)))
       :assert  {:email
                 (fn [_ _]
@@ -208,6 +226,20 @@
                     (is (mt/received-email-subject? :rasta #"Aviary KPIs")))
                   (testing "and the broken card is rendered as an error placeholder"
                     (is (mt/received-email-body? :rasta #"There was a problem with this question"))))}})))
+
+(deftest throwing-card-still-sends-subscription-test
+  (testing "a dashcard that throws outside the QP (permissions, deleted Card, ...) also does not kill the send"
+    (do-test
+     {:card    (pulse.test-util/checkins-query-card {})
+      :pulse   {:skip_if_empty true}
+      :fixture (fn [_ thunk]
+                 (with-redefs [qp.dashboard/run-query-for-dashcard-async
+                               (fn [& _] (throw (ex-info "Card query failed" {})))]
+                   (thunk)))
+      :assert  {:email
+                (fn [_ _]
+                  (is (mt/received-email-subject? :rasta #"Aviary KPIs"))
+                  (is (mt/received-email-body? :rasta #"There was a problem with this question")))}})))
 
 (deftest virtual-card-without-text-test
   (testing "a virtual dashcard with no :text (e.g. an action button) does not NPE the subscription (BI-118)"

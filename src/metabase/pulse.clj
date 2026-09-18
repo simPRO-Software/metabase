@@ -72,11 +72,15 @@
          :result   result})
       (catch Throwable e
         (log/warn e (trs "Error running query for Card {0}" card-id))
-        ;; Return a result carrying `:error` rather than `nil`. A `nil` here used to flow all the way into
-        ;; `metabase.email.messages/render-result-card`, which treats a result without a `:card` as a text card
-        ;; and calls `process-markdown` on its (nil) `:text` -- that NPEs inside flexmark and takes down the
-        ;; whole subscription, so one transient card failure meant no email at all (BI-118). With a `:error`
-        ;; result the renderer falls through to its existing `:card-error` body and the other cards still send.
+        ;; Note that an ordinary query failure does *not* land here -- `catch-exceptions` middleware turns that into
+        ;; a `{:status :failed}` result instead of rethrowing. We only get here when something throws outside the
+        ;; QP itself (a permission check, a deleted Card, a cancelled request, ...).
+        ;;
+        ;; Return a result carrying `:error` rather than `nil` all the same. A `nil` here flows into
+        ;; `metabase.email.messages/render-result-card`, which treats a result without a `:card` as a text card and
+        ;; calls `process-markdown` on its (nil) `:text` -- that NPEs inside flexmark and takes down the whole
+        ;; subscription. With an `:error` result the renderer falls through to its existing `:card-error` body and
+        ;; the other cards still send.
         (when-let [card (u/ignore-exceptions (db/select-one Card :id card-id))]
           {:card     card
            :dashcard dashcard
@@ -237,15 +241,20 @@
   "Check if the card is empty"
   [card]
   (if-let [result (:result card)]
-    (cond
-      ;; A card whose query failed is *not* empty -- we still want to send the subscription so the recipient sees
-      ;; that this card errored instead of silently getting nothing (BI-118). It also has no `:row_count`, so the
-      ;; `zero?` below would NPE on it.
-      (:error result) false
-      :else           (or (zero? (or (:row_count result) 0))
-                          ;; Many aggregations result in [[nil]] if there are no rows to aggregate after filters
-                          (= [[nil]]
-                             (-> result :data :rows))))
+    ;; `catch-exceptions` middleware does not rethrow a failed userland query -- it returns
+    ;; `{:status :failed, :error ...}` (or `{:status :interrupted}`), *neither of which has a `:row_count`*. Since
+    ;; `(zero? nil)` throws a NullPointerException, the `zero?` below used to abort the entire subscription for any
+    ;; Pulse with `skip_if_empty` set, the moment one card's query failed (BI-118).
+    ;;
+    ;; Such a card is also not "empty": we want the subscription sent so the recipient sees that this card errored
+    ;; rather than silently receiving nothing at all.
+    (if (or (:error result)
+            (not= (:status result) :completed))
+      false
+      (or (zero? (or (:row_count result) 0))
+          ;; Many aggregations result in [[nil]] if there are no rows to aggregate after filters
+          (= [[nil]]
+             (-> result :data :rows))))
     ;; Text cards have no result; treat as empty
     true))
 
