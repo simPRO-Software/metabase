@@ -148,4 +148,19 @@
                                            {::mb.viz/column-settings
                                             {{::mb.viz/field-id 1}
                                              {::mb.viz/date-style      "MMMM D, YYYY"
-                                              ::mb.viz/date-abbreviate true}}}))))))
+                                              ::mb.viz/date-abbreviate true}}}))))
+    (testing "and it still applies to the *default* style of a unit whose default is not already abbreviated"
+      (is (= "Thursday, Jul 16, 2020"
+             (datetime/format-temporal-str "UTC" now
+                                           {:unit :day :field_ref [:field 1 nil]}
+                                           {::mb.viz/column-settings
+                                            {{::mb.viz/field-id 1}
+                                             {::mb.viz/date-abbreviate true}}}))))
+    (testing "a separator still applies to a style containing slashes"
+      (is (= "2020-7-16"
+             (datetime/format-temporal-str "UTC" now
+                                           {:unit :default :field_ref [:field 1 nil]}
+                                           {::mb.viz/column-settings
+                                            {{::mb.viz/field-id 1}
+                                             {::mb.viz/date-style     "YYYY/M/D"
+                                              ::mb.viz/date-separator "-"}}}))))))

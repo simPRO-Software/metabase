@@ -158,7 +158,7 @@
                 :attachment-name "image.png"
                 :channel-id      channel-id
                 :fallback        card-name}
-               (let [mrkdwn (markdown/process-markdown (:text card-result) :slack)]
+               (let [mrkdwn (markdown/process-markdown (or (:text card-result) "") :slack)]
                  (when (not (str/blank? mrkdwn))
                    {:blocks [{:type "section"
                               :text {:type "mrkdwn"
@@ -237,20 +237,23 @@
              []
              attachments))))
 
+(defn- card-errored?
+  "Did this card's query fail? `catch-exceptions` middleware does not rethrow a failed userland query -- it returns
+  `{:status :failed, :error ...}` (or `{:status :interrupted}`), neither of which has a `:row_count`."
+  [card]
+  (boolean
+   (when-let [result (:result card)]
+     (or (some? (:error result))
+         (not= (:status result) :completed)))))
+
 (defn- is-card-empty?
   "Check if the card is empty"
   [card]
   (if-let [result (:result card)]
-    ;; `catch-exceptions` middleware does not rethrow a failed userland query -- it returns
-    ;; `{:status :failed, :error ...}` (or `{:status :interrupted}`), *neither of which has a `:row_count`*. Since
-    ;; `(zero? nil)` throws a NullPointerException, the `zero?` below used to abort the entire subscription for any
-    ;; Pulse with `skip_if_empty` set, the moment one card's query failed (BI-118).
-    ;;
-    ;; Such a card is also not "empty": we want the subscription sent so the recipient sees that this card errored
-    ;; rather than silently receiving nothing at all.
-    (if (or (:error result)
-            (not= (:status result) :completed))
-      false
+    ;; A failed result has no `:row_count`, and `(zero? nil)` throws a NullPointerException -- that used to abort the
+    ;; entire subscription for any Pulse with `skip_if_empty` set, the moment one card's query failed (BI-118).
+    (if (card-errored? card)
+      true
       (or (zero? (or (:row_count result) 0))
           ;; Many aggregations result in [[nil]] if there are no rows to aggregate after filters
           (= [[nil]]
@@ -308,7 +311,12 @@
 (defmethod should-send-notification? :pulse
   [pulse results]
   (if (:skip_if_empty pulse)
-    (not (are-all-cards-empty? results))
+    ;; An errored card is not "empty": send the subscription anyway so the recipient sees which card failed rather
+    ;; than silently receiving nothing (BI-118). Note that alerts deliberately do *not* fire on a failed query --
+    ;; `is-card-empty?` treats those as empty so a transient failure can't trigger (and, for `alert_first_only`,
+    ;; delete) an alert that never had any rows.
+    (or (some card-errored? results)
+        (not (are-all-cards-empty? results)))
     true))
 
 ;; 'notification' used below means a map that has information needed to send a Pulse/Alert, including results of

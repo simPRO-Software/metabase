@@ -194,17 +194,31 @@
 
 (deftest is-card-empty?-failed-result-test
   (testing "a failed or interrupted query result has no :row_count, and `(zero? nil)` throws an NPE (BI-118)"
-    (let [is-card-empty? @#'metabase.pulse/is-card-empty?]
-      (testing "a failed card is not empty -- we still want the subscription sent so the error is visible"
-        (is (false? (is-card-empty? {:card {} :result {:status :failed, :error "Table does not exist"}}))))
+    (let [is-card-empty? @#'metabase.pulse/is-card-empty?
+          card-errored?  @#'metabase.pulse/card-errored?]
+      (testing "a failed card is reported as errored rather than blowing up on `(zero? nil)`"
+        (is (true? (is-card-empty? {:card {} :result {:status :failed, :error "Table does not exist"}})))
+        (is (true? (card-errored? {:card {} :result {:status :failed, :error "Table does not exist"}}))))
       (testing "same for an interrupted (e.g. cancelled/timed-out) card, which carries no :error either"
-        (is (false? (is-card-empty? {:card {} :result {:status :interrupted}}))))
+        (is (true? (is-card-empty? {:card {} :result {:status :interrupted}})))
+        (is (true? (card-errored? {:card {} :result {:status :interrupted}}))))
+      (testing "an ordinary result is not errored"
+        (is (false? (card-errored? {:card {} :result {:status :completed, :row_count 3, :data {:rows [[1]]}}})))
+        (is (false? (card-errored? {:text "hi"}))))
       (testing "ordinary results are unaffected"
         (is (false? (is-card-empty? {:card {} :result {:status :completed, :row_count 3, :data {:rows [[1] [2] [3]]}}})))
         (is (true? (is-card-empty? {:card {} :result {:status :completed, :row_count 0, :data {:rows []}}})))
         (is (true? (is-card-empty? {:card {} :result {:status :completed, :row_count 1, :data {:rows [[nil]]}}}))))
       (testing "text cards have no result at all"
         (is (true? (is-card-empty? {:text "hi"})))))))
+
+(deftest should-send-notification-failed-card-test
+  (let [should-send? @#'metabase.pulse/should-send-notification?
+        failed       [{:card {} :result {:status :failed, :error "Table does not exist"}}]]
+    (testing "a subscription with skip_if_empty set still sends when a card errored, so the error is visible (BI-118)"
+      (is (true? (should-send? {:skip_if_empty true} failed))))
+    (testing "but a `rows` alert must not fire on a failed query -- with alert_first_only that would delete it"
+      (is (false? (should-send? {:alert_condition "rows"} failed))))))
 
 (deftest failed-query-still-sends-subscription-test
   (testing "a dashcard whose query FAILS (the real BI-118 path -- catch-exceptions returns a :failed result rather

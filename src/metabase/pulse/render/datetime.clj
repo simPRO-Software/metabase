@@ -85,14 +85,14 @@
                                             (update-keys (fn [k] (-> k name (str/replace #"_" "-") keyword)))))
          ;; A column can carry `date_abbreviate` and/or `date_separator` *without* a `date_style` -- the UI writes
          ;; exactly that when a user ticks "Abbreviate names of days and months" and leaves the style at its default.
-         ;; `date-style` is then nil, and `(str/replace nil ...)` throws a NullPointerException. Because table cells
-         ;; are rendered lazily, that NPE surfaces when the email HTML is realised, outside `render-pulse-card-body`'s
-         ;; try/catch, and used to kill the entire dashboard subscription (BI-118; same site as BI-49). A nil
-         ;; date-style is fine further down -- every consumer falls back to a default -- so just leave it alone.
-         date-style (some-> date-style
-                            (cond->
-                              date-separator (str/replace #"/" date-separator)
-                              abbreviate     (-> (str/replace #"MMMM" "MMM") (str/replace #"DDD" "D"))))]
+         ;; `date-style` is then nil, and `(str/replace nil ...)` threw a NullPointerException. Because table cells
+         ;; are rendered lazily, that NPE surfaced when the email HTML is realised, outside `render-pulse-card-body`'s
+         ;; try/catch, and used to kill the entire dashboard subscription (BI-118; same site as BI-49). Apply the
+         ;; separator/abbreviation to the *resolved* style instead, so they also take effect on the defaults below.
+         apply-date-options (fn [style]
+                              (cond-> style
+                                date-separator (str/replace #"/" date-separator)
+                                abbreviate     (-> (str/replace #"MMMM" "MMM") (str/replace #"DDD" "D"))))]
      (cond (str/blank? s) ""
 
            (isa? (or (:effective_type col) (:base_type col)) :type/Time)
@@ -102,14 +102,14 @@
            (case (:unit col)
              ;; these types have special formatting
              :minute  (reformat-temporal-str timezone-id s
-                                             (str (or date-style "MMMM, yyyy") ", "
+                                             (str (apply-date-options (or date-style "MMMM, yyyy")) ", "
                                                   (str/replace (or time-style "h:mm a") #"A" "a")))
              :hour    (reformat-temporal-str timezone-id s
-                                             (str (or date-style "MMMM, yyyy") ", "
+                                             (str (apply-date-options (or date-style "MMMM, yyyy")) ", "
                                                   (str/replace (or time-style "h a") #"A" "a")))
-             :day     (reformat-temporal-str timezone-id s (or date-style "EEEE, MMMM d, YYYY"))
+             :day     (reformat-temporal-str timezone-id s (apply-date-options (or date-style "EEEE, MMMM d, YYYY")))
              :week    (str (tru "Week ") (reformat-temporal-str timezone-id s "w - YYYY"))
-             :month   (reformat-temporal-str timezone-id s (or date-style "MMMM, yyyy"))
+             :month   (reformat-temporal-str timezone-id s (apply-date-options (or date-style "MMMM, yyyy")))
              :quarter (reformat-temporal-str timezone-id s "QQQ - yyyy")
              :year    (reformat-temporal-str timezone-id s "YYYY")
 
@@ -122,7 +122,9 @@
              (:week-of-year :minute-of-hour :day-of-month :day-of-year) (x-of-y (parse-long s))
 
              ;; for everything else return in this format
-             (reformat-temporal-str timezone-id s (str/replace (or date-style "MMM d, yyyy") #"D" "d")))))))
+             (reformat-temporal-str timezone-id s (-> (or date-style "MMM d, yyyy")
+                                                      apply-date-options
+                                                      (str/replace #"D" "d"))))))))
 
 (def ^:private RenderableInterval
   {:interval-start     Temporal
