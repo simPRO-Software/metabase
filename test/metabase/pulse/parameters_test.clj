@@ -25,4 +25,23 @@
 
     (testing "Filters slugs and values are encoded properly for the URL"
       (is (= "https://metabase.com/dashboard/1?%26=contains%3F"
-             (params/dashboard-url 1 [{:value "contains?", :slug "&"}]))))))
+             (params/dashboard-url 1 [{:value "contains?", :slug "&"}]))))
+
+    (testing "A parameter we cannot encode is skipped rather than throwing an NPE and killing the whole
+             subscription (BI-118)"
+      (testing "a parameter with no :slug"
+        (is (= "https://metabase.com/dashboard/1"
+               (params/dashboard-url 1 [{:id "abc", :value "CA"}]))))
+
+      (testing "a parameter with a blank :slug"
+        (is (= "https://metabase.com/dashboard/1"
+               (params/dashboard-url 1 [{:slug "", :value "CA"}]))))
+
+      (testing "a nil among a parameter's values -- the other values still make it into the URL"
+        (is (= "https://metabase.com/dashboard/1?state=CA&state=NJ"
+               (params/dashboard-url 1 [{:slug "state", :value ["CA" nil "NJ"]}]))))
+
+      (testing "an unencodable parameter does not take its well-formed neighbours down with it"
+        (is (= "https://metabase.com/dashboard/1?state=CA"
+               (params/dashboard-url 1 [{:id "no-slug", :value "whatever"}
+                                        {:slug "state", :value "CA"}])))))))

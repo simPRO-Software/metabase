@@ -426,7 +426,9 @@
   [timezone result]
   (if (:card result)
     (render/render-pulse-section timezone result)
-    {:content (markdown/process-markdown (:text result) :html)}))
+    ;; Not every virtual dashcard is a text card -- action buttons, for example, have no `:text` at all -- and
+    ;; `Parser/parse` NPEs on a nil input, which used to fail the whole subscription (BI-118). Default to "".
+    {:content (markdown/process-markdown (or (:text result) "") :html)}))
 
 (defn- render-filters
   [notification dashboard]

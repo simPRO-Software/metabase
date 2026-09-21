@@ -4,6 +4,7 @@
             [metabase.models :refer [Card Dashboard DashboardCard DashboardCardSeries]]
             [metabase.pulse :as pulse]
             [metabase.pulse.render :as render]
+            [metabase.pulse.render.body :as body]
             [metabase.query-processor :as qp]
             [metabase.test :as mt]
             [metabase.util :as u]))
@@ -36,6 +37,20 @@
                      nil nil
                      {:error "some error"}) [1 2 4 2 2])
            "There was a problem with this question."))))
+
+(deftest lazy-render-error-is-caught-test
+  (testing "an exception thrown while *realising* lazy card content is caught and rendered as the error
+           placeholder, instead of escaping when the email HTML is generated (BI-118)"
+    ;; `body/render` for tables returns Hiccup whose cells are lazy seqs; the per-cell formatting (e.g.
+    ;; `format-temporal-str`) only runs on realisation. Simulate a cell whose formatter throws.
+    (let [exploding-content [:table [:tbody (for [_ (range 1)] [:tr [:td (throw (NullPointerException.))]])]]]
+      (with-redefs [body/render (fn [chart-type & _]
+                                  (if (#{:render-error :card-error} chart-type)
+                                    {:attachments nil, :content [:div "An error occurred while displaying this card."]}
+                                    {:attachments nil, :content exploding-content}))]
+        (let [content (render/render-pulse-card-for-display
+                       nil {:name "Boom"} {:data {:cols [{:name "x", :base_type :type/Text}], :rows [["a"]]}})]
+          (is (re-find #"An error occurred while displaying this card" (pr-str content))))))))
 
 (deftest detect-pulse-chart-type-test
   (testing "Currently unsupported chart types for static-viz return `nil`."
