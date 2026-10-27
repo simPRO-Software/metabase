@@ -13,7 +13,8 @@
             [metabase.util.i18n :refer [tru]]
             [schema.core :as s]
             [toucan.db :as db]
-            [toucan.models :as models]))
+            [toucan.models :as models])
+  (:import org.joda.time.DateTimeZone))
 
 ;; ## Static Definitions
 
@@ -249,6 +250,31 @@
                  [:or [:= :schedule_day weekday]
                   ;; this is here specifically to allow for cases where day doesn't have to match
                   [:= :schedule_day monthly-schedule-day-or-nil]]]]]})))
+
+(defn- valid-timezone-id
+  "Return `tz-id` if it is a timezone ID Joda Time knows, otherwise `nil`."
+  [tz-id]
+  (when (and (string? tz-id) (seq tz-id))
+    (try
+      (DateTimeZone/forID tz-id)
+      tz-id
+      (catch IllegalArgumentException _
+        nil))))
+
+(defn pulse-id->timezone
+  "Map of Pulse ID -> ID of the timezone its `PulseChannel` schedules are set in, which is the `:timezone` in the
+  settings of the Pulse creator. Pulses whose creator has no valid timezone are left out: their schedules are in the
+  reporting timezone, or UTC."
+  []
+  (let [pulse-id->creator-id (db/select-id->field :creator_id 'Pulse)
+        user-id->timezone    (when-let [user-ids (not-empty (set (vals pulse-id->creator-id)))]
+                               (m/map-vals (comp valid-timezone-id :timezone)
+                                           (db/select-id->field :settings User :id [:in user-ids])))]
+    (into {}
+          (for [[pulse-id creator-id] pulse-id->creator-id
+                :let                  [tz-id (get user-id->timezone creator-id)]
+                :when                 tz-id]
+            [pulse-id tz-id]))))
 
 
 (defn update-recipients!

@@ -13,10 +13,12 @@
             [medley.core :as m]
             [metabase.models.dashboard-card :refer [DashboardCard]]
             [metabase.models.permissions-group :as perms-group]
+            [metabase.models.pulse-channel :as pulse-channel :refer [PulseChannel]]
             [metabase.models.setting :as setting :refer [Setting]]
             [metabase.util :as u]
             [toucan.db :as db]
-            [toucan.models :as models]))
+            [toucan.models :as models])
+  (:import org.joda.time.DateTimeZone))
 
 ;;; # Migration Helpers
 
@@ -220,6 +222,25 @@
   ;; have switched from enterprise -> SSO and stil have this mapping in Setting table
   (remove-admin-group-from-mappings-by-setting-key! :jwt-group-mappings)
   (remove-admin-group-from-mappings-by-setting-key! :saml-group-mappings))
+
+(defmigration
+  ^{:author "simPRO"
+    :added  "0.45.2"
+    :doc    "The subscription schedule form used to convert the hour a user picked from their timezone to UTC before
+            saving it, but saved the day and frame they picked as is, so weekly and monthly subscriptions could go out
+            a day early or late. Schedules are now saved and sent in the timezone of the pulse creator (see
+            `pulse-channel/pulse-id->timezone`), so convert the saved hours back to that timezone, using the current
+            offset, which is the one the form displayed them with."}
+  migrate-pulse-channel-schedule-hour-to-creator-timezone
+  (let [pulse-id->timezone (pulse-channel/pulse-id->timezone)
+        now                (System/currentTimeMillis)]
+    (doseq [{:keys [id pulse_id schedule_hour]} (db/select [PulseChannel :id :pulse_id :schedule_hour]
+                                                  :schedule_hour [:not= nil])
+            :let  [tz-id (get pulse-id->timezone pulse_id)]
+            :when tz-id
+            :let  [offset-hours (long (Math/floor (/ (.getOffset (DateTimeZone/forID tz-id) now) 3600000.0)))]]
+      (db/update-where! PulseChannel {:id id}
+        :schedule_hour (mod (+ schedule_hour offset-hours) 24)))))
 
 ;; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ;; !!                                                                                                               !!

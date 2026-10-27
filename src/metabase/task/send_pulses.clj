@@ -36,17 +36,21 @@
   (s/enum :first :last :other))
 
 (s/defn ^:private send-pulses!
-  "Send any `Pulses` which are scheduled to run in the current day/hour. We use the current time and determine the
-  hour of the day and day of the week according to the defined reporting timezone, or UTC. We then find all `Pulses`
-  that are scheduled to run and send them. The `on-error` function is called if an exception is thrown when sending
-  the pulse. Since this is a background process, the exception is only logged and not surfaced to the user. The
-  `on-error` function makes it easier to test for when an error doesn't occur"
+  "Send any `Pulses` which are scheduled to run in the given day/hour. We find all `Pulses` that are scheduled to run,
+  keep the ones whose ID satisfies `pulse-id-pred`, and send them. The `on-error` function is called if an exception
+  is thrown when sending the pulse. Since this is a background process, the exception is only logged and not surfaced
+  to the user. The `on-error` function makes it easier to test for when an error doesn't occur"
   ([hour weekday monthday monthweek]
    (send-pulses! hour weekday monthday monthweek log-pulse-exception))
 
-  ([hour :- Hour, weekday :- Weekday, monthday :- MonthDay, monthweek :- MonthWeek, on-error]
+  ([hour weekday monthday monthweek on-error]
+   (send-pulses! hour weekday monthday monthweek on-error (constantly true)))
+
+  ([hour :- Hour, weekday :- Weekday, monthday :- MonthDay, monthweek :- MonthWeek, on-error, pulse-id-pred]
    (log/info (trs "Sending scheduled pulses..."))
-   (let [pulse-id->channels (group-by :pulse_id (pulse-channel/retrieve-scheduled-channels hour weekday monthday monthweek))]
+   (let [pulse-id->channels (->> (pulse-channel/retrieve-scheduled-channels hour weekday monthday monthweek)
+                                 (filter (comp pulse-id-pred :pulse_id))
+                                 (group-by :pulse_id))]
      (doseq [[pulse-id channels] pulse-id->channels]
        (try
          (task-history/with-task-history {:task         "send-pulse"
@@ -77,23 +81,36 @@
       (< start-of-last-week curr-day-of-month) :last
       :else                                    :other)))
 
+(defn- in-timezone
+  "`dt` in the timezone with ID `tz-id`, or `dt` unchanged when `tz-id` is empty."
+  [dt tz-id]
+  (if (empty? tz-id)
+    dt
+    (time/to-time-zone dt (time/time-zone-for-id tz-id))))
+
+(defn- send-scheduled-pulses!
+  "Send the pulses scheduled to run at `now`. A pulse's schedule is in the timezone of its creator (see
+  [[pulse-channel/pulse-id->timezone]]), so `now` is converted to each of those timezones in turn and only the pulses
+  in that timezone are matched against it. Pulses without a creator timezone use the reporting timezone, or UTC."
+  [now]
+  (let [pulse-id->timezone (pulse-channel/pulse-id->timezone)]
+    (doseq [tz-id (conj (set (vals pulse-id->timezone)) nil)]
+      (let [dt (in-timezone now (or tz-id (driver/report-timezone)))]
+        (send-pulses! (time/hour dt)
+                      ;; joda time produces values of 1-7 here (Mon -> Sun) and we subtract 1 from it to
+                      ;; make the values zero based to correspond to the indexes in pulse-channel/days-of-week
+                      (->> (dec (time/day-of-week dt))
+                           (get pulse-channel/days-of-week)
+                           :id)
+                      (monthday dt)
+                      (monthweek dt)
+                      log-pulse-exception
+                      #(= tz-id (get pulse-id->timezone %)))))))
+
 (jobs/defjob ^{:doc "Triggers the sending of all pulses which are scheduled to run in the current hour"} SendPulses [_]
   (try
     (task-history/with-task-history {:task "send-pulses"}
-      ;; determine what time it is right now (hour-of-day & day-of-week) in reporting timezone
-      (let [reporting-timezone (driver/report-timezone)
-            now                (if (empty? reporting-timezone)
-                                 (time/now)
-                                 (time/to-time-zone (time/now) (time/time-zone-for-id reporting-timezone)))
-            curr-hour          (time/hour now)
-            ;; joda time produces values of 1-7 here (Mon -> Sun) and we subtract 1 from it to
-            ;; make the values zero based to correspond to the indexes in pulse-channel/days-of-week
-            curr-weekday       (->> (dec (time/day-of-week now))
-                                    (get pulse-channel/days-of-week)
-                                    :id)
-            curr-monthday      (monthday now)
-            curr-monthweek     (monthweek now)]
-        (send-pulses! curr-hour curr-weekday curr-monthday curr-monthweek)))
+      (send-scheduled-pulses! (time/now)))
     (catch Throwable e
       (log/error e (trs "SendPulses task failed")))))
 

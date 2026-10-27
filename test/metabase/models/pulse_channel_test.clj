@@ -405,6 +405,18 @@
               (is (= expected
                      (set (apply retrieve-channels args)))))))))))
 
+(deftest pulse-id->timezone-test
+  (testing "Pulses map to the valid timezone in their creator's settings"
+    (mt/with-temp* [User  [{brisbane-id :id} {:settings {:timezone "Australia/Brisbane"}}]
+                    User  [{invalid-id :id}  {:settings {:timezone "Not/A_Timezone"}}]
+                    User  [{no-tz-id :id}    {:settings {:db_id "4"}}]
+                    Pulse [{pulse-1-id :id}  {:creator_id brisbane-id}]
+                    Pulse [{pulse-2-id :id}  {:creator_id invalid-id}]
+                    Pulse [{pulse-3-id :id}  {:creator_id no-tz-id}]
+                    Pulse [{pulse-4-id :id}  {:creator_id (mt/user->id :rasta)}]]
+      (is (= {pulse-1-id "Australia/Brisbane"}
+             (select-keys (pulse-channel/pulse-id->timezone) [pulse-1-id pulse-2-id pulse-3-id pulse-4-id]))))))
+
 (deftest inactive-users-test
   (testing "Inactive users shouldn't get Pulses"
     (mt/with-temp* [Pulse                 [{pulse-id :id}]

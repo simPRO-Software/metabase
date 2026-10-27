@@ -4,7 +4,7 @@
   (:require [cheshire.core :as json]
             [clojure.test :refer :all]
             [metabase.db.data-migrations :as migrations]
-            [metabase.models :refer [Card Dashboard DashboardCard Setting]]
+            [metabase.models :refer [Card Dashboard DashboardCard Pulse PulseChannel Setting User]]
             [metabase.models.permissions-group :as perms-group]
             [metabase.models.setting :as setting]
             [metabase.test :as mt]
@@ -391,3 +391,37 @@
           [ldap-sync-admin-group "true"]
           (#'migrations/migrate-remove-admin-from-group-mapping-if-needed)
           (is (= ldap-group-mappings (get-json-setting :ldap-group-mappings))))))))
+
+(deftest migrate-pulse-channel-schedule-hour-to-creator-timezone-test
+  (testing "Saved UTC hours are converted to the pulse creator's timezone, rounding half hour offsets down"
+    (mt/with-temp* [User         [{brisbane-id :id}       {:settings {:timezone "Australia/Brisbane"}}]
+                    User         [{kolkata-id :id}        {:settings {:timezone "Asia/Kolkata"}}]
+                    User         [{phoenix-id :id}        {:settings {:timezone "America/Phoenix"}}]
+                    Pulse        [{brisbane-pulse :id}    {:creator_id brisbane-id}]
+                    Pulse        [{kolkata-pulse :id}     {:creator_id kolkata-id}]
+                    Pulse        [{phoenix-pulse :id}     {:creator_id phoenix-id}]
+                    Pulse        [{utc-pulse :id}         {:creator_id (mt/user->id :rasta)}]
+                    ;; Tue 8 AM in Brisbane (UTC+10) was saved as Tue 22
+                    PulseChannel [{brisbane-channel :id}  {:pulse_id      brisbane-pulse
+                                                           :schedule_type :weekly
+                                                           :schedule_hour 22
+                                                           :schedule_day  "tue"}]
+                    ;; 8 AM in Kolkata (UTC+5:30) was saved as 3
+                    PulseChannel [{kolkata-channel :id}   {:pulse_id      kolkata-pulse
+                                                           :schedule_hour 3}]
+                    ;; 3 AM in Phoenix (UTC-7) was saved as 10
+                    PulseChannel [{phoenix-channel :id}   {:pulse_id      phoenix-pulse
+                                                           :schedule_hour 10}]
+                    PulseChannel [{utc-channel :id}       {:pulse_id      utc-pulse
+                                                           :schedule_hour 8}]
+                    PulseChannel [{hourly-channel :id}    {:pulse_id      brisbane-pulse
+                                                           :schedule_type :hourly
+                                                           :schedule_hour nil}]]
+      (#'migrations/migrate-pulse-channel-schedule-hour-to-creator-timezone)
+      (is (= {brisbane-channel 8
+              kolkata-channel  8
+              phoenix-channel  3
+              utc-channel      8
+              hourly-channel   nil}
+             (db/select-id->field :schedule_hour PulseChannel
+               :id [:in [brisbane-channel kolkata-channel phoenix-channel utc-channel hourly-channel]]))))))
