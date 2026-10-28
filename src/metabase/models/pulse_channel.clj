@@ -252,24 +252,31 @@
                   [:= :schedule_day monthly-schedule-day-or-nil]]]]]})))
 
 (defn- valid-timezone-id
-  "Return `tz-id` if it is a timezone ID Joda Time knows, otherwise `nil`."
+  "Return `tz-id` if it is one of the timezone IDs Joda Time knows, otherwise `nil`."
   [tz-id]
-  (when (and (string? tz-id) (seq tz-id))
-    (try
-      (DateTimeZone/forID tz-id)
-      tz-id
-      (catch IllegalArgumentException _
-        nil))))
+  (when (and (string? tz-id)
+             (contains? (DateTimeZone/getAvailableIDs) tz-id))
+    tz-id))
+
+(defn channel-timezone
+  "ID of the timezone a `PulseChannel`'s schedule is saved in, which the schedule form keeps in its `:details` as
+  `:schedule_timezone`, or `nil` for schedules saved before it did. Those have the hour in UTC, but the day and frame
+  in the timezone of the Pulse creator (see [[pulse-id->timezone]])."
+  [channel]
+  (valid-timezone-id (get-in channel [:details :schedule_timezone])))
 
 (defn pulse-id->timezone
-  "Map of Pulse ID -> ID of the timezone its `PulseChannel` schedules are set in, which is the `:timezone` in the
-  settings of the Pulse creator. Pulses whose creator has no valid timezone are left out: their schedules are in the
-  reporting timezone, or UTC."
+  "Map of Pulse ID -> ID of the timezone of its creator, which is the `:timezone` in their settings, for the dashboard
+  subscriptions and Pulses (not alerts) whose creator has a valid timezone."
   []
-  (let [pulse-id->creator-id (db/select-id->field :creator_id 'Pulse)
-        user-id->timezone    (when-let [user-ids (not-empty (set (vals pulse-id->creator-id)))]
+  (let [pulse-condition      [:and [:= :alert_condition nil] [:= :archived false]]
+        pulse-id->creator-id (db/select-id->field :creator_id 'Pulse {:where pulse-condition})
+        user-id->timezone    (when (seq pulse-id->creator-id)
                                (m/map-vals (comp valid-timezone-id :timezone)
-                                           (db/select-id->field :settings User :id [:in user-ids])))]
+                                           (db/select-id->field :settings User
+                                             {:where [:in :id {:select [:creator_id]
+                                                               :from   [:pulse]
+                                                               :where  pulse-condition}]})))]
     (into {}
           (for [[pulse-id creator-id] pulse-id->creator-id
                 :let                  [tz-id (get user-id->timezone creator-id)]

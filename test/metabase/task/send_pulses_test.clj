@@ -83,40 +83,66 @@
             (is (= []
                    @exceptions))))))))
 
-(deftest send-scheduled-pulses-in-creator-timezone-test
-  (testing "Schedules are matched in the timezone of the pulse creator, or UTC when the creator has none"
-    (mt/with-temp* [User         [{brisbane-id :id}       {:settings {:timezone "Australia/Brisbane"}}]
-                    Pulse        [{brisbane-weekly :id}   {:creator_id brisbane-id}]
-                    PulseChannel [_                       {:pulse_id      brisbane-weekly
-                                                           :schedule_type :weekly
-                                                           :schedule_hour 8
-                                                           :schedule_day  "tue"}]
-                    Pulse        [{brisbane-monthly :id}  {:creator_id brisbane-id}]
-                    PulseChannel [_                       {:pulse_id       brisbane-monthly
-                                                           :schedule_type  :monthly
-                                                           :schedule_hour  8
-                                                           :schedule_day   nil
-                                                           :schedule_frame :first}]
-                    Pulse        [{utc-weekly :id}        {:creator_id (mt/user->id :rasta)}]
-                    PulseChannel [_                       {:pulse_id      utc-weekly
-                                                           :schedule_type :weekly
-                                                           :schedule_hour 8
-                                                           :schedule_day  "tue"}]]
+(deftest send-scheduled-pulses-in-schedule-timezone-test
+  (testing "Schedules are matched in the timezone they were saved in"
+    (mt/with-temp* [User         [{brisbane-id :id}  {:settings {:timezone "Australia/Brisbane"}}]
+                    User         [{phoenix-id :id}   {:settings {:timezone "America/Phoenix"}}]
+                    ;; Tue 8 AM Brisbane, saved with its timezone
+                    Pulse        [{saved-weekly :id} {:creator_id (mt/user->id :rasta)}]
+                    PulseChannel [_                  {:pulse_id      saved-weekly
+                                                      :schedule_type :weekly
+                                                      :schedule_hour 8
+                                                      :schedule_day  "tue"
+                                                      :details       {:schedule_timezone "Australia/Brisbane"}}]
+                    ;; Tue 8 AM Brisbane, saved before with the hour in UTC
+                    Pulse        [{old-weekly :id}   {:creator_id brisbane-id}]
+                    PulseChannel [_                  {:pulse_id      old-weekly
+                                                      :schedule_type :weekly
+                                                      :schedule_hour 22
+                                                      :schedule_day  "tue"}]
+                    ;; first calendar day 8 AM Brisbane, saved before with the hour in UTC
+                    Pulse        [{old-monthly :id}  {:creator_id brisbane-id}]
+                    PulseChannel [_                  {:pulse_id       old-monthly
+                                                      :schedule_type  :monthly
+                                                      :schedule_hour  22
+                                                      :schedule_day   nil
+                                                      :schedule_frame :first}]
+                    ;; Tue 8 PM Phoenix, saved before with the hour in UTC
+                    Pulse        [{old-phoenix :id}  {:creator_id phoenix-id}]
+                    PulseChannel [_                  {:pulse_id      old-phoenix
+                                                      :schedule_type :weekly
+                                                      :schedule_hour 3
+                                                      :schedule_day  "tue"}]
+                    ;; Tue 8 AM UTC, the creator has no timezone
+                    Pulse        [{utc-weekly :id}   {:creator_id (mt/user->id :rasta)}]
+                    PulseChannel [_                  {:pulse_id      utc-weekly
+                                                      :schedule_type :weekly
+                                                      :schedule_hour 8
+                                                      :schedule_day  "tue"}]
+                    ;; Tue 8 AM UTC, alert schedules were never saved in the creator's timezone
+                    Pulse        [{alert-weekly :id} {:creator_id brisbane-id, :alert_condition "rows"}]
+                    PulseChannel [_                  {:pulse_id      alert-weekly
+                                                      :schedule_type :weekly
+                                                      :schedule_hour 8
+                                                      :schedule_day  "tue"}]]
       (letfn [(sent-at [dt]
                 (let [sent (atom #{})]
                   (with-redefs [metabase.pulse/send-pulse! (fn [{pulse-id :id} & _]
                                                              (swap! sent conj pulse-id))]
                     (#'send-pulses/send-scheduled-pulses! dt))
-                  (set/intersection @sent #{brisbane-weekly brisbane-monthly utc-weekly})))]
-        (testing "Mon 22:00 UTC is Tue 8 AM in Brisbane"
-          (is (= #{brisbane-weekly}
-                 (sent-at (time/date-time 2026 10 26 22)))))
-        (testing "Tue 8 AM UTC"
-          (is (= #{utc-weekly}
-                 (sent-at (time/date-time 2026 10 27 8)))))
-        (testing "Tue 22:00 UTC is Wed 8 AM in Brisbane"
-          (is (= #{}
-                 (sent-at (time/date-time 2026 10 27 22)))))
-        (testing "Oct 31 22:00 UTC is Nov 1 8 AM in Brisbane"
-          (is (= #{brisbane-monthly}
-                 (sent-at (time/date-time 2026 10 31 22)))))))))
+                  (set/intersection @sent #{saved-weekly old-weekly old-monthly old-phoenix utc-weekly alert-weekly})))]
+        (doseq [[description dt expected] [["Mon 22:00 UTC is Tue 8 AM in Brisbane"
+                                            (time/date-time 2026 10 26 22) #{saved-weekly old-weekly}]
+                                           ["Tue 3 AM UTC is Mon 8 PM in Phoenix"
+                                            (time/date-time 2026 10 27 3) #{}]
+                                           ["Tue 8 AM UTC"
+                                            (time/date-time 2026 10 27 8) #{utc-weekly alert-weekly}]
+                                           ["Tue 22:00 UTC is Wed 8 AM in Brisbane"
+                                            (time/date-time 2026 10 27 22) #{}]
+                                           ["Wed 3 AM UTC is Tue 8 PM in Phoenix"
+                                            (time/date-time 2026 10 28 3) #{old-phoenix}]
+                                           ["Oct 31 22:00 UTC is Nov 1 8 AM in Brisbane"
+                                            (time/date-time 2026 10 31 22) #{old-monthly}]]]
+          (testing description
+            (is (= expected
+                   (sent-at dt)))))))))
