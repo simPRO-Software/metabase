@@ -73,13 +73,16 @@ function _AddEditEmailSidebar({
           />
         </div>
         <SchedulePicker
-          schedule={_.pick(
-            channel,
-            "schedule_day",
-            "schedule_frame",
-            "schedule_hour",
-            "schedule_type",
-          )}
+          schedule={{
+            ..._.pick(
+              channel,
+              "schedule_day",
+              "schedule_frame",
+              "schedule_hour",
+              "schedule_type",
+            ),
+            details: channel.details || {},
+          }}
           scheduleOptions={channelSpec.schedules}
           textBeforeInterval={t`Sent`}
           textBeforeSendTime={t`${
@@ -136,6 +139,7 @@ function _AddEditEmailSidebar({
           </div>
         </div>
         <EmailAttachmentPicker
+          key={pulse.id}
           cards={pulse.cards}
           pulse={pulse}
           setPulse={setPulse}

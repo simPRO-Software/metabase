@@ -69,10 +69,47 @@ export default class SchedulePicker extends Component {
     textBeforeSendTime: PropTypes.string,
     onScheduleChange: PropTypes.func.isRequired,
     minutesOnHourPicker: PropTypes.bool,
-    currentUser: PropTypes.object.isRequired,
+    currentUser: PropTypes.object,
   };
 
   DEFAULT_DAY = "mon";
+
+  componentDidMount() {
+    this.convertToUserTimezone();
+  }
+
+  componentDidUpdate() {
+    // the picker can be given another schedule without being mounted again
+    this.convertToUserTimezone();
+  }
+
+  // A schedule with `details` is saved in the timezone in `details.schedule_timezone`. One saved before that has
+  // the hour in UTC, so convert it to the user's timezone, which it is saved in from now on.
+  convertToUserTimezone() {
+    const { schedule, currentUser, onScheduleChange } = this.props;
+    const timezone = currentUser?.settings?.timezone;
+
+    if (
+      schedule.details &&
+      !schedule.details.schedule_timezone &&
+      timezone &&
+      moment.tz.zone(timezone)
+    ) {
+      const offset = Math.floor(moment.tz(timezone).utcOffset() / 60);
+      const details = { ...schedule.details, schedule_timezone: timezone };
+      onScheduleChange(
+        {
+          ...schedule,
+          schedule_hour:
+            schedule.schedule_hour == null
+              ? schedule.schedule_hour
+              : (((schedule.schedule_hour + offset) % 24) + 24) % 24,
+          details,
+        },
+        { name: "details", value: details },
+      );
+    }
+  }
 
   handleChangeProperty(name, value) {
     let newSchedule = {
@@ -222,11 +259,15 @@ export default class SchedulePicker extends Component {
 
   renderHourPicker() {
     const { schedule, textBeforeSendTime, currentUser } = this.props;
-    const settings = currentUser.settings;
-    const timezone = settings.timezone
-      ? settings.timezone
-      : Settings.get("report-timezone-short");
-    const offset = Math.floor(moment.tz(timezone).utcOffset() / 60);
+    // the hour of a schedule saved with its timezone is in that timezone, otherwise it is in UTC
+    const scheduleTimezone = schedule.details?.schedule_timezone;
+    const timezone =
+      scheduleTimezone ||
+      currentUser?.settings?.timezone ||
+      Settings.get("report-timezone-short");
+    const offset = scheduleTimezone
+      ? 0
+      : Math.floor(moment.tz(timezone).utcOffset() / 60);
     const hourOfDay = isNaN(schedule.schedule_hour)
       ? 8
       : schedule.schedule_hour;

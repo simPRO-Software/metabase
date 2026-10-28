@@ -233,11 +233,12 @@ function friendlySchedule(channel, user) {
     schedule_type,
   } = channel;
 
-  const settings = user.settings;
-  const timezone = settings.timezone
-    ? settings.timezone
-    : Settings.get("report-timezone-short");
-  const offset = Math.floor(moment.tz(timezone).utcOffset() / 60);
+  // the hour of a schedule saved with its timezone is in that timezone, otherwise it is in UTC
+  const timezone =
+    user.settings?.timezone || Settings.get("report-timezone-short");
+  const offset = details?.schedule_timezone
+    ? 0
+    : Math.floor(moment.tz(timezone).utcOffset() / 60);
 
   let scheduleString = "";
 

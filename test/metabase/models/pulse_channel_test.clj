@@ -405,6 +405,32 @@
               (is (= expected
                      (set (apply retrieve-channels args)))))))))))
 
+(deftest pulse-id->timezone-test
+  (testing "Pulses map to the valid timezone in their creator's settings, alerts and archived Pulses are left out"
+    (mt/with-temp* [User  [{brisbane-id :id} {:settings {:timezone "Australia/Brisbane"}}]
+                    User  [{invalid-id :id}  {:settings {:timezone "Not/A_Timezone"}}]
+                    User  [{no-tz-id :id}    {:settings {:db_id "4"}}]
+                    Pulse [{pulse-1-id :id}  {:creator_id brisbane-id}]
+                    Pulse [{pulse-2-id :id}  {:creator_id invalid-id}]
+                    Pulse [{pulse-3-id :id}  {:creator_id no-tz-id}]
+                    Pulse [{pulse-4-id :id}  {:creator_id (mt/user->id :rasta)}]
+                    Pulse [{alert-id :id}    {:creator_id brisbane-id, :alert_condition "rows"}]
+                    Pulse [{archived-id :id} {:creator_id brisbane-id, :archived true}]]
+      (is (= {pulse-1-id "Australia/Brisbane"}
+             (select-keys (pulse-channel/pulse-id->timezone)
+                          [pulse-1-id pulse-2-id pulse-3-id pulse-4-id alert-id archived-id]))))))
+
+(deftest channel-timezone-test
+  (testing "A channel's schedule timezone is the valid timezone in its details"
+    (doseq [[details expected] {{:schedule_timezone "Australia/Brisbane"} "Australia/Brisbane"
+                                {:schedule_timezone "Not/A_Timezone"}     nil
+                                {:schedule_timezone ""}                   nil
+                                {:emails ["a@b.com"]}                     nil
+                                nil                                       nil}]
+      (testing details
+        (is (= expected
+               (pulse-channel/channel-timezone {:details details})))))))
+
 (deftest inactive-users-test
   (testing "Inactive users shouldn't get Pulses"
     (mt/with-temp* [Pulse                 [{pulse-id :id}]
