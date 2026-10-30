@@ -194,10 +194,19 @@
         " of "     (strong-limit-text row-count)
         " rows."]])))
 
+(defn attachment-deselected?
+  "Should this `card` get no results file at all, whatever its size? True when the subscription chose which cards
+  to attach (`:attachments_selected`, set by `metabase.email.messages/assoc-attachment-booleans`) and this card is
+  not one of them. Before BI-51 a table with more than `rows-limit` rows was attached as a CSV even when the
+  subscription's \"Questions to attach\" left it unticked."
+  [{:keys [attachments_selected include_csv include_xls] :as _card}]
+  (boolean (and attachments_selected (not include_csv) (not include_xls))))
+
 (defn- attached-results-text
   "Returns hiccup structures to indicate truncated results are available as an attachment"
-  [render-type rows rows-limit]
+  [render-type card rows rows-limit]
   (when (and (not= :inline render-type)
+             (not (attachment-deselected? card))
              (< rows-limit (count rows)))
     [:div {:style (style/style {:color         style/color-gray-2
                                 :margin-bottom :16px})}
@@ -226,7 +235,7 @@
      nil
 
      :content
-     (if-let [results-attached (attached-results-text render-type rows rows-limit)]
+     (if-let [results-attached (attached-results-text render-type card rows rows-limit)]
        (list results-attached table-body)
        (list table-body))}))
 
