@@ -362,6 +362,11 @@
       include-xls?
       (no "it has `:include_xls`")
 
+      ;; BI-51: the subscription picked which cards to attach, and this is not one of them. The size-based
+      ;; fallbacks below must not override that choice.
+      (body/attachment-deselected? card)
+      (no "the subscription selects other cards to attach")
+
       (some (complement body/show-in-table?) cols)
       (yes "some columns are not included in rendered results")
 
@@ -491,12 +496,22 @@
                  [icon-attachment]
                  (result-attachments results)))))
 
-(defn- assoc-attachment-booleans [pulse results]
-  (for [{{result-card-id :id} :card :as result} results
-        :let [pulse-card (m/find-first #(= (:id %) result-card-id) (:cards pulse))]]
-    (if result-card-id
-      (update result :card merge (select-keys pulse-card [:include_csv :include_xls]))
-      result)))
+(defn- assoc-attachment-booleans
+  "Copy each pulse card's `:include_csv` / `:include_xls` onto the matching result's `:card`, plus
+  `:attachments_selected`: true when at least one card of the pulse is ticked under \"Questions to attach\". A card
+  without either flag in such a pulse is then left unattached by `include-csv-attachment?`, instead of falling
+  through to the row-count rule (BI-51). A pulse with no ticked card keeps the stock behaviour: a table with more
+  than `body/rows-limit` rows is attached so the reader still gets every row."
+  [pulse results]
+  (let [pulse-cards           (:cards pulse)
+        attachments-selected? (boolean (some (some-fn :include_csv :include_xls) pulse-cards))]
+    (for [{{result-card-id :id} :card :as result} results
+          :let [pulse-card (m/find-first #(= (:id %) result-card-id) pulse-cards)]]
+      (if result-card-id
+        (update result :card merge
+                (select-keys pulse-card [:include_csv :include_xls])
+                {:attachments_selected attachments-selected?})
+        result))))
 
 (defn render-pulse-email
   "Take a pulse object and list of results, returns an array of attachment objects for an email"
