@@ -489,6 +489,22 @@
                                 {}
                                 [[(SampleNastyClass. "Hello XLSX World!") (AnotherNastyClass. "No Encoder")]]))))))
 
+(deftest number-of-characters-cell-test
+  (testing "A value longer than *number-of-characters-cell* is cut to that length instead of failing the export (SIM-46959)"
+    (binding [qp.xlsx/*number-of-characters-cell* 5]
+      (is (= ["abcde"]
+             (second (xlsx-export [{:id 0, :name "Col"}] {} [["abcdefghijklmnopqrstuvwxyz"]]))))
+      (testing "including values that go through the JSON fallback encoder"
+        (is (= ["{:v \""]
+               (second (xlsx-export [{:id 0, :name "Col"}] {} [[(AnotherNastyClass. "No Encoder")]])))))))
+  (testing "Excel's real limit: a value at the limit is written as-is, one character over is cut back to the limit"
+    (let [limit qp.xlsx/*number-of-characters-cell*
+          at    (apply str (repeat limit "x"))
+          over  (str at "y")]
+      (is (= 32767 limit))
+      (is (= [at] (second (xlsx-export [{:id 0, :name "Col"}] {} [[at]]))))
+      (is (= [at] (second (xlsx-export [{:id 0, :name "Col"}] {} [[over]])))))))
+
 (defn- parse-column-width
   [sheet]
   (for [row (spreadsheet/into-seq sheet)]
