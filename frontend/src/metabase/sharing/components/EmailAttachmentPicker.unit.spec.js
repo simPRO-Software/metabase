@@ -124,6 +124,27 @@ describe("EmailAttachmentPicker", () => {
       expect(screen.getByLabelText("card1")).not.toBeChecked();
     });
 
+    it("should keep attachments on, with the format, when every question is unticked", () => {
+      const toggleAllCheckbox = screen.getByLabelText("Questions to attach");
+      fireEvent.click(toggleAllCheckbox);
+      expect(screen.getByLabelText("card2")).toBeChecked();
+
+      fireEvent.click(toggleAllCheckbox);
+
+      expect(screen.getByLabelText("card1")).not.toBeChecked();
+      expect(screen.getByLabelText("card2")).not.toBeChecked();
+      expect(screen.getByLabelText("Attach results")).toBeChecked();
+      expect(screen.getByLabelText(".xlsx")).toBeChecked();
+    });
+
+    it("should keep attachments on when the last ticked question is unticked", () => {
+      fireEvent.click(screen.getByLabelText("card1"));
+
+      expect(screen.getByLabelText("card1")).not.toBeChecked();
+      expect(screen.getByLabelText("Attach results")).toBeChecked();
+      expect(screen.getByLabelText(".xlsx")).toBeChecked();
+    });
+
     it("should not change the cards of the pulse it was given", () => {
       fireEvent.click(screen.getByLabelText("card2"));
 
@@ -134,9 +155,9 @@ describe("EmailAttachmentPicker", () => {
 
   describe("when given another pulse", () => {
     it("should show the attachments of the new pulse", () => {
-      const pulseWithAttachment = createPulse();
+      const pulseWithAttachment = { ...createPulse(), id: 1 };
       pulseWithAttachment.cards[0]["include_csv"] = true;
-      const pulseWithOtherAttachment = createPulse();
+      const pulseWithOtherAttachment = { ...createPulse(), id: 2 };
       pulseWithOtherAttachment.cards[1]["include_csv"] = true;
 
       const { rerender } = render(
@@ -161,9 +182,9 @@ describe("EmailAttachmentPicker", () => {
     });
 
     it("should turn attachments off when the new pulse has none", () => {
-      const pulseWithAttachment = createPulse();
+      const pulseWithAttachment = { ...createPulse(), id: 1 };
       pulseWithAttachment.cards[0]["include_csv"] = true;
-      const pulseWithoutAttachment = createPulse();
+      const pulseWithoutAttachment = { ...createPulse(), id: 2 };
 
       const { rerender } = render(
         <EmailAttachmentPicker
@@ -209,14 +230,15 @@ describe("EmailAttachmentPicker", () => {
   });
 });
 
-// keeps the pulse in state, as the sharing sidebar does
+// keeps the pulse in state and hands the picker a rebuilt cards array on every
+// render, as the sharing sidebar does (it maps the pulse cards on each change)
 // eslint-disable-next-line react/prop-types
 function PickerWithPulse({ initialPulse, onSetPulse }) {
   const [pulse, setPulse] = React.useState(initialPulse);
 
   return (
     <EmailAttachmentPicker
-      cards={pulse.cards}
+      cards={pulse.cards.map(card => ({ ...card }))}
       pulse={pulse}
       setPulse={newPulse => {
         onSetPulse(newPulse);

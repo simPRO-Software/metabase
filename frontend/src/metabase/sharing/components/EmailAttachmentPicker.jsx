@@ -32,11 +32,10 @@ export default class EmailAttachmentPicker extends Component {
   componentDidUpdate(prevProps) {
     const newState = this.calculateStateFromCards();
 
-    // keep the toggle on, unless the cards were loaded again from a pulse
-    const isSameCards =
-      this.props.cards === prevProps.cards ||
-      this.props.cards === this.updatedCards;
-    if (isSameCards) {
+    // keep the toggle on while the same pulse is edited (the sidebar rebuilds
+    // the cards array on every change); a pulse with another id loaded into
+    // the form starts from its own flags
+    if (prevProps.pulse.id === this.props.pulse.id) {
       newState.isEnabled = newState.isEnabled || this.state.isEnabled;
     }
     if (newState.selectedCardIds.size === 0) {
@@ -86,12 +85,12 @@ export default class EmailAttachmentPicker extends Component {
     this.setState({ selectedAttachmentType: attachmentType });
 
     // copy the cards, they can be shared with the saved pulse
-    this.updatedCards = pulse.cards.map(card => ({
+    const cards = pulse.cards.map(card => ({
       ...card,
       include_csv: selectedCardIds.has(card.id) && isCsv,
       include_xls: selectedCardIds.has(card.id) && isXls,
     }));
-    setPulse({ ...pulse, cards: this.updatedCards });
+    setPulse({ ...pulse, cards });
   }
 
   cardIds() {
