@@ -29,10 +29,16 @@ export default class EmailAttachmentPicker extends Component {
     this.setState(this.calculateStateFromCards());
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps) {
     const newState = this.calculateStateFromCards();
 
-    newState.isEnabled = newState.isEnabled || this.state.isEnabled;
+    // keep the toggle on, unless the cards were loaded again from a pulse
+    const isSameCards =
+      this.props.cards === prevProps.cards ||
+      this.props.cards === this.updatedCards;
+    if (isSameCards) {
+      newState.isEnabled = newState.isEnabled || this.state.isEnabled;
+    }
     if (newState.selectedCardIds.size === 0) {
       newState.selectedAttachmentType = this.state.selectedAttachmentType;
     }
@@ -60,7 +66,11 @@ export default class EmailAttachmentPicker extends Component {
     return (
       (currentState.isEnabled || !newState.isEnabled) &&
       newState.selectedAttachmentType === currentState.selectedAttachmentType &&
-      _.isEqual(newState.selectedCardIds, currentState.selectedCardIds)
+      // underscore sees any two Sets as equal, so compare the card IDs
+      _.isEqual(
+        [...newState.selectedCardIds].sort(),
+        [...currentState.selectedCardIds].sort(),
+      )
     );
   }
 
@@ -75,14 +85,13 @@ export default class EmailAttachmentPicker extends Component {
 
     this.setState({ selectedAttachmentType: attachmentType });
 
-    setPulse({
-      ...pulse,
-      cards: pulse.cards.map(card => {
-        card.include_csv = selectedCardIds.has(card.id) && isCsv;
-        card.include_xls = selectedCardIds.has(card.id) && isXls;
-        return card;
-      }),
-    });
+    // copy the cards, they can be shared with the saved pulse
+    this.updatedCards = pulse.cards.map(card => ({
+      ...card,
+      include_csv: selectedCardIds.has(card.id) && isCsv,
+      include_xls: selectedCardIds.has(card.id) && isXls,
+    }));
+    setPulse({ ...pulse, cards: this.updatedCards });
   }
 
   cardIds() {
@@ -127,21 +136,20 @@ export default class EmailAttachmentPicker extends Component {
    * Called on card selection
    */
   onToggleCard(card) {
-    this.setState(({ selectedAttachmentType, selectedCardIds }) => {
-      const id = card.id;
-      const attachmentType =
-        this.attachmentTypeFor(this.cardIdsToCards(selectedCardIds)) ||
-        selectedAttachmentType;
+    const id = card.id;
+    const attachmentType =
+      this.attachmentTypeFor(this.cardIdsToCards(this.state.selectedCardIds)) ||
+      this.state.selectedAttachmentType;
+    const selectedCardIds = new Set(this.state.selectedCardIds);
 
-      if (selectedCardIds.has(id)) {
-        selectedCardIds.delete(id);
-      } else {
-        selectedCardIds.add(id);
-      }
+    if (selectedCardIds.has(id)) {
+      selectedCardIds.delete(id);
+    } else {
+      selectedCardIds.add(id);
+    }
 
-      this.updatePulseCards(attachmentType, selectedCardIds);
-      return { selectedCardIds };
-    });
+    this.updatePulseCards(attachmentType, selectedCardIds);
+    this.setState({ selectedCardIds });
   }
 
   /*
@@ -149,19 +157,18 @@ export default class EmailAttachmentPicker extends Component {
    */
   onToggleAll = () => {
     const { cards } = this.props;
+    const { selectedAttachmentType, selectedCardIds } = this.state;
 
-    this.setState(({ selectedAttachmentType, selectedCardIds }) => {
-      const attachmentType =
-        this.attachmentTypeFor(this.cardIdsToCards(selectedCardIds)) ||
-        selectedAttachmentType;
-      let newSelectedCardIds = this.cardIds();
-      if (this.areAllSelected(cards, selectedCardIds)) {
-        newSelectedCardIds = new Set();
-      }
+    const attachmentType =
+      this.attachmentTypeFor(this.cardIdsToCards(selectedCardIds)) ||
+      selectedAttachmentType;
+    let newSelectedCardIds = this.cardIds();
+    if (this.areAllSelected(cards, selectedCardIds)) {
+      newSelectedCardIds = new Set();
+    }
 
-      this.updatePulseCards(attachmentType, newSelectedCardIds);
-      return { selectedCardIds: newSelectedCardIds };
-    });
+    this.updatePulseCards(attachmentType, newSelectedCardIds);
+    this.setState({ selectedCardIds: newSelectedCardIds });
   };
 
   disableAllCards() {
