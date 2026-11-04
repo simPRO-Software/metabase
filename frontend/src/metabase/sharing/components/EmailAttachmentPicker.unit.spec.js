@@ -10,13 +10,7 @@ describe("EmailAttachmentPicker", () => {
     beforeEach(() => {
       pulse = createPulse();
       setPulse = jest.fn();
-      render(
-        <EmailAttachmentPicker
-          cards={pulse.cards}
-          pulse={pulse}
-          setPulse={setPulse}
-        />,
-      );
+      render(<PickerWithPulse initialPulse={pulse} onSetPulse={setPulse} />);
     });
 
     it("should have a Toggle that is not toggled", () => {
@@ -55,13 +49,7 @@ describe("EmailAttachmentPicker", () => {
       pulse = createPulse();
       pulse.cards[0]["include_xls"] = true;
       setPulse = jest.fn();
-      render(
-        <EmailAttachmentPicker
-          cards={pulse.cards}
-          pulse={pulse}
-          setPulse={setPulse}
-        />,
-      );
+      render(<PickerWithPulse initialPulse={pulse} onSetPulse={setPulse} />);
     });
 
     it("should have a toggled Toggle", () => {
@@ -135,8 +123,130 @@ describe("EmailAttachmentPicker", () => {
       fireEvent.click(toggle);
       expect(screen.getByLabelText("card1")).not.toBeChecked();
     });
+
+    it("should keep attachments on, with the format, when every question is unticked", () => {
+      const toggleAllCheckbox = screen.getByLabelText("Questions to attach");
+      fireEvent.click(toggleAllCheckbox);
+      expect(screen.getByLabelText("card2")).toBeChecked();
+
+      fireEvent.click(toggleAllCheckbox);
+
+      expect(screen.getByLabelText("card1")).not.toBeChecked();
+      expect(screen.getByLabelText("card2")).not.toBeChecked();
+      expect(screen.getByLabelText("Attach results")).toBeChecked();
+      expect(screen.getByLabelText(".xlsx")).toBeChecked();
+    });
+
+    it("should keep attachments on when the last ticked question is unticked", () => {
+      fireEvent.click(screen.getByLabelText("card1"));
+
+      expect(screen.getByLabelText("card1")).not.toBeChecked();
+      expect(screen.getByLabelText("Attach results")).toBeChecked();
+      expect(screen.getByLabelText(".xlsx")).toBeChecked();
+    });
+
+    it("should not change the cards of the pulse it was given", () => {
+      fireEvent.click(screen.getByLabelText("card2"));
+
+      expect(screen.getByLabelText("card2")).toBeChecked();
+      expect(pulse.cards[1].include_xls).toBe(false);
+    });
+  });
+
+  describe("when given another pulse", () => {
+    it("should show the attachments of the new pulse", () => {
+      const pulseWithAttachment = { ...createPulse(), id: 1 };
+      pulseWithAttachment.cards[0]["include_csv"] = true;
+      const pulseWithOtherAttachment = { ...createPulse(), id: 2 };
+      pulseWithOtherAttachment.cards[1]["include_csv"] = true;
+
+      const { rerender } = render(
+        <EmailAttachmentPicker
+          cards={pulseWithAttachment.cards}
+          pulse={pulseWithAttachment}
+          setPulse={jest.fn()}
+        />,
+      );
+      expect(screen.getByLabelText("card1")).toBeChecked();
+      expect(screen.getByLabelText("card2")).not.toBeChecked();
+
+      rerender(
+        <EmailAttachmentPicker
+          cards={pulseWithOtherAttachment.cards}
+          pulse={pulseWithOtherAttachment}
+          setPulse={jest.fn()}
+        />,
+      );
+      expect(screen.getByLabelText("card1")).not.toBeChecked();
+      expect(screen.getByLabelText("card2")).toBeChecked();
+    });
+
+    it("should turn attachments off when the new pulse has none", () => {
+      const pulseWithAttachment = { ...createPulse(), id: 1 };
+      pulseWithAttachment.cards[0]["include_csv"] = true;
+      const pulseWithoutAttachment = { ...createPulse(), id: 2 };
+
+      const { rerender } = render(
+        <EmailAttachmentPicker
+          cards={pulseWithAttachment.cards}
+          pulse={pulseWithAttachment}
+          setPulse={jest.fn()}
+        />,
+      );
+      expect(screen.getByLabelText("Attach results")).toBeChecked();
+
+      rerender(
+        <EmailAttachmentPicker
+          cards={pulseWithoutAttachment.cards}
+          pulse={pulseWithoutAttachment}
+          setPulse={jest.fn()}
+        />,
+      );
+      expect(screen.getByLabelText("Attach results")).not.toBeChecked();
+    });
+
+    it("should keep attachments on when other fields of the pulse change", () => {
+      const pulse = createPulse();
+
+      const { rerender } = render(
+        <EmailAttachmentPicker
+          cards={pulse.cards}
+          pulse={pulse}
+          setPulse={jest.fn()}
+        />,
+      );
+      fireEvent.click(screen.getByLabelText("Attach results"));
+
+      const renamedPulse = { ...pulse, name: "Renamed" };
+      rerender(
+        <EmailAttachmentPicker
+          cards={renamedPulse.cards}
+          pulse={renamedPulse}
+          setPulse={jest.fn()}
+        />,
+      );
+      expect(screen.getByLabelText("Attach results")).toBeChecked();
+    });
   });
 });
+
+// keeps the pulse in state and hands the picker a rebuilt cards array on every
+// render, as the sharing sidebar does (it maps the pulse cards on each change)
+// eslint-disable-next-line react/prop-types
+function PickerWithPulse({ initialPulse, onSetPulse }) {
+  const [pulse, setPulse] = React.useState(initialPulse);
+
+  return (
+    <EmailAttachmentPicker
+      cards={pulse.cards.map(card => ({ ...card }))}
+      pulse={pulse}
+      setPulse={newPulse => {
+        onSetPulse(newPulse);
+        setPulse(newPulse);
+      }}
+    />
+  );
+}
 
 function createPulse() {
   return {

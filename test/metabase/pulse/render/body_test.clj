@@ -657,3 +657,27 @@
       (is (= {:bottom "X custom", :left "Y custom"}
              (#'body/x-and-y-axis-label-info x-col y-col {:graph.x_axis.title_text "X custom"
                                                           :graph.y_axis.title_text "Y custom"}))))))
+
+(deftest attachment-deselected-test
+  (testing "a card left unticked under \"Questions to attach\" gets no results file, whatever its size (BI-51)"
+    (is (true? (body/attachment-deselected? {:attachments_selected true}))))
+  (testing "a ticked card is attached"
+    (is (false? (body/attachment-deselected? {:attachments_selected true :include_csv true})))
+    (is (false? (body/attachment-deselected? {:attachments_selected true :include_xls true}))))
+  (testing "with no ticked card the stock rules apply"
+    (is (false? (body/attachment-deselected? {:attachments_selected false})))
+    (is (false? (body/attachment-deselected? {})))))
+
+(deftest attached-results-text-test
+  (let [rows (repeat (inc body/rows-limit) [1])]
+    (testing "a truncated table says its full results are attached"
+      (is (some? (#'body/attached-results-text :attachment {} rows body/rows-limit))))
+    (testing "unless the subscription ticked other cards to attach (BI-51)"
+      (is (nil? (#'body/attached-results-text :attachment {:attachments_selected true} rows body/rows-limit))))
+    (testing "a ticked card keeps the text"
+      (is (some? (#'body/attached-results-text :attachment
+                                               {:attachments_selected true :include_csv true}
+                                               rows
+                                               body/rows-limit))))
+    (testing "an inline render never has the text"
+      (is (nil? (#'body/attached-results-text :inline {} rows body/rows-limit))))))

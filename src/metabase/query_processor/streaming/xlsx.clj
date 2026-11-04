@@ -370,9 +370,23 @@
   [^Cell cell t id-or-name]
   (set-cell! cell (t/offset-date-time t) id-or-name))
 
+(def ^:dynamic *number-of-characters-cell*
+  "Total number of characters that a cell can contain; 32767 is the maximum an Excel cell supports. POI throws
+  `The maximum length of cell contents (text) is 32767 characters` on a longer value, which fails the whole
+  export -- and, when the XLSX is a dashboard subscription attachment, the whole email (SIM-46959)."
+  ;; See https://support.microsoft.com/en-us/office/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3
+  32767)
+
+(defn- truncate-cell-text
+  "Cuts `s` down to `*number-of-characters-cell*` characters, the most an Excel cell can hold."
+  ^String [^String s]
+  (if (> (count s) *number-of-characters-cell*)
+    (subs s 0 *number-of-characters-cell*)
+    s))
+
 (defmethod set-cell! String
   [^Cell cell value _]
-  (.setCellValue cell ^String value))
+  (.setCellValue cell (truncate-cell-text value)))
 
 (defmethod set-cell! Number
   [^Cell cell value id-or-name]
@@ -396,9 +410,9 @@
   ;; stick the object in a JSON map and encode it, which will force conversion to a string. Then unparse that JSON and
   ;; use the resulting value as the cell's new String value.  There might be some more efficient way of doing this but
   ;; I'm not sure what it is.
-  (.setCellValue cell (str (-> (json/generate-string {:v value})
-                               (json/parse-string keyword)
-                               :v))))
+  (.setCellValue cell (truncate-cell-text (str (-> (json/generate-string {:v value})
+                                                   (json/parse-string keyword)
+                                                   :v)))))
 
 (defmethod set-cell! nil [^Cell cell _ _]
   (.setBlank cell))
