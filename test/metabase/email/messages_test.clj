@@ -4,6 +4,7 @@
    [clojure.test :refer :all]
    [metabase.email-test :as et]
    [metabase.email.messages :as messages]
+   [metabase.pulse.render.body :as body]
    [metabase.test :as mt]
    [metabase.test.util :as tu])
   (:import
@@ -103,3 +104,30 @@
             emails (messages/render-pulse-email "America/Pacific" {} {} [result])]
         (is (vector? emails))
         (is (map? (first emails)))))))
+
+(deftest assoc-attachment-booleans-test
+  (testing "each result's card gets its pulse card's attachment flags, plus whether any card is ticked (BI-51)"
+    (is (= [{:card {:id 1 :include_csv true :attachments_selected true}}
+            {:card {:id 2 :attachments_selected true}}
+            {:text "a text card has no card"}]
+           (#'messages/assoc-attachment-booleans
+            {:cards [{:id 1 :include_csv true} {:id 2}]}
+            [{:card {:id 1}} {:card {:id 2}} {:text "a text card has no card"}]))))
+  (testing "with no ticked card nothing is selected"
+    (is (= [{:card {:id 1 :attachments_selected false}}]
+           (#'messages/assoc-attachment-booleans {:cards [{:id 1}]} [{:card {:id 1}}])))))
+
+(deftest include-csv-attachment-test
+  (let [many-rows {:cols [{:name "x" :base_type :type/Integer} {:name "y" :base_type :type/Text}]
+                   :rows (vec (repeat (inc body/rows-limit) [1 "a"]))}
+        table     {:name "table" :display :table}]
+    (testing "a ticked card is attached"
+      (is (true? (#'messages/include-csv-attachment? (assoc table :include_csv true :attachments_selected true)
+                                                     many-rows))))
+    (testing "an xls card is not attached as csv"
+      (is (false? (#'messages/include-csv-attachment? (assoc table :include_xls true :attachments_selected true)
+                                                      many-rows))))
+    (testing "a card left unticked under \"Questions to attach\" is not attached, however many rows it has (BI-51)"
+      (is (false? (#'messages/include-csv-attachment? (assoc table :attachments_selected true) many-rows))))
+    (testing "with no ticked card a table over the row limit is still attached"
+      (is (true? (#'messages/include-csv-attachment? (assoc table :attachments_selected false) many-rows))))))
