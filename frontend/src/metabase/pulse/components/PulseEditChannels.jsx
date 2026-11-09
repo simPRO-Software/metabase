@@ -196,13 +196,16 @@ export default class PulseEditChannels extends Component {
         ) : null}
         {!this.props.hideSchedulePicker && channelSpec.schedules && (
           <SchedulePicker
-            schedule={_.pick(
-              channel,
-              "schedule_day",
-              "schedule_frame",
-              "schedule_hour",
-              "schedule_type",
-            )}
+            schedule={{
+              ..._.pick(
+                channel,
+                "schedule_day",
+                "schedule_frame",
+                "schedule_hour",
+                "schedule_type",
+              ),
+              details: channel.details || {},
+            }}
             scheduleOptions={channelSpec.schedules}
             textBeforeInterval={t`Sent`}
             textBeforeSendTime={t`${
