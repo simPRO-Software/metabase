@@ -647,6 +647,24 @@
     (testing "Multiple series with far values does split y-axis."
       (is (axes-split? (conj rows ["D" 3 70]))))))
 
+(deftest ^:parallel breakout-series-share-left-axis-test
+  (testing "BI-80: every breakout series of one metric goes on the left y-axis, as on the dashboard"
+    (let [x-cols      [{:name "month" :base_type :type/Date} {:name "name" :base_type :type/Text}]
+          y-cols      [{:name "total" :base_type :type/Decimal}]
+          joined-rows [[["2024-11-01" "Maintenance PPM"] [14800]]
+                       [["2024-11-01" "Maintenance Quoted"] [2400]]
+                       [["2024-11-01" "Project Direct"] [181000]]]
+          positions   (fn [viz-settings]
+                        (into {}
+                              (map (juxt :breakoutValue :yAxisPosition))
+                              (#'body/double-x-axis-combo-series :bar joined-rows x-cols y-cols
+                                                                 {:viz-settings viz-settings} "card")))]
+      (is (= {"Maintenance PPM" "left", "Maintenance Quoted" "left", "Project Direct" "left"}
+             (positions {})))
+      (testing "an axis that the user selected for a series is kept"
+        (is (= {"Maintenance PPM" "left", "Maintenance Quoted" "left", "Project Direct" "right"}
+               (positions {:series_settings {(keyword "Project Direct") {:axis "right"}}})))))))
+
 (deftest ^:parallel x-and-y-axis-label-info-test
   (let [x-col {:display_name "X col"}
         y-col {:display_name "Y col"}]

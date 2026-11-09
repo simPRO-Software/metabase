@@ -669,8 +669,13 @@
   for a double x-axis, which has pretty materially different semantics for that second dimension, with single y-axis only.
 
   This mimics default behavior in JS viz, which is to group by the second dimension and make every group-by-value a series.
-  This can have really high cardinality of series but the JS viz will complain about more than 100 already"
-  [chart-type joined-rows x-cols _y-cols {:keys [viz-settings] :as data} card-name]
+  This can have really high cardinality of series but the JS viz will complain about more than 100 already
+
+  Every series is one breakout value of the same metric column, so all of them go on the left y-axis, as on the
+  dashboard (the JS viz never auto-splits a breakout series). Only an axis the user selected for a series moves it.
+  Before BI-80, the position came from `default-y-pos` indexed by the breakout group, which put every group after
+  the first on a second y-axis."
+  [chart-type joined-rows x-cols _y-cols {:keys [viz-settings] :as _data} card-name]
   (let [grouped-rows (group-by #(second (first %)) joined-rows)
         groups       (keys grouped-rows)]
     (for [[idx group-key] (map-indexed vector groups)]
@@ -680,7 +685,7 @@
                                    chart-type
                                    (nth default-combo-chart-types idx))
             y-axis-pos         (or (series-setting viz-settings group-key :axis)
-                                   (nth (default-y-pos data axis-group-threshold) idx))]
+                                   "left")]
         {:cardName      card-name
          :type          card-type
          :data          selected-row-group
