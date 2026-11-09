@@ -582,7 +582,26 @@
               [:table
                [:tr [:td [:span "•"]] [:td "Doohickey"] [:td "75%"]]
                [:tr [:td [:span "•"]] [:td "Widget"] [:td "25%"]]]]
-             (prune (:content (render [["Doohickey" 75] ["Widget" 25]]))))))))
+             (prune (:content (render [["Doohickey" 75] ["Widget" 25]]))))))
+    (testing "Keeps `false` and empty dimension values as slices, like the dashboard (SIM-46756)"
+      (is (= [:div
+              [:img]
+              [:table
+               [:tr [:td [:span "•"]] [:td "false"] [:td "12.31%"]]
+               [:tr [:td [:span "•"]] [:td "true"] [:td "76.92%"]]
+               [:tr [:td [:span "•"]] [:td ""] [:td "10.77%"]]]]
+             (prune (:content (render [[false 8] [true 50] [nil 7]]))))))
+    (testing "Drops rows without a metric value"
+      (is (= [:div
+              [:img]
+              [:table
+               [:tr [:td [:span "•"]] [:td "Yes"] [:td "100%"]]]]
+             (prune (:content (render [["Yes" 10] ["No" nil]]))))))))
+
+(deftest ^:parallel row-preprocess-test
+  (testing "Drops rows with a nil x or y value, keeps `false` (SIM-46756)"
+    (is (= [[false 8] [true 50]]
+           (common/row-preprocess first second [[false 8] [true 50] [nil 7] [true nil]])))))
 
 (deftest render-progress
   (let [col [{:name          "NumPurchased",
