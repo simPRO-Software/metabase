@@ -89,10 +89,13 @@
          (prep-for-html-rendering' test-columns test-data nil nil nil))))
 
 (deftest header-result-2
-  (let [cols-with-desc (conj test-columns description-col)
-        data-with-desc (mapv #(conj % "Desc") test-data)]
-    (is (= default-header-result
-           (prep-for-html-rendering' cols-with-desc data-with-desc nil nil nil)))))
+  (testing "BI-11: a :type/Description column (the job description) is shown"
+    (let [cols-with-desc (conj test-columns description-col)
+          data-with-desc (mapv #(conj % "Desc") test-data)]
+      (is (= [{:row       [(number "ID") (number "Latitude") "Last Login" "Name" "Description Column"]
+               :bar-width nil}
+              #{5}]
+             (prep-for-html-rendering' cols-with-desc data-with-desc nil nil nil))))))
 
 (deftest header-result-3
   (let [cols-with-details (conj test-columns detail-col)
