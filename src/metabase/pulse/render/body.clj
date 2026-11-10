@@ -361,6 +361,27 @@
       (assoc viz-settings :stackable.stack_type "stacked")
       viz-settings)))
 
+(defn- normalized-stack?
+  "True for a 100% stacked chart (`:stackable.stack_type` \"normalized\")."
+  [viz-settings]
+  (= (:stackable.stack_type viz-settings) "normalized"))
+
+(defn- normalize-stacked-series
+  "For a 100% stacked chart, replace each value with its share of the total of all series at the same x value, as
+  the dashboard does. The static viz then stacks the shares to 1 (100%). An x value whose total is 0 keeps its values."
+  [series]
+  (let [totals (reduce (fn [acc [x y]] (cond-> acc (number? y) (update x (fnil + 0) y)))
+                       {}
+                       (mapcat :data series))]
+    (for [s series]
+      (update s :data (fn [rows]
+                        (mapv (fn [[x y]]
+                                (let [total (get totals x)]
+                                  [x (if (and (number? y) (number? total) (not (zero? total)))
+                                       (/ (double y) total)
+                                       y)]))
+                              rows))))))
+
 (defn- x-and-y-axis-label-info
   "Generate the X and Y axis labels passed in as the `labels` argument
   to [[metabase.pulse.render.js-svg/waterfall]] and other similar functions for rendering charts with X and Y
@@ -752,12 +773,16 @@
                           chart-type)
         card-name       (:name card)
         ;; NB: There's a hardcoded limit of arity 2 on x-axis, so there's only the 1-axis or 2-axis case
-        series-seqs     [(if (= (count x-cols) 1)
-                           (single-x-axis-combo-series enforced-type joined-rows x-cols y-cols data card-name)
-                           (double-x-axis-combo-series enforced-type joined-rows x-cols y-cols data card-name))]
+        normalized?     (normalized-stack? viz-settings)
+        series-seqs     [(cond-> (if (= (count x-cols) 1)
+                                   (single-x-axis-combo-series enforced-type joined-rows x-cols y-cols data card-name)
+                                   (double-x-axis-combo-series enforced-type joined-rows x-cols y-cols data card-name))
+                           normalized? normalize-stacked-series)]
 
         labels          (combo-label-info x-cols y-cols viz-settings)
-        settings        (->ts-viz (first x-cols) (first y-cols) labels viz-settings)]
+        settings        (cond-> (->ts-viz (first x-cols) (first y-cols) labels viz-settings)
+                          ;; 100% stacked: the y-axis shows the shares as 0% to 100%
+                          normalized? (assoc-in [:y :format :number_style] "percent"))]
     (image-bundle/make-image-bundle
      render-type
      (js-svg/combo-chart series-seqs settings))))
