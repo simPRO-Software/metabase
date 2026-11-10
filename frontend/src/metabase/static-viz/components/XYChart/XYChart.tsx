@@ -278,6 +278,7 @@ export const XYChart = ({
                 yScaleRight={yScaleRight}
                 xAccessor={xScale.barAccessor}
                 bandwidth={xScale.bandwidth}
+                areStacked={settings.stacking === "stack"}
               />
             )}
             <AreaSeries

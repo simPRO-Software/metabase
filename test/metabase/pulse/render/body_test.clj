@@ -665,6 +665,21 @@
         (is (= {"Maintenance PPM" "left", "Maintenance Quoted" "left", "Project Direct" "right"}
                (positions {:series_settings {(keyword "Project Direct") {:axis "right"}}})))))))
 
+(deftest ^:parallel normalize-stacked-series-test
+  (testing "BI-86: a 100% stacked chart shows each value as its share of the total at its x value"
+    (let [series [{:name "YES" :data [["Sydney" 1100] ["Cairns" 115] ["Empty" 0]]}
+                  {:name "NO"  :data [["Sydney" 900] ["Cairns" 310] ["Empty" 0]]}
+                  {:name "N/A" :data [["Cairns" 75] ["Sydney" nil]]}]
+          shares (into {} (map (juxt :name :data)) (#'body/normalize-stacked-series series))]
+      (is (= {"YES" [["Sydney" 0.55] ["Cairns" 0.23] ["Empty" 0]]
+              "NO"  [["Sydney" 0.45] ["Cairns" 0.62] ["Empty" 0]]
+              "N/A" [["Cairns" 0.15] ["Sydney" nil]]}
+             shares))))
+  (testing "only \"normalized\" is a 100% stack"
+    (is (true? (#'body/normalized-stack? {:stackable.stack_type "normalized"})))
+    (is (false? (#'body/normalized-stack? {:stackable.stack_type "stacked"})))
+    (is (false? (#'body/normalized-stack? {})))))
+
 (deftest ^:parallel x-and-y-axis-label-info-test
   (let [x-col {:display_name "X col"}
         y-col {:display_name "Y col"}]
