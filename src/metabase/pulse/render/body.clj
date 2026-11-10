@@ -58,10 +58,11 @@
 ;;; +----------------------------------------------------------------------------------------------------------------+
 
 (defn show-in-table?
-  "Should this column be shown in a rendered table in a Pulse?"
-  [{:keys [semantic_type visibility_type] :as _column}]
-  (and (not (isa? semantic_type :type/Description))
-       (not (contains? #{:details-only :retired :sensitive} visibility_type))))
+  "Should this column be shown in a rendered table in a Pulse?
+  A `:type/Description` column (for example the job description) is shown, as on the dashboard (BI-11, from upstream
+  metabase/metabase#53726)."
+  [{:keys [visibility_type] :as _column}]
+  (not (contains? #{:details-only :retired :sensitive} visibility_type)))
 
 ;;; --------------------------------------------------- Formatting ---------------------------------------------------
 
@@ -228,7 +229,9 @@
         table-body   [:div
                       (table/render-table
                        (color/make-color-selector data viz-settings)
-                       (mapv :name (:cols data))
+                       ;; the names of the columns the table shows, in order, so that each cell gets the
+                       ;; conditional-format colour of its own column (upstream metabase/metabase#53726)
+                       (into [] (comp (filter show-in-table?) (remove :remapped_from) (map :name)) (:cols data))
                        (prep-for-html-rendering timezone-id card data))
                       (render-truncation-warning rows-limit (count rows))]]
     {:attachments
