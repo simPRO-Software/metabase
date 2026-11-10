@@ -2,6 +2,7 @@
   (:require [cheshire.core :as json]
             [clojure.core.memoize :as memoize]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [java-time :as t]
             [metabase.mbql.normalize :as mbql.normalize]
             [metabase.public-settings.premium-features :refer [defenterprise]]
@@ -227,6 +228,20 @@
      (max (- stale-time days-ago) 0)
      stale-time)))
 
+(defn- normalize-dataset-query
+  "Parse and normalize the `dataset_query` JSON of a search result. A query that cannot be normalized (for example an
+  old card with a string field name and no `:base-type`) gives nil and a warning, so that one bad card does not fail
+  the whole search, the archive page included (SIM-44296). This is the same rule as
+  `metabase.models.interface/catch-normalization-exceptions`, which already protects reading the card itself."
+  [{:keys [model id dataset_query]}]
+  (when dataset_query
+    (try
+      (some-> dataset_query json/parse-string mbql.normalize/normalize)
+      (catch Throwable e
+        (log/warnf "Search: cannot normalize the dataset_query of %s %s, returning it without a query: %s"
+                   model id (ex-message e))
+        nil))))
+
 (defn- serialize
   "Massage the raw result from the DB and match data into something more useful for the client"
   [result all-scores relevant-scores]
@@ -248,7 +263,7 @@
                           :authority_level collection_authority_level
                           :app_id          collection_app_id}
          :scores          all-scores)
-        (update :dataset_query #(some-> % json/parse-string mbql.normalize/normalize))
+        (assoc :dataset_query (normalize-dataset-query result))
         (dissoc
          :collection_id
          :collection_name
