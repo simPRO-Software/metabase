@@ -6,6 +6,7 @@
   `?namespace=snippet`)."
   (:require [cheshire.core :as json]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [compojure.core :refer [GET POST PUT]]
             [honeysql.core :as hsql]
             [honeysql.helpers :as hh]
@@ -333,7 +334,14 @@
       false)))
 
 (defn- fully-parametrized-query? [row]
-  (let [native-query (-> row :dataset_query json/parse-string mbql.normalize/normalize :native)]
+  ;; A card whose query cannot be normalized must not fail the whole collection list (SIM-44296): treat its query as
+  ;; having no template tags, as for any non-native card.
+  (let [native-query (try
+                       (-> row :dataset_query json/parse-string mbql.normalize/normalize :native)
+                       (catch Throwable e
+                         (log/warnf "Collection items: cannot normalize the dataset_query of card %s: %s"
+                                    (:id row) (ex-message e))
+                         nil))]
     (if-let [template-tags (:template-tags native-query)]
       (fully-parametrized-text? (:query native-query) template-tags)
       true)))
