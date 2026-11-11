@@ -89,10 +89,13 @@
          (prep-for-html-rendering' test-columns test-data nil nil nil))))
 
 (deftest header-result-2
-  (let [cols-with-desc (conj test-columns description-col)
-        data-with-desc (mapv #(conj % "Desc") test-data)]
-    (is (= default-header-result
-           (prep-for-html-rendering' cols-with-desc data-with-desc nil nil nil)))))
+  (testing "BI-11: a :type/Description column (the job description) is shown"
+    (let [cols-with-desc (conj test-columns description-col)
+          data-with-desc (mapv #(conj % "Desc") test-data)]
+      (is (= [{:row       [(number "ID") (number "Latitude") "Last Login" "Name" "Description Column"]
+               :bar-width nil}
+              #{5}]
+             (prep-for-html-rendering' cols-with-desc data-with-desc nil nil nil))))))
 
 (deftest header-result-3
   (let [cols-with-details (conj test-columns detail-col)
@@ -665,6 +668,39 @@
       (is (not (axes-split? rows))))
     (testing "Multiple series with far values does split y-axis."
       (is (axes-split? (conj rows ["D" 3 70]))))))
+
+(deftest ^:parallel breakout-series-share-left-axis-test
+  (testing "BI-80: every breakout series of one metric goes on the left y-axis, as on the dashboard"
+    (let [x-cols      [{:name "month" :base_type :type/Date} {:name "name" :base_type :type/Text}]
+          y-cols      [{:name "total" :base_type :type/Decimal}]
+          joined-rows [[["2024-11-01" "Maintenance PPM"] [14800]]
+                       [["2024-11-01" "Maintenance Quoted"] [2400]]
+                       [["2024-11-01" "Project Direct"] [181000]]]
+          positions   (fn [viz-settings]
+                        (into {}
+                              (map (juxt :breakoutValue :yAxisPosition))
+                              (#'body/double-x-axis-combo-series :bar joined-rows x-cols y-cols
+                                                                 {:viz-settings viz-settings} "card")))]
+      (is (= {"Maintenance PPM" "left", "Maintenance Quoted" "left", "Project Direct" "left"}
+             (positions {})))
+      (testing "an axis that the user selected for a series is kept"
+        (is (= {"Maintenance PPM" "left", "Maintenance Quoted" "left", "Project Direct" "right"}
+               (positions {:series_settings {(keyword "Project Direct") {:axis "right"}}})))))))
+
+(deftest ^:parallel normalize-stacked-series-test
+  (testing "BI-86: a 100% stacked chart shows each value as its share of the total at its x value"
+    (let [series [{:name "YES" :data [["Sydney" 1100] ["Cairns" 115] ["Empty" 0]]}
+                  {:name "NO"  :data [["Sydney" 900] ["Cairns" 310] ["Empty" 0]]}
+                  {:name "N/A" :data [["Cairns" 75] ["Sydney" nil]]}]
+          shares (into {} (map (juxt :name :data)) (#'body/normalize-stacked-series series))]
+      (is (= {"YES" [["Sydney" 0.55] ["Cairns" 0.23] ["Empty" 0]]
+              "NO"  [["Sydney" 0.45] ["Cairns" 0.62] ["Empty" 0]]
+              "N/A" [["Cairns" 0.15] ["Sydney" nil]]}
+             shares))))
+  (testing "only \"normalized\" is a 100% stack"
+    (is (true? (#'body/normalized-stack? {:stackable.stack_type "normalized"})))
+    (is (false? (#'body/normalized-stack? {:stackable.stack_type "stacked"})))
+    (is (false? (#'body/normalized-stack? {})))))
 
 (deftest ^:parallel x-and-y-axis-label-info-test
   (let [x-col {:display_name "X col"}

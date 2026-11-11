@@ -58,10 +58,11 @@
 ;;; +----------------------------------------------------------------------------------------------------------------+
 
 (defn show-in-table?
-  "Should this column be shown in a rendered table in a Pulse?"
-  [{:keys [semantic_type visibility_type] :as _column}]
-  (and (not (isa? semantic_type :type/Description))
-       (not (contains? #{:details-only :retired :sensitive} visibility_type))))
+  "Should this column be shown in a rendered table in a Pulse?
+  A `:type/Description` column (for example the job description) is shown, as on the dashboard (BI-11, from upstream
+  metabase/metabase#53726)."
+  [{:keys [visibility_type] :as _column}]
+  (not (contains? #{:details-only :retired :sensitive} visibility_type)))
 
 ;;; --------------------------------------------------- Formatting ---------------------------------------------------
 
@@ -228,7 +229,9 @@
         table-body   [:div
                       (table/render-table
                        (color/make-color-selector data viz-settings)
-                       (mapv :name (:cols data))
+                       ;; the names of the columns the table shows, in order, so that each cell gets the
+                       ;; conditional-format colour of its own column (upstream metabase/metabase#53726)
+                       (into [] (comp (filter show-in-table?) (remove :remapped_from) (map :name)) (:cols data))
                        (prep-for-html-rendering timezone-id card data))
                       (render-truncation-warning rows-limit (count rows))]]
     {:attachments
@@ -360,6 +363,27 @@
     (if stacked
       (assoc viz-settings :stackable.stack_type "stacked")
       viz-settings)))
+
+(defn- normalized-stack?
+  "True for a 100% stacked chart (`:stackable.stack_type` \"normalized\")."
+  [viz-settings]
+  (= (:stackable.stack_type viz-settings) "normalized"))
+
+(defn- normalize-stacked-series
+  "For a 100% stacked chart, replace each value with its share of the total of all series at the same x value, as
+  the dashboard does. The static viz then stacks the shares to 1 (100%). An x value whose total is 0 keeps its values."
+  [series]
+  (let [totals (reduce (fn [acc [x y]] (cond-> acc (number? y) (update x (fnil + 0) y)))
+                       {}
+                       (mapcat :data series))]
+    (for [s series]
+      (update s :data (fn [rows]
+                        (mapv (fn [[x y]]
+                                (let [total (get totals x)]
+                                  [x (if (and (number? y) (number? total) (not (zero? total)))
+                                       (/ (double y) total)
+                                       y)]))
+                              rows))))))
 
 (defn- x-and-y-axis-label-info
   "Generate the X and Y axis labels passed in as the `labels` argument
@@ -672,8 +696,13 @@
   for a double x-axis, which has pretty materially different semantics for that second dimension, with single y-axis only.
 
   This mimics default behavior in JS viz, which is to group by the second dimension and make every group-by-value a series.
-  This can have really high cardinality of series but the JS viz will complain about more than 100 already"
-  [chart-type joined-rows x-cols _y-cols {:keys [viz-settings] :as data} card-name]
+  This can have really high cardinality of series but the JS viz will complain about more than 100 already
+
+  Every series is one breakout value of the same metric column, so all of them go on the left y-axis, as on the
+  dashboard (the JS viz never auto-splits a breakout series). Only an axis the user selected for a series moves it.
+  Before BI-80, the position came from `default-y-pos` indexed by the breakout group, which put every group after
+  the first on a second y-axis."
+  [chart-type joined-rows x-cols _y-cols {:keys [viz-settings] :as _data} card-name]
   (let [grouped-rows (group-by #(second (first %)) joined-rows)
         groups       (keys grouped-rows)]
     (for [[idx group-key] (map-indexed vector groups)]
@@ -683,7 +712,7 @@
                                    chart-type
                                    (nth default-combo-chart-types idx))
             y-axis-pos         (or (series-setting viz-settings group-key :axis)
-                                   (nth (default-y-pos data axis-group-threshold) idx))]
+                                   "left")]
         {:cardName      card-name
          :type          card-type
          :data          selected-row-group
@@ -750,12 +779,16 @@
                           chart-type)
         card-name       (:name card)
         ;; NB: There's a hardcoded limit of arity 2 on x-axis, so there's only the 1-axis or 2-axis case
-        series-seqs     [(if (= (count x-cols) 1)
-                           (single-x-axis-combo-series enforced-type joined-rows x-cols y-cols data card-name)
-                           (double-x-axis-combo-series enforced-type joined-rows x-cols y-cols data card-name))]
+        normalized?     (normalized-stack? viz-settings)
+        series-seqs     [(cond-> (if (= (count x-cols) 1)
+                                   (single-x-axis-combo-series enforced-type joined-rows x-cols y-cols data card-name)
+                                   (double-x-axis-combo-series enforced-type joined-rows x-cols y-cols data card-name))
+                           normalized? normalize-stacked-series)]
 
         labels          (combo-label-info x-cols y-cols viz-settings)
-        settings        (->ts-viz (first x-cols) (first y-cols) labels viz-settings)]
+        settings        (cond-> (->ts-viz (first x-cols) (first y-cols) labels viz-settings)
+                          ;; 100% stacked: the y-axis shows the shares as 0% to 100%
+                          normalized? (assoc-in [:y :format :number_style] "percent"))]
     (image-bundle/make-image-bundle
      render-type
      (js-svg/combo-chart series-seqs settings))))

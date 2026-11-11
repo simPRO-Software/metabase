@@ -316,7 +316,19 @@
   (testing "Doesn't error on other models without a query"
     (is (nil? (-> {:name "dash" :model "dashboard"}
                   (#'scoring/serialize {} {})
-                  :dataset_query)))))
+                  :dataset_query))))
+  (testing "SIM-44296: a query that cannot be normalized gives a result without a query, not an exception"
+    (let [bad-query {:type     "query"
+                     :database 1
+                     :query    {:source-table 1
+                                :breakout     [["datetime-field" ["field" "date_issued" nil] "month"]]}}
+          result    (#'scoring/serialize {:name          "old card"
+                                          :model         "card"
+                                          :id            1
+                                          :dataset_query (json/generate-string bad-query)}
+                                         {} {})]
+      (is (= "old card" (:name result)))
+      (is (nil? (:dataset_query result))))))
 
 (deftest force-weight-test
   (is (= [{:weight 10}]

@@ -89,7 +89,8 @@ export default function Values({
       series.type === "bar"
         ? fixSmallBarChartValues(
             getValues(series, areStacked, settings),
-            innerBarScale?.domain().length ?? 0,
+            // stacked bars fill the whole band, so they are never too narrow for a value
+            areStacked ? 1 : innerBarScale?.domain().length ?? 0,
           )
         : getValues(series, areStacked, settings);
 
@@ -121,6 +122,10 @@ export default function Values({
   }
 
   function getBarXOffset(series: HydratedSeries) {
+    if (containBars && areStacked && xScale.bandwidth) {
+      // stacked bars (BI-86) fill the whole band: put the value in its middle
+      return xScale.bandwidth / 2;
+    }
     if (containBars && innerBarScale) {
       // Use the same logic when rendering <BarSeries />, as bar charts can display values in groups.
       // https://github.com/metabase/metabase/blob/44fa5e5cc1ee7c43c24774d2fd19ef16d8b40bfa/frontend/src/metabase/static-viz/components/XYChart/shapes/BarSeries.tsx#L61
@@ -228,12 +233,21 @@ function getValues(
   settings?: Settings,
 ): Value[] {
   const data = getData(series, areStacked);
+  const values = transformDataToValues(series.type, data, settings);
 
-  return transformDataToValues(series.type, data, settings);
+  if (series.type === "bar" && areStacked) {
+    // a stacked bar segment is placed at its stacked top, but shows its own value
+    return values.map((value, index) => ({
+      ...value,
+      datumForLabel: series.data[index],
+    }));
+  }
+
+  return values;
 }
 
 function getData(series: HydratedSeries, areStacked: boolean) {
-  if (series.type === "area" && areStacked) {
+  if ((series.type === "area" || series.type === "bar") && areStacked) {
     return series.stackedData as StackedDatum[];
   }
 
