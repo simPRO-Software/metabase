@@ -463,8 +463,11 @@
   [_ render-type timezone-id :- (s/maybe s/Str) card dashcard {:keys [rows cols viz-settings] :as data}]
   (let [viz-settings                (merge viz-settings (:visualization_settings dashcard))
         [x-axis-rowfn y-axis-rowfn] (common/graphing-column-row-fns card data)
+        ;; The dashboard pie shows rows with an empty dimension as a slice of their own, so the email keeps them
+        ;; too (`str` gives them the label ""); only rows without a metric value are dropped. SIM-46756: the email
+        ;; dropped the `false` and empty slices, so its total and percentages did not match the dashboard.
         rows                        (map (juxt (comp str x-axis-rowfn) y-axis-rowfn)
-                                         (common/row-preprocess x-axis-rowfn y-axis-rowfn rows))
+                                         (common/row-preprocess (constantly true) y-axis-rowfn rows))
         slice-threshold             (or (get viz-settings :pie.slice_threshold)
                                         2.5)
         {:keys [rows percentages]}  (donut-info slice-threshold rows)
