@@ -382,6 +382,28 @@
                                        y)]))
                               rows))))))
 
+(defn- stacked-chart?
+  "True for a stacked or a 100% stacked chart."
+  [viz-settings]
+  (contains? #{"stacked" "normalized"} (:stackable.stack_type viz-settings)))
+
+(defn- fill-missing-stacked-values
+  "For a stacked chart, give every area and bar series a value at each x value that any series has: 0 where the series
+  has no row, and 0 in place of nil. The dashboard stacks all series on one shared x dimension, so a missing value
+  counts as 0 there. Without this, the static viz draws an area series only between its own points: a band starts and
+  stops early, skips the x values in between, and a series with one point is not drawn at all (BI-86).
+  The rows of a series keep their order relative to the order in which the x values first appear."
+  [series]
+  (let [xs       (distinct (map first (mapcat :data series)))
+        x->index (zipmap xs (range))]
+    (for [s series]
+      (if (contains? #{:area :bar} (some-> (:type s) keyword))
+        (let [own-xs (set (map first (:data s)))
+              rows   (concat (map (fn [[x y]] [x (if (nil? y) 0 y)]) (:data s))
+                             (for [x xs :when (not (contains? own-xs x))] [x 0]))]
+          (assoc s :data (vec (sort-by (comp x->index first) rows))))
+        s))))
+
 (defn- x-and-y-axis-label-info
   "Generate the X and Y axis labels passed in as the `labels` argument
   to [[metabase.pulse.render.js-svg/waterfall]] and other similar functions for rendering charts with X and Y
@@ -777,7 +799,8 @@
         series-seqs     [(cond-> (if (= (count x-cols) 1)
                                    (single-x-axis-combo-series enforced-type joined-rows x-cols y-cols data card-name)
                                    (double-x-axis-combo-series enforced-type joined-rows x-cols y-cols data card-name))
-                           normalized? normalize-stacked-series)]
+                           (stacked-chart? viz-settings) fill-missing-stacked-values
+                           normalized?                   normalize-stacked-series)]
 
         labels          (combo-label-info x-cols y-cols viz-settings)
         settings        (cond-> (->ts-viz (first x-cols) (first y-cols) labels viz-settings)

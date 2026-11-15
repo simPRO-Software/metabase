@@ -236,10 +236,12 @@ function getValues(
   const values = transformDataToValues(series.type, data, settings);
 
   if (series.type === "bar" && areStacked) {
-    // a stacked bar segment is placed at its stacked top, but shows its own value
+    // a stacked bar segment is placed at its stacked top, but shows its own value;
+    // an empty segment (0, also where the series had no row) gets no label
     return values.map((value, index) => ({
       ...value,
       datumForLabel: series.data[index],
+      hidden: value.hidden || getY(series.data[index]) === 0,
     }));
   }
 

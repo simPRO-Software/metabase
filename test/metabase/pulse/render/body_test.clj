@@ -680,6 +680,30 @@
     (is (false? (#'body/normalized-stack? {:stackable.stack_type "stacked"})))
     (is (false? (#'body/normalized-stack? {})))))
 
+(deftest ^:parallel fill-missing-stacked-values-test
+  (testing "BI-86: in a stacked chart every area or bar series gets 0 at each x value it has no row for, as on the dashboard"
+    (let [series [{:name "YES"    :type :area :data [["Adelaide" 20] ["Brisbane" 370] ["Cairns" 115] ["Perth" 145]]}
+                  {:name "PORTAL" :type :area :data [["Brisbane" 12] ["Perth" 50]]}
+                  {:name "REPORT" :type "bar" :data [["Perth" 3] ["Cairns" nil]]}
+                  {:name "LINE"   :type "line" :data [["Perth" 7]]}]
+          filled (into {} (map (juxt :name :data)) (#'body/fill-missing-stacked-values series))]
+      (is (= {"YES"    [["Adelaide" 20] ["Brisbane" 370] ["Cairns" 115] ["Perth" 145]]
+              "PORTAL" [["Adelaide" 0] ["Brisbane" 12] ["Cairns" 0] ["Perth" 50]]
+              "REPORT" [["Adelaide" 0] ["Brisbane" 0] ["Cairns" 0] ["Perth" 3]]
+              "LINE"   [["Perth" 7]]}
+             filled))))
+  (testing "the filled zeros keep the 100% stack at 100%"
+    (let [series [{:name "A" :type :area :data [["x1" 1] ["x2" 3]]}
+                  {:name "B" :type :area :data [["x2" 1]]}]]
+      (is (= {"A" [["x1" 1.0] ["x2" 0.75]]
+              "B" [["x1" 0.0] ["x2" 0.25]]}
+             (into {} (map (juxt :name :data))
+                   (#'body/normalize-stacked-series (#'body/fill-missing-stacked-values series)))))))
+  (testing "only a stacked or 100% stacked chart is filled"
+    (is (true? (#'body/stacked-chart? {:stackable.stack_type "stacked"})))
+    (is (true? (#'body/stacked-chart? {:stackable.stack_type "normalized"})))
+    (is (false? (#'body/stacked-chart? {})))))
+
 (deftest ^:parallel x-and-y-axis-label-info-test
   (let [x-col {:display_name "X col"}
         y-col {:display_name "Y col"}]
