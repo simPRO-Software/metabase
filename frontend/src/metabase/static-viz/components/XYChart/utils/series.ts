@@ -81,7 +81,10 @@ export const calculateStackedItems = (multipleSeries: Series[]) => {
         }
         const currentY = getY(currentDatum);
 
-        const hasSameSign = (y > 0 && currentY > 0) || (y < 0 && currentY < 0);
+        // a 0 value sits on top of the positive stack, as on the dashboard (BI-86); before, it fell to the axis,
+        // so a stacked area series dropped to 0 at each x value where it had nothing
+        const hasSameSign =
+          (y >= 0 && currentY > 0) || (y < 0 && currentY < 0);
         if (hasSameSign) {
           y1 += currentY;
         }

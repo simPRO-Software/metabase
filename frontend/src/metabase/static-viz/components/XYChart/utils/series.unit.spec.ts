@@ -226,4 +226,34 @@ describe("calculateStackedItems", () => {
       ],
     ]);
   });
+
+  it("puts a 0 value on top of the positive stack (BI-86)", () => {
+    const series: Series[] = [
+      {
+        name: "YES",
+        color: "#509ee3",
+        yAxisPosition: "left",
+        type: "area",
+        data: [
+          ["Adelaide", 20],
+          ["Brisbane", 370],
+        ],
+      },
+      {
+        name: "PORTAL PHOTOS",
+        color: "#a989c5",
+        yAxisPosition: "left",
+        type: "area",
+        data: [
+          ["Adelaide", 0],
+          ["Brisbane", 12],
+        ],
+      },
+    ];
+
+    expect(calculateStackedItems(series)[1].stackedData).toStrictEqual([
+      ["Adelaide", 20, 20],
+      ["Brisbane", 382, 370],
+    ]);
+  });
 });
