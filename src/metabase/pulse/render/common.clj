@@ -178,9 +178,10 @@
 (defn row-preprocess
   "Preprocess rows.
 
-  - Removes any rows that have a nil value for the `x-axis-fn` OR `y-axis-fn`
+  - Removes any rows that have a nil value for the `x-axis-fn` OR `y-axis-fn`. A `false` value is kept: it is a
+    real value (a boolean column), and a truthiness test dropped those rows from emailed charts (SIM-46756).
   - Normalizes bigints and bigdecs to ordinary sizes"
   [x-axis-fn y-axis-fn rows]
   (->> rows
-       (filter (every-pred x-axis-fn y-axis-fn))
+       (filter (fn [row] (and (some? (x-axis-fn row)) (some? (y-axis-fn row)))))
        (map coerce-bignum-to-int)))
