@@ -687,6 +687,42 @@
         (is (= {"Maintenance PPM" "left", "Maintenance Quoted" "left", "Project Direct" "right"}
                (positions {:series_settings {(keyword "Project Direct") {:axis "right"}}})))))))
 
+(deftest ^:parallel sum-rows-by-x-test
+  (testing "BI-5: rows that share an x value are added up, as on the dashboard"
+    (is (= [["2026-05-03" 3431.25] ["2026-06-07" 3250.0] ["2026-07-26" 500.0]]
+           (#'body/sum-rows-by-x [["2026-05-03" 650.0] ["2026-06-07" 125.0] ["2026-05-03" 981.25]
+                                  ["2026-07-26" 500.0] ["2026-05-03" 1800.0] ["2026-06-07" 3125.0]]))))
+  (testing "a nil counts as nothing, and only nils give nil"
+    (is (= [["a" 5] ["b" nil] ["c" 2]]
+           (#'body/sum-rows-by-x [["a" nil] ["b" nil] ["a" 5] ["c" 2] ["b" nil] ["c" nil]]))))
+  (testing "rows with unique x values are not changed"
+    (is (= [["b" 2] ["a" 1] ["c" nil]]
+           (#'body/sum-rows-by-x [["b" 2] ["a" 1] ["c" nil]]))))
+  (testing "no rows give no rows"
+    (is (= [] (#'body/sum-rows-by-x [])))))
+
+(deftest ^:parallel combo-series-sum-rows-by-x-test
+  (testing "BI-5: a sum by job and by week, drawn as a bar chart on the week only, gets one bar per week with the total"
+    (let [y-cols      [{:name "sum" :base_type :type/Float}]
+          joined-rows [[["2026-05-03"] [650.0]] [["2026-05-03"] [981.25]] [["2026-06-07"] [125.0]]
+                       [["2026-05-03"] [1800.0]] [["2026-06-07"] [3125.0]]]
+          [series]    (#'body/single-x-axis-combo-series :bar joined-rows [{:name "date_created"}] y-cols
+                                                         {:viz-settings {} :cols y-cols :rows []} "card")]
+      (is (= [["2026-05-03" 3431.25] ["2026-06-07" 3250.0]]
+             (:data series)))))
+  (testing "BI-5: with two dimensions, each breakout series gets one value per x value"
+    (let [x-cols      [{:name "week" :base_type :type/Date} {:name "type" :base_type :type/Text}]
+          y-cols      [{:name "sum" :base_type :type/Float}]
+          joined-rows [[["w1" "Project"] [10]] [["w1" "Service"] [1]] [["w1" "Project"] [5]]
+                       [["w2" "Project"] [7]] [["w1" "Service"] [2]]]
+          data        (into {}
+                            (map (juxt :breakoutValue :data))
+                            (#'body/double-x-axis-combo-series :bar joined-rows x-cols y-cols
+                                                               {:viz-settings {}} "card"))]
+      (is (= {"Project" [["w1" 15] ["w2" 7]]
+              "Service" [["w1" 3]]}
+             data)))))
+
 (deftest ^:parallel normalize-stacked-series-test
   (testing "BI-86: a 100% stacked chart shows each value as its share of the total at its x value"
     (let [series [{:name "YES" :data [["Sydney" 1100] ["Cairns" 115] ["Empty" 0]]}
