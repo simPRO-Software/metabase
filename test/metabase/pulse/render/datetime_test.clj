@@ -150,7 +150,8 @@
                                              {::mb.viz/date-style      "MMMM D, YYYY"
                                               ::mb.viz/date-abbreviate true}}}))))
     (testing "and it still applies to the *default* style of a unit whose default is not already abbreviated"
-      (is (= "Thursday, Jul 16, 2020"
+      ;; day and month names are both abbreviated, as in the web UI (BI-84, upstream metabase#27105)
+      (is (= "Thu, Jul 16, 2020"
              (datetime/format-temporal-str "UTC" now
                                            {:unit :day :field_ref [:field 1 nil]}
                                            {::mb.viz/column-settings
@@ -163,4 +164,29 @@
                                            {::mb.viz/column-settings
                                             {{::mb.viz/field-id 1}
                                              {::mb.viz/date-style     "YYYY/M/D"
-                                              ::mb.viz/date-separator "-"}}}))))))
+                                              ::mb.viz/date-separator "-"}}})))))
+  (testing "A Moment.js day-name style (\"Sunday, January 7, 2018\") renders instead of throwing (BI-84, metabase#27105)"
+    ;; Before the fix `dddd` reached java.time as is: `Too many pattern letters: d`, and the card failed in every
+    ;; dashboard subscription email, with or without "Abbreviate days and months".
+    (letfn [(fmt [unit col-settings]
+              (datetime/format-temporal-str "UTC" now
+                                            {:unit unit :field_ref [:field 1 nil]}
+                                            {::mb.viz/column-settings {{::mb.viz/field-id 1} col-settings}}))]
+      (testing "full names"
+        (is (= "Thursday, July 16, 2020"
+               (fmt :default {::mb.viz/date-style "dddd, MMMM D, YYYY"}))))
+      (testing "abbreviated day and month names"
+        (is (= "Thu, Jul 16, 2020"
+               (fmt :default {::mb.viz/date-style "dddd, MMMM D, YYYY" ::mb.viz/date-abbreviate true}))))
+      (testing "the :day unit"
+        (is (= "Thursday, July 16, 2020"
+               (fmt :day {::mb.viz/date-style "dddd, MMMM D, YYYY"}))))
+      (testing "the :minute unit"
+        (is (= "Thursday, July 16, 2020, 6:04 PM"
+               (fmt :minute {::mb.viz/date-style "dddd, MMMM D, YYYY"}))))))
+  (testing "Moment.js `D` is the day of the month, not the day of the year, for every unit (metabase#27469)"
+    (is (= "July 16, 2020"
+           (datetime/format-temporal-str "UTC" now
+                                         {:unit :day :field_ref [:field 1 nil]}
+                                         {::mb.viz/column-settings
+                                          {{::mb.viz/field-id 1} {::mb.viz/date-style "MMMM D, YYYY"}}})))))
