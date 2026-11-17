@@ -45,6 +45,10 @@
 
 (defsetting report-timezone
   (deferred-tru "Connection timezone to use when executing queries. Defaults to system timezone.")
+  ;; simPRO: each build has its own Database, and the build's company timezone is stored in its `Database.settings`
+  ;; as `report-timezone`. That value wins over the site-wide value, so relative date filters ("previous 1 day",
+  ;; "previous 1 month") run in the build's timezone, not the server's (BI-91).
+  :database-local :allowed
   :setter
   (fn [new-value]
     (setting/set-value-of-type! :string :report-timezone new-value)
