@@ -20,6 +20,8 @@
   [table :- i/TableInstance, field-metadata :- i/TableMetadataField, metabase-field :- common/TableMetadataFieldWithID]
   (let [{old-database-type     :database-type
          old-base-type         :base-type
+         old-effective-type    :effective-type
+         old-coercion-strategy :coercion-strategy
          old-field-comment     :field-comment
          old-semantic-type     :semantic-type
          old-database-position :database-position
@@ -68,12 +70,33 @@
                           old-database-type
                           new-database-type))
            {:database_type new-database-type})
+         ;; Ported from upstream metabase#37110 (v0.49): a column whose type changed (for example a BI table
+         ;; re-created with `double precision` in place of `text`) must take the new type as its effective type,
+         ;; and be re-fingerprinted and re-classified. Otherwise the UI keeps the old type.
          (when new-base-type?
-           (log/info (trs "Base type of {0} has changed from ''{1}'' to ''{2}''."
+           (log/info (trs "Base type of {0} has changed from ''{1}'' to ''{2}''. This field will be refingerprinted and analyzed."
                           (common/field-metadata-name-for-logging table metabase-field)
                           old-base-type
                           new-base-type))
-           {:base_type new-base-type})
+           {:base_type           new-base-type
+            :effective_type      new-base-type
+            :coercion_strategy   nil
+            ;; reset fingerprint version so this field will get re-fingerprinted and analyzed
+            :fingerprint_version 0
+            :fingerprint         nil
+            ;; semantic type needs to be set to nil so that the fingerprinter can re-infer it during analysis
+            :semantic_type       nil})
+         ;; Ported from upstream metabase#72591: heal a field whose base type already changed in an earlier sync
+         ;; but whose effective type was left behind, with no coercion to explain the difference.
+         (when (and (not new-base-type?)
+                    (nil? old-coercion-strategy)
+                    (some? old-effective-type)
+                    (not= old-effective-type new-base-type))
+           (log/warn (trs "Healing {0}: effective type ''{1}'' is not base type ''{2}'' and there is no coercion strategy. Resetting the effective type to the base type."
+                          (common/field-metadata-name-for-logging table metabase-field)
+                          old-effective-type
+                          new-base-type))
+           {:effective_type new-base-type})
          (when new-semantic-type?
            (log/info (trs "Semantic type of {0} has changed from ''{1}'' to ''{2}''."
                           (common/field-metadata-name-for-logging table metabase-field)

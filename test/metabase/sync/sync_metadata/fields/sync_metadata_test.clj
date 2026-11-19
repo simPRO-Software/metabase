@@ -98,6 +98,81 @@
              :database-position 0
              :database-required false})))))
 
+(deftest base-type-changed-test
+  (testing (str "BI-52 (upstream metabase#37110): when the base type changes, the effective type follows it, the "
+                "coercion is cleared, and the field is re-fingerprinted and re-classified")
+    (is (= [["Field" 1 {:database_type       "float8"
+                        :base_type           :type/Float
+                        :effective_type      :type/Float
+                        :coercion_strategy   nil
+                        :fingerprint_version 0
+                        :fingerprint         nil
+                        :semantic_type       nil}]]
+           (updates-that-will-be-performed
+            {:name              "freight"
+             :database-type     "float8"
+             :base-type         :type/Float
+             :database-position 10
+             :database-required false}
+            {:name              "freight"
+             :database-type     "text"
+             :base-type         :type/Text
+             :effective-type    :type/Text
+             :semantic-type     :type/Category
+             :id                1
+             :database-position 10
+             :database-required false})))))
+
+(deftest effective-type-drift-heal-test
+  (testing (str "BI-52 (upstream metabase#72591): a field whose base type changed in an earlier sync but whose "
+                "effective type was left behind, with no coercion, gets the base type as its effective type")
+    (is (= [["Field" 1 {:effective_type :type/Float}]]
+           (updates-that-will-be-performed
+            {:name              "freight"
+             :database-type     "float8"
+             :base-type         :type/Float
+             :database-position 10
+             :database-required false}
+            {:name              "freight"
+             :database-type     "float8"
+             :base-type         :type/Float
+             :effective-type    :type/Text
+             :semantic-type     :type/Category
+             :id                1
+             :database-position 10
+             :database-required false}))))
+  (testing "a field with a coercion strategy keeps its effective type"
+    (is (= []
+           (updates-that-will-be-performed
+            {:name              "created"
+             :database-type     "text"
+             :base-type         :type/Text
+             :database-position 0
+             :database-required false}
+            {:name              "created"
+             :database-type     "text"
+             :base-type         :type/Text
+             :effective-type    :type/DateTime
+             :coercion-strategy :Coercion/ISO8601->DateTime
+             :id                1
+             :database-position 0
+             :database-required false}))))
+  (testing "a field whose effective type is its base type is not changed"
+    (is (= []
+           (updates-that-will-be-performed
+            {:name              "total"
+             :database-type     "float8"
+             :base-type         :type/Float
+             :database-position 0
+             :database-required false}
+            {:name              "total"
+             :database-type     "float8"
+             :base-type         :type/Float
+             :effective-type    :type/Float
+             :id                1
+             :database-position 0
+             :database-required false})))))
+
 (deftest dont-overwrite-semantic-type-test
   (testing "We should not override non-nil `semantic_type`s"
     (is (= []
