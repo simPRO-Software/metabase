@@ -89,10 +89,18 @@
          ;; are rendered lazily, that NPE surfaced when the email HTML is realised, outside `render-pulse-card-body`'s
          ;; try/catch, and used to kill the entire dashboard subscription (BI-118; same site as BI-49). Apply the
          ;; separator/abbreviation to the *resolved* style instead, so they also take effect on the defaults below.
+         ;;
+         ;; The UI's `date_style` is a Moment.js pattern, not a java.time one. Moment's `dddd` (day name) is a
+         ;; `Too many pattern letters: d` error in java.time and failed every email with a "Sunday, January 7, 2018"
+         ;; style column (BI-84), and Moment's `D` (day of month) is java.time's day of year. Translate them as
+         ;; upstream does (metabase#27105 / #27339 and metabase#27469 / #27557, both after the fork point).
          apply-date-options (fn [style]
-                              (cond-> style
-                                date-separator (str/replace #"/" date-separator)
-                                abbreviate     (-> (str/replace #"MMMM" "MMM") (str/replace #"DDD" "D"))))]
+                              (-> (cond-> (str/replace style #"dddd" "EEEE")
+                                    date-separator (str/replace #"/" date-separator)
+                                    abbreviate     (-> (str/replace #"MMMM" "MMM")
+                                                       (str/replace #"EEEE" "EEE")
+                                                       (str/replace #"DDD" "D")))
+                                  (str/replace #"D" "d")))]
      (cond (str/blank? s) ""
 
            (isa? (or (:effective_type col) (:base_type col)) :type/Time)
@@ -122,9 +130,7 @@
              (:week-of-year :minute-of-hour :day-of-month :day-of-year) (x-of-y (parse-long s))
 
              ;; for everything else return in this format
-             (reformat-temporal-str timezone-id s (-> (or date-style "MMM d, yyyy")
-                                                      apply-date-options
-                                                      (str/replace #"D" "d"))))))))
+             (reformat-temporal-str timezone-id s (apply-date-options (or date-style "MMM d, yyyy"))))))))
 
 (def ^:private RenderableInterval
   {:interval-start     Temporal
