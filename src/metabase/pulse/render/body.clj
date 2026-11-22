@@ -695,6 +695,36 @@
 
 (def ^:private axis-group-threshold 0.33)
 
+(defn- sum-metric
+  "Add two y values the way the dashboard does: two numbers add up, a number plus a nil (or another non-number) is the
+  number, and two non-numbers give nil. Upstream Metabase has the same rule as `sumMetric` in its chart dataset
+  (v0.50 and later)."
+  [a b]
+  (cond
+    (and (number? a) (number? b)) (+ a b)
+    (number? a)                   a
+    (number? b)                   b
+    :else                         nil))
+
+(defn- sum-rows-by-x
+  "Give one `[x y]` row per x value, with the y values of all the rows at that x value added up (`sum-metric`). The
+  rows keep the order in which their x values first appear. A row whose x value occurs once is not changed.
+
+  A question can have more breakouts than the chart uses as dimensions, for example a sum by job and by week shown as
+  a bar chart on the week only. The dashboard then adds up the rows that share an x value, and shows a warning that
+  the data is not aggregated. Before BI-5, the static viz got every row: it drew one bar per row at the same x value,
+  so an emailed chart showed a single row's value (the tallest bar) in place of the total."
+  [rows]
+  (let [{:keys [xs totals]} (reduce (fn [{:keys [totals] :as acc} [x y]]
+                                      (if (contains? totals x)
+                                        (update-in acc [:totals x] sum-metric y)
+                                        (-> acc
+                                            (update :xs conj x)
+                                            (assoc-in [:totals x] y))))
+                                    {:xs [] :totals {}}
+                                    rows)]
+    (mapv (fn [x] [x (get totals x)]) xs)))
+
 (defn- single-x-axis-combo-series
   "This munges rows and columns into series in the format that we want for combo staticviz for literal combo displaytype,
   for a single x-axis with multiple y-axis."
@@ -704,7 +734,7 @@
           card-type     (or (series-setting viz-settings y-col-key :display)
                             chart-type
                             (nth default-combo-chart-types idx))
-          selected-rows (mapv #(vector (ffirst %) (nth (second %) idx)) joined-rows)
+          selected-rows (sum-rows-by-x (mapv #(vector (ffirst %) (nth (second %) idx)) joined-rows))
           y-axis-pos    (or (series-setting viz-settings y-col-key :axis)
                             (nth (default-y-pos data axis-group-threshold) idx))]
       {:cardName      card-name
@@ -729,7 +759,7 @@
         groups       (keys grouped-rows)]
     (for [[idx group-key] (map-indexed vector groups)]
       (let [row-group          (get grouped-rows group-key)
-            selected-row-group (mapv #(vector (ffirst %) (first (second %))) row-group)
+            selected-row-group (sum-rows-by-x (mapv #(vector (ffirst %) (first (second %))) row-group))
             card-type          (or (series-setting viz-settings group-key :display)
                                    chart-type
                                    (nth default-combo-chart-types idx))
