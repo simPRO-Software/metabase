@@ -117,6 +117,15 @@
                                           {{::mb.viz/field-id 1}
                                            {::mb.viz/date-style "YYYY/M/D"
                                             nil                 "ascending"}}}))))
+  (testing "A saved Pivot Table sort order on the column does not change the date format"
+    ;; the settings as a Card holds them: the Pivot Table keeps the column's sort order beside the date style
+    (is (= "2020/7/16"
+           (datetime/format-temporal-str "UTC" now
+                                         {:unit :default :field_ref [:field 1 nil]}
+                                         (mb.viz/db->norm
+                                          {:column_settings {"[\"ref\",[\"field\",1,null]]"
+                                                             {:date_style                    "YYYY/M/D"
+                                                              :pivot_table.column_sort_order "descending"}}})))))
   (testing "date_abbreviate / date_separator without a date_style must not NPE (BI-118)"
     ;; The UI writes exactly this when "Abbreviate names of days and months" is ticked and the date style is
     ;; left at its default. Before the fix `(str/replace nil ...)` threw, and because table cells render lazily
